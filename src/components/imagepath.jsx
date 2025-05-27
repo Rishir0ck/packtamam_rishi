@@ -1,5 +1,6 @@
 export { default as login02 } from "../assets/img/login-02.png";
 export { default as packtamam } from "../assets/img/pack tamam.png";
+export { default as packtamam1 } from "../assets/img/packtamam1.png";
 export { default as loginlogo } from "../assets/img/login-logo.png";
 export { default as loginicon01 } from "../assets/img/icons/login-icon-01.svg";
 export { default as loginicon02} from "../assets/img/icons/login-icon-02.svg";

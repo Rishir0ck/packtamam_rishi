@@ -1,30 +1,36 @@
 import React, { useState } from "react";
 import FeatherIcon from "feather-icons-react/build/FeatherIcon";
-import DonutChart from "./DonutChart";
+// import DonutChart from "./DonutChart";
 import Sidebar from "../../Sidebar";
 import Header from "../../Header";
 import PatientChart from "./PaitentChart";
 import Select from "react-select";
 import {
-  Avatar2,
-  Avatar3,
-  Avatar4,
-  Avatar5,
-  calendar,
-  dep_icon1,
-  dep_icon2,
-  dep_icon3,
-  dep_icon4,
-  dep_icon5,
-  empty_wallet,
+  // Avatar2,
+  // Avatar3,
+  // Avatar4,
+  // Avatar5,
+  // calendar,
+  // dep_icon1,
+  // dep_icon2,
+  // dep_icon3,
+  // dep_icon4,
+  // dep_icon5,
+  // empty_wallet,
   imagesend,
   morning_img_01,
-  profile_add,
-  scissor,
-  user001,
+  // profile_add,
+  // scissor,
+  // user001,
 } from "../../imagepath";
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
+
+import { AlertTriangle, ListChecks, Users, IndianRupee, ShoppingCart, Activity } from 'lucide-react';
+
+
+
+
 
 const Admin_Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -71,7 +77,7 @@ const Admin_Dashboard = () => {
                 <div className="col-md-6">
                   <div className="morning-user">
                     <h2>
-                      Good Morning, <span>Daniel Bruk</span>
+                      Good Morning, <span style={{ color: '#c1a078' , fontWeight: 600}}>Admin</span>
                     </h2>
                     <p>Have a nice day at work</p>
                   </div>
@@ -84,17 +90,19 @@ const Admin_Dashboard = () => {
                 </div>
               </div>
             </div>
+            {/* Total Revenue */}
             <div className="row">
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
-                    <img src={calendar}  alt="#" />
+                    {/* <img src={calendar}  alt="#" /> */}
+                   <IndianRupee className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="dash-content dash-count flex-grow-1">
-                    <h4>Appointments</h4>
+                    <h4>Total Revenue</h4>
                     <h2>
                       {" "}
-                      <CountUp delay={0.4} end={250} duration={0.6} />
+                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={250000} duration={0.6} />
                     </h2>
                     <p>
                       <span className="passive-view">
@@ -108,15 +116,17 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
+            {/* Total Restaurants */}
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
-                    <img src={profile_add}  alt="#" />
+                    {/* <img src={profile_add}  alt="#" /> */}
+                    <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="dash-content dash-count">
-                    <h4>New Patients</h4>
+                    <h4>Total Restaurants</h4>
                     <h2>
-                      <CountUp delay={0.4} end={140} duration={0.6} />
+                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={140} duration={0.6} />
                     </h2>
                     <p>
                       <span className="passive-view">
@@ -130,15 +140,17 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
+            {/* Pending Approvals */}
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
-                    <img src={scissor} alt="#" />
+                    {/* <img src={scissor} alt="#" /> */}
+                    <ListChecks className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="dash-content dash-count">
-                    <h4>Operations</h4>
+                    <h4>Pending Approvals</h4>
                     <h2>
-                      <CountUp delay={0.4} end={56} duration={0.6} />
+                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={56} duration={0.6} />
                     </h2>
                     <p>
                       <span className="negative-view">
@@ -152,15 +164,17 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
+              {/* Active SKUs */}
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
-                    <img src={empty_wallet} alt="#" />
+                    {/* <img src={empty_wallet} alt="#" /> */}
+                    <Activity className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="dash-content dash-count">
-                    <h4>Earnings</h4>
+                    <h4>Active SKUs</h4>
                     <h2>
-                      $<CountUp delay={0.4} end={20250} duration={0.6} />
+                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={20250} duration={0.6} />
                     </h2>
                     <p>
                       <span className="passive-view">
@@ -175,14 +189,17 @@ const Admin_Dashboard = () => {
                 </div>
               </div>
             </div>
+
+{/* **************************************************************************************** */}
+
             <div className="row">
-              <div className="col-12 col-md-12 col-lg-6 col-xl-9">
+              <div className="col-12 col-md-12 col-lg-6 col-flex">
                 <div className="card">
                   <div className="card-body">
                     <div className="chart-title patient-visit">
-                      <h4>Patient Visit by Gender</h4>
+                      <h4>Monthly Order Summary</h4>
                       <div>
-                        <ul className="nav chat-user-total">
+                        {/* <ul className="nav chat-user-total">
                           <li>
                             <i
                               className="fa fa-circle current-users"
@@ -197,7 +214,7 @@ const Admin_Dashboard = () => {
                             />{" "}
                             Female 25%
                           </li>
-                        </ul>
+                        </ul> */}
                       </div>
                       <div className="form-group mb-0">
                         <Select
@@ -213,7 +230,7 @@ const Admin_Dashboard = () => {
                             control: (baseStyles, state) => ({
                               ...baseStyles,
                               borderColor: state.isFocused ?'none' : '2px solid rgba(46, 55, 164, 0.1);',
-                               boxShadow: state.isFocused ? '0 0 0 1px #2e37a4' : 'none',
+                               boxShadow: state.isFocused ? '0 0 0 1px #c1a078' : 'none',
                               '&:hover': {
                                 borderColor: state.isFocused ? 'none' : '2px solid rgba(46, 55, 164, 0.1)',
                               },
@@ -237,21 +254,45 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <div className="col-12 col-md-12 col-lg-6 col-xl-3 d-flex">
-                <div className="card">
-                  <div className="card-body">
-                    <div className="chart-title">
-                      <h4>Patient by Department</h4>
-                    </div>
-                    <div id="donut-chart-dash" className="chart-user-icon">
-                      <DonutChart />
-                      <img src={user001} alt="#" />
+              
+                <div className="col-12 col-md-12 col-lg-6 col-flex">
+                  <div className="card">
+                    <div className="card-body">
+                        <div className="chart-title">
+                          <h4>Recent Activity</h4>
+                          <ul className="space-y-3">
+                            <li className="flex items-start gap-3">
+                              <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-medium">High-risk transaction flagged</p>
+                                <p className="text-xs text-muted-foreground"> Restaurant &#39;Shady Deals Inc.&#39; - Investigate immediately.</p>
+                              </div>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <ListChecks className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-medium">New restaurant &rsquo;Foodie Haven&rsquo; approved</p>
+                                <p className="text-xs text-muted-foreground">Onboarding completed successfully.</p>
+                              </div>
+                            </li>
+                            <li className="flex items-start gap-3">
+                              <Users className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-medium">User &#39;pricing_mgr&#39; updated pricing rules</p>
+                                <p className="text-xs text-muted-foreground">Awaiting checker approval for &#39;Summer Discounts&#39;.</p>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="row">
+            
+{/* **************************************************************************************** */}
+
+
+            {/* <div className="row">
               <div className="col-12 col-md-12  col-xl-4">
                 <div className="card top-departments">
                   <div className="card-header">
@@ -647,8 +688,11 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="row">
+            </div> */}
+{/* **************************************************************************************** */}
+
+
+            {/* <div className="row">
               <div className="col-12 col-xl-12">
                 <div className="card">
                   <div className="card-header pb-0">
@@ -928,7 +972,9 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
+{/* **************************************************************************************** */}
+
           </div>
           <div id="delete_patient" className="modal fade delete-modal" role="dialog">
     <div className="modal-dialog modal-dialog-centered">

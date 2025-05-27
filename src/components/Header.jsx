@@ -13,6 +13,8 @@ import {
   user06,
   settingicon01,
   noteicon1,
+  packtamam,
+  packtamam1,
 } from "./imagepath";
 
 const Header = () => {
@@ -58,11 +60,11 @@ const Header = () => {
       <div className="header">
         <div className="header-left">
           <Link to="/admin-dashboard" className="logo">
-            <img src={logo} width={35} height={35} alt="" />{" "}
-            <span>Pre Clinic</span>
+            <img src={packtamam1} width={35} height={35} alt="" />{" "}
+            <span style={{ color: '#403222'}}>PackTamam</span>
           </Link>
         </div>
-        <Link id="toggle_btn" to="#" onClick={handlesidebar}>
+        <Link  id="toggle_btn" to="#" onClick={handlesidebar}>
           <img src={baricon} alt="" />
         </Link>
         <Link id="mobile_btn" className="mobile_btn float-start" to="#" onClick={handlesidebarmobilemenu}>
@@ -71,12 +73,13 @@ const Header = () => {
         <div className="top-nav-search mob-view">
           <form>
             <input
+              style={{ color: '#c1a078'}}
               type="text"
               className="form-control"
               placeholder="Search here"
             />
             <Link className="btn">
-              <img src={searchnormal} alt="" />
+              <img style={{ color: '#c1a078'}} src={searchnormal} alt="" />
             </Link>
           </form>
         </div>
@@ -87,9 +90,11 @@ const Header = () => {
               className="dropdown-toggle nav-link"
               data-bs-toggle="dropdown"
             >
-              <img src={noteicon} alt="" />
+              <img  src={noteicon} alt="" />
               <span className="pulse" />{" "}
             </Link>
+
+{/* ********************************************************* */}
             <div className="dropdown-menu notifications">
               <div className="topnav-dropdown-header">
                 <span>Notifications</span>
@@ -235,6 +240,8 @@ const Header = () => {
                 <img src={user06} alt="Admin" />
               </span>
             </Link>
+{/* ********************************************************* */}
+
             <div className="dropdown-menu">
               <Link className="dropdown-item" to="/profile">
                 My Profile

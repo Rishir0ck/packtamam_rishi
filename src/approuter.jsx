@@ -112,10 +112,10 @@ import Calender from "./components/calender/Calender";
 import Profile from "./components/pages/login/Profile";
 import EditProfile from "./components/pages/login/EditProfile";
 import BlankPage from "./components/pages/login/BlankPage";
-import Doctor_Dashboard from "./components/Dashboard/Doctor_Dashboard/Doctor_Dashboard";
+// import Doctor_Dashboard from "./components/Dashboard/Doctor_Dashboard/Doctor_Dashboard";
 import Admin_Dashboard from "./components/Dashboard/Admin_Dashboard/Admin_Dashboard";
-import Patient_Dashboard from "./components/Dashboard/Patient_Dashboard/Patient_Dashboard";
-import Doctor_Settings from "./components/Dashboard/Doctor_Dashboard/Doctor_Settings";
+// import Patient_Dashboard from "./components/Dashboard/Patient_Dashboard/Patient_Dashboard";
+// import Doctor_Settings from "./components/Dashboard/Doctor_Dashboard/Doctor_Settings";
 import Patient_Settings from "./components/patients/Patient_Settings";
 import Staff_Settings from "./components/staff/Staff-Settings";
 import Edit_Provident from "./components/accounts/Edit_Provident";
@@ -178,7 +178,7 @@ const Approuter = () => {
           <Route path="/add-doctor" element={<AddDoctor />} />
           <Route path="/editdoctor" element={<EditDoctor />} />
           <Route path="/doctorprofile" element={<DoctorProfile />} />
-          <Route path="/doctor-setting" element={<Doctor_Settings />} />
+          {/* <Route path="/doctor-setting" element={<Doctor_Settings />} /> */}
           {/* Patients */}
           <Route path="/patientslist" element={<PatientsList />} />
           <Route path="/addpatients" element={<AddPatients />} />
@@ -277,8 +277,8 @@ const Approuter = () => {
           <Route path="/calender" element={<Calender />} />
           {/* Dashboard */}
           <Route path="/admin-dashboard" element={<Admin_Dashboard />} />
-          <Route path="/doctor-dashboard" element={<Doctor_Dashboard />} />
-          <Route path="/patient-dashboard" element={<Patient_Dashboard />} />
+          {/* <Route path="/doctor-dashboard" element={<Doctor_Dashboard />} />
+          <Route path="/patient-dashboard" element={<Patient_Dashboard />} /> */}
         </Routes>
       </BrowserRouter>
       <div className="sidebar-overlay"></div>
