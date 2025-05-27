@@ -123,12 +123,12 @@ const Signup = () => {
                       </div> */}
 
                       <div className="d-grid mb-3">
-                        <button className="btn btn-primary" type="submit">Sign up</button>
+                        <button className="btn btn-primary" type="submit" style={{ backgroundColor: '#c1a078', color: '#fff' }}>Sign up</button>
                       </div>
                     </form>
 
                     <div className="text-center mb-3">
-                      <p className="mb-1">Already have an account? <Link to="/login">Login</Link></p>
+                      <p className="mb-1">Already have an account? <Link to="/login" style={{ color: '#403222' , fontWeight: 600}}>Login</Link></p>
                     </div>
                   </div>
                 </div>

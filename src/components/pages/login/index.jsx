@@ -81,14 +81,18 @@ const Login = () => {
                             <input type="checkbox" className="form-check-input me-1" /> Remember me
                           </label>
                         </div>
-                        <Link to="/forgotpassword">Forgot Password?</Link>
+                        <Link to="/forgotpassword" style={{ color: '#403222' , fontWeight: 600}}>Forgot Password?</Link>
                       </div>
                       <div className="d-grid mb-3">
-                        <Link to="/admin-dashboard" className="btn btn-primary">Login</Link>
+                        <Link 
+                        to="/admin-dashboard" 
+                        className="btn btn-primary" 
+                        style={{ backgroundColor: '#c1a078', color: '#fff' }}
+                        >Login</Link>
                       </div>
                     </form>
                     <div className="text-center">
-                      <p className="mb-3">Need an account? <Link to="/signup">Sign Up</Link></p>
+                      <p className="mb-3">Need an account? <Link to="/signup" style={{ color: '#403222' , fontWeight: 600}}>Sign Up</Link></p>
                     </div>
                   </div>
                 </div>
