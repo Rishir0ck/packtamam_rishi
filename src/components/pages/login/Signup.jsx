@@ -1,10 +1,6 @@
 import React from "react";
 import {
-  login02,
-  loginicon01,
-  loginicon02,
-  loginicon03,
-  loginlogo,
+  packtamam
 } from "../../imagepath";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -32,122 +28,107 @@ const Signup = () => {
       <div className="main-wrapper login-body">
         <div className="container-fluid px-0">
           <div className="row">
-            {/* Login logo */}
-            <div className="col-lg-6 login-wrap">
-              <div className="login-sec">
-                <div className="log-img">
-                  <img className="img-fluid" src={login02} alt="Logo" />
-                </div>
-              </div>
-            </div>
-            {/* /Login logo */}
             {/* Login Content */}
-            <div className="col-lg-6 login-wrap-bg">
-              <div className="login-wrapper">
-                <div className="loginbox">
-                  <div className="login-right">
-                    <div className="login-right-wrap">
-                      <div className="account-logo">
-                        <Link to="/admin-dashboard">
-                          <img src={loginlogo}alt="#"/>
-                        </Link>
+            <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center px-3 bg-light">
+              <div className="row w-100 justify-content-center">
+                <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                  <div className="card p-4 shadow rounded-4 bg-white">
+                    <div className="text-center mb-4">
+                      <Link to="/admin-dashboard">
+                        <img src={packtamam} alt="Logo" style={{ maxWidth: '150px' }} className="img-fluid" />
+                      </Link>
+                    </div>
+                    <h3 className="text-center mb-4">Getting Started</h3>
+                    {/* Full Name */}
+                    <form action="./login">
+                      <div className="mb-3">
+                        <label>Full Name <span className="text-danger">*</span></label>
+                        <input className="form-control" type="text" required />
                       </div>
-                      <h2>Getting Started</h2>
-                      {/* Form */}
-                      <form action="./login">
-                        <div className="form-group">
-                          <label>
-                            Full Name <span className="login-danger">*</span>
-                          </label>
-                          <input className="form-control" type="text" />
-                        </div>
-                        <div className="form-group">
-                          <label>
-                            Email <span className="login-danger">*</span>
-                          </label>
-                          <input className="form-control" type="text" />
-                        </div>
-                        <div className="form-group">
-                          <label>
-                            Password <span className="login-danger">*</span>
-                          </label>
+                      {/* Email */}
+                      <div className="mb-3">
+                        <label>Email <span className="text-danger">*</span></label>
+                        <input className="form-control" type="email" required />
+                      </div>
+                      {/* Password */}
+                      <div className="form-group position-relative">
+                        <label>Password <span className="text-danger">*</span></label>
+                        <div className="position-relative">
                           <input
-                          type={passwordVisible ? 'password' : ''}
-                          className="form-control pass-input"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <span
-                          className="toggle-password"
-                          onClick={togglePasswordVisibility}
-                        >
-                          {passwordVisible ? <EyeOff className="react-feather-custom" /> : <Eye className="react-feather-custom" />}
-                        </span>
-                        </div>
-                        <div className="form-group">
-                          <label>
-                            Confirm Password{" "}
-                            <span className="login-danger">*</span>
-                          </label>
-                          <input
-                          type={passwordVisible1 ? 'password' : ''}
-                          className="form-control pass-input"
-                          value={password1}
-                          onChange={(e) => setPassword1(e.target.value)}
-                        />
-                        <span
-                          className="toggle-password"
-                          onClick={togglePasswordVisibility1}
-                        >
-                          {passwordVisible1 ? <EyeOff className="react-feather-custom" /> : <Eye className="react-feather-custom" />}
-                        </span>
-                          {/* <input
-                            className="form-control pass-input-confirm"
-                            type="password"
-                          /> */}
-                          <span className="profile-views feather-eye-off confirm-password" />
-                        </div>
-                        <div className="forgotpass">
-                          <div className="remember-me">
-                            <label className="custom_check mr-2 mb-0 d-inline-flex remember-me">
-                              {" "}
-                              I agree to the{" "}
-                              <Link to="#">&nbsp; terms of service </Link>
-                              &nbsp; and{" "}
-                              <Link to="#">&nbsp; privacy policy </Link>
-                              <input type="checkbox" name="radio" />
-                              <span className="checkmark" />
-                            </label>
-                          </div>
-                        </div>
-                        <div className="form-group login-btn">
-                          <button
-                            className="btn btn-primary btn-block"
-                            type="submit"
+                            type={passwordVisible ? 'text' : 'password'}
+                            className="form-control"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={{ paddingRight: '40px' }}
+                            required
+                          />
+                          <span
+                            onClick={togglePasswordVisibility}
+                            style={{
+                              position: 'absolute',
+                              top: '50%',
+                              right: '12px',
+                              transform: 'translateY(-50%)',
+                              cursor: 'pointer',
+                              color: '#6c757d',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              height: '20px',
+                              width: '20px',
+                            }}
                           >
-                            Sign up
-                          </button>
+                            {passwordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </span>
                         </div>
-                      </form>
-                      {/* /Form */}
-                      <div className="next-sign">
-                        <p className="account-subtitle">
-                          Already have account? <Link to="/login">Login</Link>
-                        </p>
-                        {/* Social Login */}
-                        <div className="social-login">
-                          <Link to="#">
-                            <img src={loginicon01}alt="#"/>
-                          </Link>
-                          <Link to="#">
-                            <img src={loginicon02}alt="#"/>
-                          </Link>
-                          <Link to="#">
-                            <img src={loginicon03}alt="#"/>
-                          </Link>
-                        </div>
-                        {/* /Social Login */}
                       </div>
+                      {/* Confirm Password */}
+                      <div className="form-group position-relative">
+                        <label>Confirm Password <span className="text-danger">*</span></label>
+                        <div className="position-relative">
+                          <input
+                            type={passwordVisible1 ? 'text' : 'password'}
+                            className="form-control"
+                            value={password1}
+                            onChange={(e) => setPassword1(e.target.value)}
+                            style={{ paddingRight: '40px' }}
+                            required
+                          />
+                          <span
+                            onClick={togglePasswordVisibility1}
+                            style={{
+                              position: 'absolute',
+                              top: '50%',
+                              right: '12px',
+                              transform: 'translateY(-50%)',
+                              cursor: 'pointer',
+                              color: '#6c757d',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              height: '20px',
+                              width: '20px',
+                            }}
+                          >
+                            {passwordVisible1 ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Terms and Conditions */}
+                      {/* <div className="form-check mb-3">
+                        <input type="checkbox" className="form-check-input" id="termsCheck" required />
+                        <label className="form-check-label" htmlFor="termsCheck">
+                          I agree to the <Link to="#">terms of service</Link> and <Link to="#">privacy policy</Link>
+                        </label>
+                      </div> */}
+
+                      <div className="d-grid mb-3">
+                        <button className="btn btn-primary" type="submit">Sign up</button>
+                      </div>
+                    </form>
+
+                    <div className="text-center mb-3">
+                      <p className="mb-1">Already have an account? <Link to="/login">Login</Link></p>
                     </div>
                   </div>
                 </div>

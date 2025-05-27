@@ -1,7 +1,7 @@
 import React  from "react";
 import { Link } from "react-router-dom";
 // import FeatherIcon from "feather-icons-react";
-import { packtamam, loginicon01, loginicon02, loginicon03 } from "../../imagepath";
+import { packtamam } from "../../imagepath";
 import "owl.carousel/dist/assets/owl.carousel.css";
 import "owl.carousel/dist/assets/owl.theme.default.css";
 import { useState } from "react";
@@ -37,95 +37,58 @@ const Login = () => {
       <div className="main-wrapper login-body">
         <div className="container-fluid px-0">
           <div className="row">
-            {/* Login logo */}
-            {/* <div className="col-lg-6 login-wrap">
-              <div className="login-sec">
-                <div className="log-img">
-                  <img
-                    className="img-fluid"
-                    src={login02}
-                    alt="#"
-                  />
-                </div>
-              </div>
-            </div> */}
-            {/* /Login logo */}
             {/* Login Content */}
-            <div className="col-lg-6 login-wrap-bg">
-              <div className="login-wrapper">
-                <div className="loginbox">
-                  <div className="login-right">
-                    <div className="login-right-wrap">
-                      <div className="account-logo">
-                        <Link to="/admin-dashboard">
-                          <img className="img-fluid" src={packtamam} alt="#" />
-                        </Link>
+            <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center px-3">
+              <div className="row w-100 justify-content-center">
+                <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                  <div className="card shadow rounded-4 p-4">
+                    <div className="text-center mb-4">
+                      <Link to="/admin-dashboard">
+                        <img className="img-fluid" src={packtamam} alt="Logo" style={{ maxWidth: '150px' }} />
+                      </Link>
+                    </div>
+                    <h3 className="text-center mb-4">Login</h3>
+                    <form>
+                      <div className="mb-3">
+                        <label>Email <span className="text-danger">*</span></label>
+                        <input type="email" className="form-control" required />
                       </div>
-                      <h2>Login</h2>
-                      {/* Form */}
-                      <form >
-                        <div className="form-group">
-                          <label>
-                            Email <span className="login-danger">*</span>
-                          </label>
-                          <input className="form-control" type="text" />
-                        </div>
-                        <div className="form-group">
-                          <label>
-                            Password <span className="login-danger">*</span>
-                          </label>
+                      {/* password  */}
+                      <div className="mb-3">
+                        <label>
+                          Password <span className="text-danger">*</span>
+                        </label>
+                        <div className="input-group">
                           <input
-                          type={passwordVisible ? 'password' : ''}
-                          className="form-control pass-input"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <span
-                          className="toggle-password"
-                          onClick={togglePasswordVisibility}
-                        >
-                          {passwordVisible ? <EyeOff className="react-feather-custom" /> : <Eye className="react-feather-custom" />}
-                        </span>
-                        </div>
-                        <div className="forgotpass">
-                          <div className="remember-me">
-                            <label className="custom_check mr-2 mb-0 d-inline-flex remember-me">
-                              {" "}
-                              Remember me
-                              <input type="checkbox" name="radio" />
-                              <span className="checkmark" />
-                            </label>
-                          </div>
-                          <Link to="/forgotpassword">Forgot Password?</Link>
-                        </div>
-                        <div className="form-group login-btn">
-                          <Link to="/admin-dashboard"
-                            className="btn btn-primary btn-block"
-
+                            type={passwordVisible ? 'text' : 'password'}
+                            className="form-control"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                          />
+                          <span
+                            className="input-group-text"
+                            style={{ cursor: 'pointer' }}
+                            onClick={togglePasswordVisibility}
                           >
-                            Login
-                          </Link>
+                            {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </span>
                         </div>
-                      </form>
-                      {/* /Form */}
-                      <div className="next-sign">
-                        <p className="account-subtitle">
-                          Need an account? <Link to="/signup">Sign Up</Link>
-                        </p>
-                        {/* Social Login */}
-                        <div className="social-login">
-                          <Link to="#">
-                            <img src={loginicon01} alt="#"/>
-                          </Link>
-                          <Link to="#">
-                            <img src={loginicon02}alt="#" />
-                          </Link>
-                          <Link to="#">
-                            <img src={loginicon03}  alt="#"/>
-                          </Link>
-                        </div>
-                        {/* /Social Login */}
                       </div>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                          <label className="form-check-label">
+                            <input type="checkbox" className="form-check-input me-1" /> Remember me
+                          </label>
+                        </div>
+                        <Link to="/forgotpassword">Forgot Password?</Link>
+                      </div>
+                      <div className="d-grid mb-3">
+                        <Link to="/admin-dashboard" className="btn btn-primary">Login</Link>
+                      </div>
+                    </form>
+                    <div className="text-center">
+                      <p className="mb-3">Need an account? <Link to="/signup">Sign Up</Link></p>
                     </div>
                   </div>
                 </div>
