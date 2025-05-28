@@ -23,18 +23,18 @@ import SettingsOthers from "./components/settings/SettingsOthers";
 import Assests from "./components/assests/Assests";
 import AddAsset from "./components/assests/AddAsset";
 //Doctor
-import DoctorList from "./components/doctor/DoctorList";
-import AddDoctor from "./components/doctor/AddDoctor";
-import EditDoctor from "./components/doctor/EditDoctor";
-import DoctorProfile from "./components/doctor/DoctorProfile";
+import DoctorList from "./components/users/DoctorList";
+import AddDoctor from "./components/users/AddDoctor";
+import EditDoctor from "./components/users/EditDoctor";
+import DoctorProfile from "./components/users/DoctorProfile";
 //Patients...
 import PatientsList from "./components/patients/PatientsList";
 import AddPatients from "./components/patients/AddPatients";
 import EditPatients from "./components/patients/EditPatients";
 import PatientsProfile from "./components/patients/PatientsProfile";
-import AppoinmentList from "./components/restaurant/AppoinmentList";
-import AddAppoinments from "./components/restaurant/AddAppoinments";
-import EditAppoinments from "./components/restaurant/EditAppoinments";
+import AppoinmentList from "./components/appoinments/AppoinmentList";
+import AddAppoinments from "./components/appoinments/AddAppoinments";
+import EditAppoinments from "./components/appoinments/EditAppoinments";
 //DoctorSchedule
 import ScheduleList from "./components/doctorschedule/ScheduleList";
 
