@@ -17,7 +17,7 @@ import {
   // dep_icon4,
   // dep_icon5,
   // empty_wallet,
-  imagesend,
+  // imagesend,
   morning_img_01,
   // profile_add,
   // scissor,
@@ -26,11 +26,14 @@ import {
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
 
-import { AlertTriangle, ListChecks, Users, IndianRupee, ShoppingCart, Activity } from 'lucide-react';
-
-
-
-
+import {
+  AlertTriangle,
+  ListChecks,
+  Users,
+  IndianRupee,
+  ShoppingCart,
+  Activity,
+} from "lucide-react";
 
 const Admin_Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -77,15 +80,17 @@ const Admin_Dashboard = () => {
                 <div className="col-md-6">
                   <div className="morning-user">
                     <h2>
-                      Good Morning, <span style={{ color: '#c1a078' , fontWeight: 600}}>Admin</span>
+                      Good Morning,{" "}
+                      <span style={{ color: "#c1a078", fontWeight: 600 }}>
+                        Admin
+                      </span>
                     </h2>
                     <p>Have a nice day at work</p>
                   </div>
                 </div>
                 <div className="col-md-6 position-blk">
                   <div className="morning-img">
-                    <img src={morning_img_01}
-                     alt="#" />
+                    <img src={morning_img_01} alt="#" />
                   </div>
                 </div>
               </div>
@@ -96,18 +101,23 @@ const Admin_Dashboard = () => {
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
                     {/* <img src={calendar}  alt="#" /> */}
-                   <IndianRupee className="h-5 w-5 text-muted-foreground" />
+                    <IndianRupee className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="dash-content dash-count flex-grow-1">
                     <h4>Total Revenue</h4>
                     <h2>
                       {" "}
-                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={250000} duration={0.6} />
+                      <CountUp
+                        style={{ color: "#c1a078", fontWeight: 600 }}
+                        delay={0.4}
+                        end={250000}
+                        duration={0.6}
+                      />
                     </h2>
                     <p>
                       <span className="passive-view">
-                        <i className="feather-arrow-up-right me-1" >
-                          <FeatherIcon icon="arrow-up-right"/>
+                        <i className="feather-arrow-up-right me-1">
+                          <FeatherIcon icon="arrow-up-right" />
                         </i>
                         40%
                       </span>{" "}
@@ -116,7 +126,7 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-            {/* Total Restaurants */}
+              {/* Total Restaurants */}
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
@@ -126,13 +136,18 @@ const Admin_Dashboard = () => {
                   <div className="dash-content dash-count">
                     <h4>Total Restaurants</h4>
                     <h2>
-                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={140} duration={0.6} />
+                      <CountUp
+                        style={{ color: "#c1a078", fontWeight: 600 }}
+                        delay={0.4}
+                        end={140}
+                        duration={0.6}
+                      />
                     </h2>
                     <p>
                       <span className="passive-view">
                         <i className="feather-arrow-up-right me-1">
                           <FeatherIcon icon="arrow-up-right" />
-                          </i>
+                        </i>
                         20%
                       </span>{" "}
                       vs last month
@@ -140,7 +155,7 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-            {/* Pending Approvals */}
+              {/* Pending Approvals */}
               <div className="col-md-6 col-sm-6 col-lg-6 col-xl-3">
                 <div className="dash-widget">
                   <div className="dash-boxs comman-flex-center">
@@ -150,13 +165,18 @@ const Admin_Dashboard = () => {
                   <div className="dash-content dash-count">
                     <h4>Pending Approvals</h4>
                     <h2>
-                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={56} duration={0.6} />
+                      <CountUp
+                        style={{ color: "#c1a078", fontWeight: 600 }}
+                        delay={0.4}
+                        end={56}
+                        duration={0.6}
+                      />
                     </h2>
                     <p>
                       <span className="negative-view">
                         <i className="feather-arrow-down-right me-1">
-                          <FeatherIcon icon="arrow-down-right"/>
-                          </i>
+                          <FeatherIcon icon="arrow-down-right" />
+                        </i>
                         15%
                       </span>{" "}
                       vs last month
@@ -174,13 +194,18 @@ const Admin_Dashboard = () => {
                   <div className="dash-content dash-count">
                     <h4>Active SKUs</h4>
                     <h2>
-                      <CountUp style={{ color: '#c1a078' , fontWeight: 600}} delay={0.4} end={20250} duration={0.6} />
+                      <CountUp
+                        style={{ color: "#c1a078", fontWeight: 600 }}
+                        delay={0.4}
+                        end={20250}
+                        duration={0.6}
+                      />
                     </h2>
                     <p>
                       <span className="passive-view">
                         <i className="feather-arrow-up-right me-1">
-                          <FeatherIcon icon="arrow-up-right"/>
-                          </i>
+                          <FeatherIcon icon="arrow-up-right" />
+                        </i>
                         30%
                       </span>{" "}
                       vs last month
@@ -190,7 +215,7 @@ const Admin_Dashboard = () => {
               </div>
             </div>
 
-{/* **************************************************************************************** */}
+            {/* **************************************************************************************** */}
 
             <div className="row">
               <div className="col-12 col-md-12 col-lg-6 col-flex">
@@ -224,26 +249,34 @@ const Admin_Dashboard = () => {
                           options={year}
                           id="search-commodity"
                           components={{
-                            IndicatorSeparator: () => null
+                            IndicatorSeparator: () => null,
                           }}
                           styles={{
                             control: (baseStyles, state) => ({
                               ...baseStyles,
-                              borderColor: state.isFocused ?'none' : '2px solid rgba(46, 55, 164, 0.1);',
-                               boxShadow: state.isFocused ? '0 0 0 1px #c1a078' : 'none',
-                              '&:hover': {
-                                borderColor: state.isFocused ? 'none' : '2px solid rgba(46, 55, 164, 0.1)',
+                              borderColor: state.isFocused
+                                ? "none"
+                                : "2px solid rgba(46, 55, 164, 0.1);",
+                              boxShadow: state.isFocused
+                                ? "0 0 0 1px #c1a078"
+                                : "none",
+                              "&:hover": {
+                                borderColor: state.isFocused
+                                  ? "none"
+                                  : "2px solid rgba(46, 55, 164, 0.1)",
                               },
-                              borderRadius: '10px',
+                              borderRadius: "10px",
                               fontSize: "14px",
-                                minHeight: "45px",
+                              minHeight: "45px",
                             }),
                             dropdownIndicator: (base, state) => ({
                               ...base,
-                              transform: state.selectProps.menuIsOpen ? 'rotate(-180deg)' : 'rotate(0)',
-                              transition: '250ms',
-                              width: '35px',
-                              height: '35px',
+                              transform: state.selectProps.menuIsOpen
+                                ? "rotate(-180deg)"
+                                : "rotate(0)",
+                              transition: "250ms",
+                              width: "35px",
+                              height: "35px",
                             }),
                           }}
                         />
@@ -254,43 +287,58 @@ const Admin_Dashboard = () => {
                   </div>
                 </div>
               </div>
-              
-                <div className="col-12 col-md-12 col-lg-6 col-flex">
-                  <div className="card">
-                    <div className="card-body">
-                        <div className="chart-title">
-                          <h4>Recent Activity</h4>
-                          <ul className="space-y-3">
-                            <li className="flex items-start gap-3">
-                              <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium">High-risk transaction flagged</p>
-                                <p className="text-xs text-muted-foreground"> Restaurant &#39;Shady Deals Inc.&#39; - Investigate immediately.</p>
-                              </div>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <ListChecks className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium">New restaurant &rsquo;Foodie Haven&rsquo; approved</p>
-                                <p className="text-xs text-muted-foreground">Onboarding completed successfully.</p>
-                              </div>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <Users className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium">User &#39;pricing_mgr&#39; updated pricing rules</p>
-                                <p className="text-xs text-muted-foreground">Awaiting checker approval for &#39;Summer Discounts&#39;.</p>
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
+              {/* ************************** */}
+              <div className="col-12 col-md-12 col-lg-6 col-flex">
+                <div className="card">
+                  <div className="card-body">
+                    <div className="chart-title">
+                      <h4>Recent Activity</h4>
+                      <ul className="space-y-3 list-none">
+                        <li className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">
+                              High-risk transaction flagged
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Restaurant &apos;Shady Deals Inc.&apos; -
+                              Investigate immediately.
+                            </p>
+                          </div>
+                        </li>
+
+                        <li className="flex items-start gap-3">
+                          <ListChecks className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">
+                              New restaurant &apos;Foodie Haven&apos; approved
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Onboarding completed successfully.
+                            </p>
+                          </div>
+                        </li>
+
+                        <li className="flex items-start gap-3">
+                          <Users className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">
+                              User &apos;pricing_mgr&apos; updated pricing rules
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Awaiting checker approval for &apos;Summer
+                              Discounts&apos;.
+                            </p>
+                          </div>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>
-            
-{/* **************************************************************************************** */}
+              </div>
+            </div>
 
+            {/* **************************************************************************************** */}
 
             {/* <div className="row">
               <div className="col-12 col-md-12  col-xl-4">
@@ -689,8 +737,7 @@ const Admin_Dashboard = () => {
                 </div>
               </div>
             </div> */}
-{/* **************************************************************************************** */}
-
+            {/* **************************************************************************************** */}
 
             {/* <div className="row">
               <div className="col-12 col-xl-12">
@@ -973,47 +1020,62 @@ const Admin_Dashboard = () => {
                 </div>
               </div>
             </div> */}
-{/* **************************************************************************************** */}
-
+            {/* **************************************************************************************** */}
           </div>
-          <div id="delete_patient" className="modal fade delete-modal" role="dialog">
-    <div className="modal-dialog modal-dialog-centered">
-      <div className="modal-content">
-        <div className="modal-body text-center">
-          <img src={imagesend} alt="#" width={50} height={46} />
-          <h3>Are you sure want to delete this ?</h3>
-          <div className="m-t-20">
-            {" "}
-            <Link to="#" className="btn btn-white me-2" data-bs-dismiss="modal">
-              Close
-            </Link>
-            <button type="submit" className="btn btn-danger">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="delete_patient" className="modal fade delete-modal" role="dialog">
-    <div className="modal-dialog modal-dialog-centered">
-      <div className="modal-content">
-        <div className="modal-body text-center">
-          <img src={imagesend} alt="#" width={50} height={46} />
-          <h3>Are you sure want to delete this ?</h3>
-          <div className="m-t-20">
-            {" "}
-            <Link to="#" className="btn btn-white me-2" data-bs-dismiss="modal">
-              Close
-            </Link>
-            <button type="submit" className="btn btn-danger">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  </div>
+          {/* <div
+            id="delete_patient"
+            className="modal fade delete-modal"
+            role="dialog"
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-body text-center">
+                  <img src={imagesend} alt="#" width={50} height={46} />
+                  <h3>Are you sure want to delete this ?</h3>
+                  <div className="m-t-20">
+                    {" "}
+                    <Link
+                      to="#"
+                      className="btn btn-white me-2"
+                      data-bs-dismiss="modal"
+                    >
+                      Close
+                    </Link>
+                    <button type="submit" className="btn btn-danger">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              id="delete_patient"
+              className="modal fade delete-modal"
+              role="dialog"
+            >
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-body text-center">
+                    <img src={imagesend} alt="#" width={50} height={46} />
+                    <h3>Are you sure want to delete this ?</h3>
+                    <div className="m-t-20">
+                      {" "}
+                      <Link
+                        to="#"
+                        className="btn btn-white me-2"
+                        data-bs-dismiss="modal"
+                      >
+                        Close
+                      </Link>
+                      <button type="submit" className="btn btn-danger">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> */}
         </div>
       </>
     </>
