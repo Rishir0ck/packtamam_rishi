@@ -540,9 +540,9 @@ const Sidebar = (props) => {
               <div className="logout-btn">
                 <Link to="/login">
                   <span className="menu-side">
-                    <img src={logout} alt="" />
+                    <img  src={logout} alt="" />
                   </span>{" "}
-                  <span style={{ color: '#403222' , fontWeight: 600}}>Logout</span>
+                  <span style={{ color: '#c1a078'}}>Logout</span>
                 </Link>
               </div>
             </div>
