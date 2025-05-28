@@ -22,6 +22,7 @@ export { default as settingicon01 } from "../assets/img/icons/setting-icon-01.sv
 
 export { default as menuicon08 } from "../assets/img/icons/menu-icon-08.svg";
 export { default as menuicon04 } from "../assets/img/icons/menu-icon-04.svg";
+export { default as restaurant } from "../assets/img/icons/restaurant.svg";
 export { default as menuicon06 } from "../assets/img/icons/menu-icon-06.svg";
 export { default as menuicon09 } from "../assets/img/icons/menu-icon-09.svg";
 export { default as menuicon10 } from "../assets/img/icons/menu-icon-10.svg";

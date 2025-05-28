@@ -2,7 +2,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react'
 import { Link } from "react-router-dom";
-import { blog, dashboard, doctor, doctorschedule, logout, menuicon04, menuicon06, menuicon08, menuicon09, menuicon10, menuicon11, menuicon12, menuicon14, menuicon15, menuicon16, patients, sidemenu } from './imagepath';
+import { blog, restaurant,dashboard, doctor, doctorschedule, logout, menuicon04, menuicon06, menuicon08, menuicon09, menuicon10, menuicon11, menuicon12, menuicon14, menuicon15, menuicon16, patients, sidemenu } from './imagepath';
 import Scrollbars from "react-custom-scrollbars-2";
 
 
@@ -56,14 +56,15 @@ const Sidebar = (props) => {
                     handleClick(e, "menu-item", "menu-items")
                   }}>
                     <span className="menu-side">
-                      <img src={dashboard} alt="" />
+                      <img className='img-fluid' src={dashboard} alt="" />
                     </span>{" "}
-                    <span style={{ color: '#c1a078'}} > Dashboard </span> <span style={{ color: '#403222'}} className="menu-arrow" />
+                    {/* <span style={{ color: '#c1a078'}} > Dashboard </span> <span style={{ color: '#403222'}} className="menu-arrow" /> */}
+                      <Link style={{ color: '#c1a078'}} className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''} to="/admin-dashboard">Dashboard</Link>
                   </Link>
                   <ul style={{ display: sidebar === 'Dashboard' ? 'block' : "none" }} className='menu-items'>
-                    <li>
-                      <Link style={{ color: '#c1a078'}} className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''} to="/admin-dashboard">Admin Dashboard</Link>
-                    </li>
+                    {/* <li> */}
+                      {/* <Link style={{ color: '#c1a078'}} className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''} to="/admin-dashboard">Dashboard</Link> */}
+                    {/* </li> */}
                     {/* <li>
                       <Link className={props?.activeClassName === 'doctor-dashboard' ? 'active' : ''} to="/doctor-dashboard">Doctor Dashboard</Link>
                     </li>
@@ -151,25 +152,25 @@ const Sidebar = (props) => {
                   </ul>
                 </li> */}
 {/* ************************************************************************** */}
-                {/* <li className="submenu">
+                <li className="submenu">
                   <Link to="#" id="menu-item4" onClick={(e) => handleClick(e, "menu-item4", "menu-items4")}>
                     <span className="menu-side">
-                      <img src={menuicon04} alt="" />
+                      <img className='img-fluid' src={menuicon06} alt="" />
                     </span>{" "}
-                    <span> Appointments </span> <span className="menu-arrow" />
+                    <span style={{ color: '#c1a078'}}> Restaurant </span> <span className="menu-arrow" />
                   </Link>
                   <ul style={{ display: "none" }} className="menu-items4">
                     <li>
-                      <Link className={props?.activeClassName === 'appoinment-list' ? 'active' : ''} to="/appoinmentlist">Appointment List</Link>
+                      <Link className={props?.activeClassName === 'appoinment-list' ? 'active' : ''} to="/appoinmentlist">Restaurant List</Link>
                     </li>
                     <li>
-                      <Link className={props?.activeClassName === 'add-appoinment' ? 'active' : ''} to="/addappoinments">Add Appointment</Link>
+                      <Link className={props?.activeClassName === 'add-appoinment' ? 'active' : ''} to="/addappoinments">Add Restaurant</Link>
                     </li>
                     <li>
-                      <Link className={props?.activeClassName === 'edit-appoinment' ? 'active' : ''} to="/editappoinments">Edit Appointment</Link>
+                      <Link className={props?.activeClassName === 'edit-appoinment' ? 'active' : ''} to="/editappoinments">Edit Restaurant</Link>
                     </li>
                   </ul>
-                </li> */}
+                </li>
 {/* ************************************************************************** */}
                 {/* <li className="submenu">
                   <Link to="#" id="menu-item5" onClick={(e) => handleClick(e, "menu-item5", "menu-items5")}>
