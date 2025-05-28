@@ -32,7 +32,7 @@ import PatientsList from "./components/patients/PatientsList";
 import AddPatients from "./components/patients/AddPatients";
 import EditPatients from "./components/patients/EditPatients";
 import PatientsProfile from "./components/patients/PatientsProfile";
-// import AppoinmentList from "./components/appoinments/AppoinmentList";
+import AppoinmentList from "./components/restaurant/AppoinmentList";
 import AddAppoinments from "./components/appoinments/AddAppoinments";
 import EditAppoinments from "./components/appoinments/EditAppoinments";
 //DoctorSchedule
@@ -183,7 +183,7 @@ const Approuter = () => {
           <Route path="/patientsprofile" element={<PatientsProfile />} />
           <Route path="/patient-settings" element={<Patient_Settings />} />
           {/* Appoinments */}
-          {/* <Route path="/appoinmentlist" element={<AppoinmentList />} /> */}
+          <Route path="/appoinmentlist" element={<AppoinmentList />} />
           <Route path="/addappoinments" element={<AddAppoinments />} />
           <Route path="/editappoinments" element={<EditAppoinments />} />
           {/* DoctorSchedule */}
