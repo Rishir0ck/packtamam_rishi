@@ -98,9 +98,6 @@ import HorizontalForm from "./components/Forms/HorizontalForm";
 import VerticalForm from "./components/Forms/VerticalForm";
 import BasicTable from "./components/Tables/BasicTable";
 import DataTable from "./components/Tables/DataTable";
-import UiKit from "./components/Ui_Elements/UiKit";
-import Typography from "./components/Ui_Elements/Typography";
-import Tab from "./components/Ui_Elements/Tab";
 import Edit_Assets from "./components/assests/Edit_Assets";
 import Register from "./components/pages/login/Register";
 import LockScreen from "./components/pages/login/LockScreen";
@@ -261,10 +258,7 @@ const Approuter = () => {
           />
           <Route path="/tax-settings" element={<Tax_Settings />} />
           <Route path="/bank-settings" element={<Bank_Settings />} />
-          {/* ui-elements */}
-          <Route path="/ui-kit" element={<UiKit />} />
-          <Route path="/typography" element={<Typography />} />
-          <Route path="/tab" element={<Tab />} />
+
           {/* Forms */}
           <Route path="/basic-input" element={<BasicInput />} />
           <Route path="/inputgroup" element={<InputGroups />} />
