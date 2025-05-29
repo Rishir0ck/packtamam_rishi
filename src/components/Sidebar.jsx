@@ -23,8 +23,12 @@ const Sidebar = (props) => {
   const handleClick = (e, item, item1, item3) => {
     const div = document.querySelector(`#${item}`);
     const ulDiv = document.querySelector(`.${item1}`);
-    e?.target?.className ? ulDiv.style.display = 'none' : ulDiv.style.display = 'block'
-    e?.target?.className ? div.classList.remove('subdrop') : div.classList.add('subdrop');
+    
+    // Add null checks to prevent errors
+    if (div && ulDiv) {
+      e?.target?.className ? ulDiv.style.display = 'none' : ulDiv.style.display = 'block'
+      e?.target?.className ? div.classList.remove('subdrop') : div.classList.add('subdrop');
+    }
   }
 
   const handleLogoutClick = (e) => {
@@ -61,7 +65,10 @@ const Sidebar = (props) => {
   useEffect(() => {
     if (props?.id && props?.id1) {
       const ele = document.getElementById(`${props?.id}`);
-      handleClick(ele, props?.id, props?.id1);
+      // Only call handleClick if the element exists
+      if (ele) {
+        handleClick(ele, props?.id, props?.id1);
+      }
     }
   }, [])
 
@@ -93,17 +100,18 @@ const Sidebar = (props) => {
             >
               <ul>
                 <li className="menu-title">Main</li>
-                <li className="submenu" >
-                  <Link to="#" id="menu-item" onClick={(e) => {
-                    handleClick(e, "menu-item", "menu-items")
-                  }}>
+
+                {/* Dashboard - Fixed to be a simple menu item without submenu */}
+                <li>
+                  <Link 
+                    to="/admin-dashboard" 
+                    className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''}
+                  >
                     <span className="menu-side">
                       <img className='img-fluid' src={dashboard} alt="" />
-                    </span>{" "}
-                      <Link style={{ color: '#c1a078'}} className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''} to="/admin-dashboard">Dashboard</Link>
+                    </span>
+                    <span style={{ color: '#c1a078'}}>Dashboard</span>
                   </Link>
-                  <ul style={{ display: sidebar === 'Dashboard' ? 'block' : "none" }} className='menu-items'>
-                  </ul>
                 </li>
 
                 <li className="submenu">
@@ -200,15 +208,17 @@ const Sidebar = (props) => {
                   </ul>
                 </li>
 
+                {/* Logout - Fixed to be inside the menu structure */}
+                <li>
+                  <Link to="#" onClick={handleLogoutClick}>
+                    <span className="menu-side">
+                      <img src={logout} alt="" />
+                    </span>
+                    <span style={{ color: '#c1a078'}}>Logout</span>
+                  </Link>
+                </li>
+
               </ul>
-              <div className="logout-btn">
-                <Link to="#" onClick={handleLogoutClick}>
-                  <span className="menu-side">
-                    <img src={logout} alt="" />
-                  </span>{" "}
-                  <span style={{ color: '#c1a078'}}>Logout</span>
-                </Link>
-              </div>
             </div>
           </div>
         </Scrollbars>

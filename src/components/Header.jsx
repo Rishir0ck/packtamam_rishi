@@ -17,6 +17,9 @@ import {
   packtamam1,
 } from "./imagepath";
 
+
+
+
 const Header = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [user, setUser] = useState(null);
@@ -109,7 +112,7 @@ const Header = () => {
             </Link>
           </div>
           <Link id="toggle_btn" to="#" onClick={handlesidebar}>
-            <img style={{ color: '#403222'}} src={baricon} alt="" />
+          <img style={{ color: '#403222'}} src={baricon} alt="" />
           </Link>
           <Link id="mobile_btn" className="mobile_btn float-start" to="#" onClick={handlesidebarmobilemenu}>
             <img style={{ color: '#403222'}} src={baricon1} alt="" />
