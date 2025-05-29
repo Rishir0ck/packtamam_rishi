@@ -22,7 +22,7 @@ import SettingsOthers from "./components/settings/SettingsOthers";
 //Assest
 import Assests from "./components/assests/Assests";
 import AddAsset from "./components/assests/AddAsset";
-//Doctor
+//------------------Users-------------------
 import DoctorList from "./components/users/DoctorList";
 import AddDoctor from "./components/users/AddDoctor";
 import EditDoctor from "./components/users/EditDoctor";
@@ -32,21 +32,22 @@ import PatientsList from "./components/patients/PatientsList";
 import AddPatients from "./components/patients/AddPatients";
 import EditPatients from "./components/patients/EditPatients";
 import PatientsProfile from "./components/patients/PatientsProfile";
+
+//----------------Restaurant--------------------
 import AppoinmentList from "./components/restaurant/AppoinmentList";
 import AddAppoinments from "./components/restaurant/AddAppoinments";
 import EditAppoinments from "./components/restaurant/EditAppoinments";
-//DoctorSchedule
-import ScheduleList from "./components/doctorschedule/ScheduleList";
 
-import AddSchedule from "./components/doctorschedule/AddSchedule";
-import EditSchedule from "./components/doctorschedule/EditSchedule";
+//-----------------Pricing-----------------------
+import ScheduleList from "./components/pricing/ScheduleList";
+import AddSchedule from "./components/pricing/AddSchedule";
+import EditSchedule from "./components/pricing/EditSchedule";
+
 //Departments
 import DepartmentList from "./components/department/DepartmentList";
 import AddDepartment from "./components/department/AddDepartment";
 import EditDepartment from "./components/department/EditDepartment";
-import StaffList from "./components/staff/StafList";
-import AddStaff from "./components/staff/Add-Staff";
-import StaffProfile from "./components/staff/StaffProfile";
+
 import ProvidentFund from "./components/accounts/ProvidentFund";
 import ForgotPassword from "./components/pages/login/ForgotPassword";
 import Signup from "./components/pages/login/Signup";
@@ -61,9 +62,19 @@ import Add_Tax from "./components/accounts/Add_Tax";
 import EmployeeSalary from "./components/Payroll/EmployeeSalary/EmployeeSalary";
 
 import Inbox from "./components/email/Inbox";
-import AddLeave from "./components/staff/AddLeave";
-import Attendence from "./components/staff/Attendence";
-import Leave from "./components/staff/Leave";
+//--------------Inventory-------------------
+import AddLeave from "./components/inventory/AddLeave";
+import Attendence from "./components/inventory/Attendence";
+import Leave from "./components/inventory/Leave";
+import EditStaff from "./components/inventory/EditStaff";
+import EditLeave from "./components/inventory/EditLeave";
+import Holiday from "./components/inventory/Holiday";
+import StaffList from "./components/inventory/StafList";
+import StaffProfile from "./components/inventory/StaffProfile";
+
+import Staff_Settings from "./components/staff/Staff-Settings";
+
+
 import ComposeMail from "./components/email/ComposeMail";
 import MailView from "./components/email/MailView";
 import UserActivity from "./components/activity/UserActivity";
@@ -71,9 +82,7 @@ import AddEmployeeSalary from "./components/Payroll/EmployeeSalary/AddEmployeeSa
 import Chat from "./components/Chat/Chat";
 import VoiceCall from "./components/Call/VoiceCall";
 import VideoCall from "./components/Call/VideoCall";
-import EditStaff from "./components/staff/EditStaff";
-import EditLeave from "./components/staff/EditLeave";
-import Holiday from "./components/staff/Holiday";
+
 import Add_ProviderFund from "./components/accounts/Add_ProviderFund";
 import ExpensesReport from "./components/ExpenseReport/Expenses/ExpensesReport";
 import AddExpenses from "./components/ExpenseReport/Expenses/AddExpenses";
@@ -109,12 +118,11 @@ import Calender from "./components/calender/Calender";
 import Profile from "./components/pages/login/Profile";
 import EditProfile from "./components/pages/login/EditProfile";
 import BlankPage from "./components/pages/login/BlankPage";
-// import Doctor_Dashboard from "./components/Dashboard/Doctor_Dashboard/Doctor_Dashboard";
+//-----------Dashboard-------------------
 import Admin_Dashboard from "./components/Dashboard/Admin_Dashboard/Admin_Dashboard";
-// import Patient_Dashboard from "./components/Dashboard/Patient_Dashboard/Patient_Dashboard";
-// import Doctor_Settings from "./components/Dashboard/Doctor_Dashboard/Doctor_Settings";
+
+
 import Patient_Settings from "./components/patients/Patient_Settings";
-import Staff_Settings from "./components/staff/Staff-Settings";
 import Edit_Provident from "./components/accounts/Edit_Provident";
 import Edit_Taxes from "./components/accounts/Edit_Taxes";
 import Edit_Expenses from "./components/ExpenseReport/Expenses/Edit_Expenses";
@@ -182,11 +190,11 @@ const Approuter = () => {
           <Route path="/editpatients" element={<EditPatients />} />
           <Route path="/patientsprofile" element={<PatientsProfile />} />
           <Route path="/patient-settings" element={<Patient_Settings />} />
-          {/* Appoinments */}
+          {/* ---------restaurant--------- */}
           <Route path="/appoinmentlist" element={<AppoinmentList />} />
           <Route path="/addappoinments" element={<AddAppoinments />} />
           <Route path="/editappoinments" element={<EditAppoinments />} />
-          {/* DoctorSchedule */}
+          {/* -------------pricing-------------- */}
           <Route path="/schedulelist" element={<ScheduleList />} />
           <Route path="/addschedule" element={<AddSchedule />} />
           <Route path="/editschedule" element={<EditSchedule />} />
@@ -194,9 +202,8 @@ const Approuter = () => {
           <Route path="/departmentlist" element={<DepartmentList />} />
           <Route path="/add-department" element={<AddDepartment />} />
           <Route path="/editdepartment" element={<EditDepartment />} />
-          {/* Staff */}
+          {/* ------inventory------- */}
           <Route path="/stafflist" element={<StaffList />} />
-          <Route path="/addstaff" element={<AddStaff />} />
           <Route path="/editstaff" element={<EditStaff />} />
           <Route path="/staffprofile" element={<StaffProfile />} />
           <Route path="/leave" element={<Leave />} />
@@ -269,10 +276,8 @@ const Approuter = () => {
           <Route path="/data-table" element={<DataTable />} />
           {/* Calender */}
           <Route path="/calender" element={<Calender />} />
-          {/* Dashboard */}
+          {/* -------------Dashboard------------ */}
           <Route path="/admin-dashboard" element={<Admin_Dashboard />} />
-          {/* <Route path="/doctor-dashboard" element={<Doctor_Dashboard />} />
-          <Route path="/patient-dashboard" element={<Patient_Dashboard />} /> */}
         </Routes>
       </BrowserRouter>
       <div className="sidebar-overlay"></div>
