@@ -60,7 +60,6 @@ import Holiday from "./components/inventory/Holiday";
 import StaffList from "./components/inventory/StafList";
 import StaffProfile from "./components/inventory/StaffProfile";
 
-import Staff_Settings from "./components/staff/Staff-Settings";
 
 
 import ComposeMail from "./components/email/ComposeMail";
@@ -161,7 +160,6 @@ const Approuter = () => {
           <Route path="/editleave" element={<EditLeave />} />
           <Route path="/attendence" element={<Attendence />} />
           <Route path="/holiday" element={<Holiday />} />
-          <Route path="/staff-settings" element={<Staff_Settings />} />
           {/* Accounts */}
           <Route path="/providentfund" element={<ProvidentFund />} />
           <Route path="/add-providerfund" element={<Add_ProviderFund />} />
