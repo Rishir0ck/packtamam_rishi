@@ -1,21 +1,126 @@
 import React from "react";
 import { packtamam, packtamambanner } from "../../imagepath";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff } from "feather-icons-react/build/IconComponents";
+import FirebaseAuthService from "../../../Firebase/services/firebase_auth_service";
 
 const Signup = () => {
+  const navigate = useNavigate();
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  
+  // UI states
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [password, setPassword] = useState("");
+  const [passwordVisible1, setPasswordVisible1] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
 
+  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
-  const [passwordVisible1, setPasswordVisible1] = useState(false);
-  const [password1, setPassword1] = useState("");
 
   const togglePasswordVisibility1 = () => {
     setPasswordVisible1(!passwordVisible1);
+  };
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear specific error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Full name validation
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = "Full name must be at least 2 characters";
+    }
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!FirebaseAuthService.validateEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else {
+      const passwordValidation = FirebaseAuthService.validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        newErrors.password = passwordValidation.message;
+      }
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const result = await FirebaseAuthService.signUp(
+        formData.email, 
+        formData.password, 
+        formData.fullName
+      );
+
+      if (result.success) {
+        setMessage(result.message);
+        // Redirect to dashboard after successful signup
+        setTimeout(() => {
+          navigate("/admin-dashboard");
+        }, 1500);
+      } else {
+        setMessage(result.message);
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred. Please try again.");
+      console.error("Signup error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,29 +154,52 @@ const Signup = () => {
                         </Link>
                       </div>
                       <h3 className="text-center mb-4">Getting Started</h3>
-                      {/* Full Name */}
-                      <form action="./login">
+                      
+                      {/* Success/Error Message */}
+                      {message && (
+                        <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} mb-3`}>
+                          {message}
+                        </div>
+                      )}
+
+                      {/* Form */}
+                      <form onSubmit={handleSubmit}>
+                        {/* Full Name */}
                         <div className="mb-3">
                           <label>
                             Full Name <span className="text-danger">*</span>
                           </label>
                           <input
-                            className="form-control"
+                            className={`form-control ${errors.fullName ? 'is-invalid' : ''}`}
                             type="text"
+                            name="fullName"
+                            value={formData.fullName}
+                            onChange={handleInputChange}
                             required
                           />
+                          {errors.fullName && (
+                            <div className="invalid-feedback">{errors.fullName}</div>
+                          )}
                         </div>
+                        
                         {/* Email */}
                         <div className="mb-3">
                           <label>
                             Email <span className="text-danger">*</span>
                           </label>
                           <input
-                            className="form-control"
+                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                             type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
                             required
                           />
+                          {errors.email && (
+                            <div className="invalid-feedback">{errors.email}</div>
+                          )}
                         </div>
+                        
                         {/* Password */}
                         <div className="mb-3">
                           <label>
@@ -80,9 +208,10 @@ const Signup = () => {
                           <div className="position-relative">
                             <input
                               type={passwordVisible ? "text" : "password"}
-                              className="form-control"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
+                              className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                              name="password"
+                              value={formData.password}
+                              onChange={handleInputChange}
                               style={{ paddingRight: "40px" }}
                               required
                             />
@@ -108,8 +237,12 @@ const Signup = () => {
                                 <Eye size={20} />
                               )}
                             </span>
+                            {errors.password && (
+                              <div className="invalid-feedback">{errors.password}</div>
+                            )}
                           </div>
                         </div>
+                        
                         {/* Confirm Password */}
                         <div className="mb-3">
                           <label>
@@ -119,9 +252,10 @@ const Signup = () => {
                           <div className="position-relative">
                             <input
                               type={passwordVisible1 ? "text" : "password"}
-                              className="form-control"
-                              value={password1}
-                              onChange={(e) => setPassword1(e.target.value)}
+                              className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                              name="confirmPassword"
+                              value={formData.confirmPassword}
+                              onChange={handleInputChange}
                               style={{ paddingRight: "40px" }}
                               required
                             />
@@ -147,26 +281,30 @@ const Signup = () => {
                                 <Eye size={20} />
                               )}
                             </span>
+                            {errors.confirmPassword && (
+                              <div className="invalid-feedback">{errors.confirmPassword}</div>
+                            )}
                           </div>
                         </div>
-                        {/* Terms and Conditions */}
-                        {/* <div className="form-check mb-3">
-                        <input type="checkbox" className="form-check-input" id="termsCheck" required />
-                        <label className="form-check-label" htmlFor="termsCheck">
-                          I agree to the <Link to="#">terms of service</Link> and <Link to="#">privacy policy</Link>
-                        </label>
-                      </div> */}
 
                         <div className="d-grid mb-3">
                           <button
                             className="btn btn-block"
                             type="submit"
+                            disabled={loading}
                             style={{
                               backgroundColor: "#c1a078",
                               color: "#fff",
                             }}
                           >
-                            Sign up
+                            {loading ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Creating Account...
+                              </>
+                            ) : (
+                              "Sign up"
+                            )}
                           </button>
                         </div>
                       </form>

@@ -1,33 +1,103 @@
 import React from "react";
-import { Link } from "react-router-dom";
-// import FeatherIcon from "feather-icons-react";
+import { Link, useNavigate } from "react-router-dom";
 import { packtamam, packtamambanner } from "../../imagepath";
-import "owl.carousel/dist/assets/owl.carousel.css";
-import "owl.carousel/dist/assets/owl.theme.default.css";
 import { useState } from "react";
-
 import { Eye, EyeOff } from "feather-icons-react/build/IconComponents";
-
-// import ReactPasswordToggleIcon from 'react-password-toggle-icon';
+import FirebaseAuthService from "../../../Firebase/services/firebase_auth_service";
 
 const Login = () => {
+  const navigate = useNavigate();
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  
+  // UI states
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
 
+  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  // let inputRef = useRef();
-  // const showIcon = () => <i className="feather feather-eye" aria-hidden="true">
-  //   <FeatherIcon icon="eye" />
-  // </i>;
-  // const hideIcon = () => <i className="feather feather-eye-slash" aria-hidden="true">
-  //   <FeatherIcon icon="eye-off" />
-  // </i>
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Clear specific error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!FirebaseAuthService.validateEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const result = await FirebaseAuthService.signIn(
+        formData.email, 
+        formData.password
+      );
+
+      if (result.success) {
+        setMessage(result.message);
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+          navigate("/admin-dashboard");
+        }, 1500);
+      } else {
+        setMessage(result.message);
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred. Please try again.");
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <>
-      {/* Main Wrapper */}
+    <div>
       <div className="main-wrapper login-body">
         <div className="container-fluid px-0">
           <div className="row">
@@ -48,73 +118,140 @@ const Login = () => {
                     <div className="login-right-wrap">
                       <div className="account-logo">
                         <Link to="/admin-dashboard">
-                          <img className="img-fluid" src={packtamam} alt="#" />
+                          <img
+                            src={packtamam}
+                            alt="Logo"
+                            style={{ maxWidth: "150px" }}
+                            className="img-fluid"
+                          />
                         </Link>
                       </div>
-                      <h2>Login</h2>
-                      {/* Form */}
-                      <form>
-                        <div className="form-group">
-                          <label>
-                            Email <span className="login-danger">*</span>
-                          </label>
-                          <input className="form-control" type="text" />
+                      <h3 className="text-center mb-4">Welcome Back</h3>
+                      
+                      {/* Success/Error Message */}
+                      {message && (
+                        <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} mb-3`}>
+                          {message}
                         </div>
-                        <div className="form-group">
+                      )}
+
+                      {/* Form */}
+                      <form onSubmit={handleSubmit}>
+                        {/* Email */}
+                        <div className="mb-3">
                           <label>
-                            Password <span className="login-danger">*</span>
+                            Email <span className="text-danger">*</span>
                           </label>
                           <input
-                            type={passwordVisible ? "password" : ""}
-                            className="form-control pass-input"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            required
                           />
-                          <span
-                            className="toggle-password"
-                            onClick={togglePasswordVisibility}
-                          >
-                            {passwordVisible ? (
-                              <EyeOff className="react-feather-custom" />
-                            ) : (
-                              <Eye className="react-feather-custom" />
-                            )}
-                          </span>
+                          {errors.email && (
+                            <div className="invalid-feedback">{errors.email}</div>
+                          )}
                         </div>
-                        <div className="forgotpass">
-                          <div className="remember-me">
-                            <label className="custom_check mr-2 mb-0 d-inline-flex remember-me">
-                              {" "}
+                        
+                        {/* Password */}
+                        <div className="mb-3">
+                          <label>
+                            Password <span className="text-danger">*</span>
+                          </label>
+                          <div className="position-relative">
+                            <input
+                              type={passwordVisible ? "text" : "password"}
+                              className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                              name="password"
+                              value={formData.password}
+                              onChange={handleInputChange}
+                              style={{ paddingRight: "40px" }}
+                              required
+                            />
+                            <span
+                              onClick={togglePasswordVisibility}
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                right: "12px",
+                                transform: "translateY(-50%)",
+                                cursor: "pointer",
+                                color: "#6c757d",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                height: "20px",
+                                width: "20px",
+                              }}
+                            >
+                              {passwordVisible ? (
+                                <EyeOff size={20} />
+                              ) : (
+                                <Eye size={20} />
+                              )}
+                            </span>
+                            {errors.password && (
+                              <div className="invalid-feedback">{errors.password}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Remember Me & Forgot Password */}
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <div className="form-check">
+                            {/* <input
+                              className="form-check-input"
+                              type="checkbox"
+                              name="rememberMe"
+                              id="rememberMe"
+                              checked={formData.rememberMe}
+                              onChange={handleInputChange}
+                            /> */}
+                            {/* <label className="form-check-label" htmlFor="rememberMe">
                               Remember me
-                              <input type="checkbox" name="radio" />
-                              <span className="checkmark" />
-                            </label>
+                            </label> */}
                           </div>
                           <Link
-                            style={{ color: "#403222", fontWeight: "bold" }}
                             to="/forgotpassword"
+                            style={{ color: "#403222", fontWeight: 600 }}
                           >
                             Forgot Password?
                           </Link>
                         </div>
-                        <div className="form-group login-btn">
-                          <Link
-                            to="/admin-dashboard"
+
+                        <div className="d-grid mb-3">
+                          <button
                             className="btn btn-block"
+                            type="submit"
+                            disabled={loading}
                             style={{
                               backgroundColor: "#c1a078",
                               color: "#fff",
-                              border: "none",
                             }}
                           >
-                            Login
-                          </Link>
+                            {loading ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Logging in...
+                              </>
+                            ) : (
+                              "Login"
+                            )}
+                          </button>
                         </div>
                       </form>
-                      {/* /Form */}
-                      <div className="next-sign">
-                        <p className="account-subtitle">
-                          Need an account? <Link  style={{ color: "#403222" }} to="/signup">Sign Up</Link>
+
+                      <div className="text-center mb-3">
+                        <p className="mb-1">
+                          Need an account?{" "}
+                          <Link
+                            to="/signup"
+                            style={{ color: "#403222", fontWeight: 600 }}
+                          >
+                            Sign Up
+                          </Link>
                         </p>
                       </div>
                     </div>
@@ -126,7 +263,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -25,6 +25,7 @@
     "apexcharts": "^4.5.0",
     "bootstrap": "^5.3.3",
     "feather-icons-react": "^0.6.2",
+    "firebase": "^11.8.1",
     "fs": "^0.0.1-security",
     "fullcalendar": "^6.1.15",
     "lucide-react": "^0.511.0",
