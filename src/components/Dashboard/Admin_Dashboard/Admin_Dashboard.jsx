@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FeatherIcon from "feather-icons-react/build/FeatherIcon";
 // import DonutChart from "./DonutChart";
 import Sidebar from "../../Sidebar";
@@ -25,6 +25,7 @@ import {
 } from "../../imagepath";
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
+import FirebaseAuthService from "../../../Firebase/services/firebase_auth_service";
 
 import {
   AlertTriangle,
@@ -37,6 +38,9 @@ import {
 
 const Admin_Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState(null);
+  const [currentGreeting, setCurrentGreeting] = useState("");
+  const [currentUser, setCurrentUser] = useState("Admin");
+  
   // eslint-disable-next-line no-unused-vars
   const [year, setyear] = useState([
     { value: 1, label: "2022" },
@@ -44,6 +48,58 @@ const Admin_Dashboard = () => {
     { value: 3, label: "2020" },
     { value: 4, label: "2019" },
   ]);
+
+  // Function to get current greeting based on time
+  const getTimeBasedGreeting = () => {
+    const currentHour = new Date().getHours();
+    
+    if (currentHour >= 5 && currentHour < 12) {
+      return "Good Morning";
+    } else if (currentHour >= 12 && currentHour < 17) {
+      return "Good Afternoon";
+    } else if (currentHour >= 17 && currentHour < 22) {
+      return "Good Evening";
+    } else {
+      return "Good Night";
+    }
+  };
+
+  // Function to get current user information
+  const getCurrentUser = async () => {
+    try {
+      const user = await FirebaseAuthService.getCurrentUser();
+      if (user) {
+        // Extract name from email or use displayName
+        const userName = user.displayName || 
+                        user.email?.split('@')[0]?.replace(/[._]/g, ' ')
+                                  .split(' ')
+                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                  .join(' ') || 
+                        'Admin';
+        setCurrentUser(userName);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setCurrentUser("Admin"); // Fallback
+    }
+  };
+
+  // Update greeting every minute and get user on component mount
+  useEffect(() => {
+    // Set initial greeting
+    setCurrentGreeting(getTimeBasedGreeting());
+    
+    // Get current user
+    getCurrentUser();
+    
+    // Update greeting every minute
+    const greetingInterval = setInterval(() => {
+      setCurrentGreeting(getTimeBasedGreeting());
+    }, 60000); // Update every minute
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(greetingInterval);
+  }, []);
 
   return (
     <>
@@ -76,9 +132,9 @@ const Admin_Dashboard = () => {
                 <div className="col-md-6">
                   <div className="morning-user">
                     <h2>
-                      Good Morning,{" "}
+                      {currentGreeting},{" "}
                       <span style={{ color: "#c1a078", fontWeight: 600 }}>
-                        Admin
+                        {currentUser}
                       </span>
                     </h2>
                     <p>Have a nice day at work</p>
