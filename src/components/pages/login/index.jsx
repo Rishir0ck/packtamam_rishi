@@ -102,10 +102,10 @@ const Login = () => {
         <div className="container-fluid px-0">
           <div className="row">
             {/* Login logo */}
-            <div className="col-lg-6 login-wrap">
+            <div className="col-lg-6">
               <div className="login-sec">
                 <div className="log-img">
-                  <img className="img-fluid" src={packtamambanner} alt="#" />
+                  <img className="img-fluid login-wrap" src={packtamambanner} alt="#" />
                 </div>
               </div>
             </div>
