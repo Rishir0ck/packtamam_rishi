@@ -113,27 +113,16 @@ const Sidebar = (props) => {
                     <span style={{ color: '#c1a078'}}>Dashboard</span>
                   </Link>
                 </li>
-
+{/* Restaurant */}
                 <li className="submenu">
-                  <Link to="#" id="menu-item4" onClick={(e) => handleClick(e, "menu-item4", "menu-items4")}>
+                  <Link to="/restaurantlist" id="menu-item4" onClick={(e) => handleClick(e, "menu-item4", "menu-items4")}>
                     <span className="menu-side">
                       <img className='img-fluid' src={menuicon06} alt="" />
-                    </span>{" "}
-                    <span style={{ color: '#c1a078'}}> Restaurant </span> <span className="menu-arrow" />
+                    </span>
+                    <span style={{ color: '#c1a078'}}> Restaurant </span> 
                   </Link>
-                  <ul style={{ display: "none" }} className="menu-items4">
-                    <li>
-                      <Link className={props?.activeClassName === 'appoinment-list' ? 'active' : ''} to="/appoinmentlist">Restaurant List</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'add-appoinment' ? 'active' : ''} to="/addappoinments">Add Restaurant</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'edit-appoinment' ? 'active' : ''} to="/editappoinments">Edit Restaurant</Link>
-                    </li>
-                  </ul>
                 </li>
-
+{/* Inventory */}
                 <li className="submenu">
                   <Link to="#" id="menu-item3" onClick={(e) => handleClick(e, "menu-item3", "menu-items3")}>
                     <span className="menu-side">
@@ -162,7 +151,7 @@ const Sidebar = (props) => {
                     </li>
                   </ul>
                 </li>
-
+{/* Pricing */}
                 <li className="submenu">
                   <Link to="#" id="menu-item5" onClick={(e) => handleClick(e, "menu-item5", "menu-items5")}>
                     <span className="menu-side">
@@ -182,7 +171,7 @@ const Sidebar = (props) => {
                     </li>
                   </ul>
                 </li>
-
+{/* Users */}
                 <li className="submenu">
                   <Link to="#" id="menu-item1" onClick={(e) => {
                     handleClick(e, "menu-item1", "menu-items1")

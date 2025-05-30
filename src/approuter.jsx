@@ -27,9 +27,9 @@ import EditDoctor from "./components/users/EditDoctor";
 import DoctorProfile from "./components/users/DoctorProfile";
 
 //----------------Restaurant--------------------
-import AppoinmentList from "./components/restaurant/AppoinmentList";
-import AddAppoinments from "./components/restaurant/AddAppoinments";
-import EditAppoinments from "./components/restaurant/EditAppoinments";
+import RestaurantList from "./components/restaurant/RestaurantList";
+import AddRestaurant from "./components/restaurant/AddRestaurant";
+import EditRestaurant from "./components/restaurant/EditRestaurant";
 
 //-----------------Pricing-----------------------
 import ScheduleList from "./components/pricing/ScheduleList";
@@ -142,9 +142,9 @@ const Approuter = () => {
          
 
           {/* ---------restaurant--------- */}
-          <Route path="/appoinmentlist" element={<AppoinmentList />} />
-          <Route path="/addappoinments" element={<AddAppoinments />} />
-          <Route path="/editappoinments" element={<EditAppoinments />} />
+          <Route path="/restaurantList" element={<RestaurantList />} />
+          <Route path="/addrestaurant" element={<AddRestaurant />} />
+          <Route path="/editrestaurant" element={<EditRestaurant />} />
 
           {/* -------------pricing-------------- */}
           <Route path="/schedulelist" element={<ScheduleList />} />
