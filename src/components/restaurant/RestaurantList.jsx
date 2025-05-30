@@ -24,18 +24,12 @@ import FeatherIcon from "feather-icons-react/build/FeatherIcon";
 import Select from "react-select";
 
 const RestaurantList = () => {
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [editSelectedOption, setEditSelectedOption] = useState(null);
   const [editStatusOption, setEditStatusOption] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
-
-  const onSelectChange = (newSelectedRowKeys) => {
-    console.log("selectedRowKeys changed: ", selectedRowKeys);
-    setSelectedRowKeys(newSelectedRowKeys);
-  };
 
   const showAddModal = () => {
     setIsAddModalVisible(true);
@@ -88,11 +82,6 @@ const RestaurantList = () => {
     { value: "Active", label: "Active" },
     { value: "In Active", label: "In Active" }
   ];
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: onSelectChange,
-  };
 
   const datasource = [
     {
@@ -282,7 +271,6 @@ const RestaurantList = () => {
                         }}
                         columns={columns}
                         dataSource={datasource}
-                        rowSelection={rowSelection}
                         rowKey={(record) => record.id}
                       />
                     </div>
