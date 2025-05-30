@@ -123,7 +123,7 @@ const Sidebar = (props) => {
                   </Link>
                 </li>
 {/* Inventory */}
-                <li className="submenu">
+                {/* <li className="submenu">
                   <Link to="#" id="menu-item3" onClick={(e) => handleClick(e, "menu-item3", "menu-items3")}>
                     <span className="menu-side">
                       <img src={menuicon08} alt="" />
@@ -150,9 +150,9 @@ const Sidebar = (props) => {
                       <Link className={props?.activeClassName === 'attendance' ? 'active' : ''} to="/attendence">Attendance</Link>
                     </li>
                   </ul>
-                </li>
+                </li> */}
 {/* Pricing */}
-                <li className="submenu">
+                {/* <li className="submenu">
                   <Link to="#" id="menu-item5" onClick={(e) => handleClick(e, "menu-item5", "menu-items5")}>
                     <span className="menu-side">
                       <img src={doctorschedule} alt="" />
@@ -170,9 +170,9 @@ const Sidebar = (props) => {
                       <Link className={props?.activeClassName === 'edit-shedule' ? 'active' : ''} to="/editschedule">Edit Schedule</Link>
                     </li>
                   </ul>
-                </li>
+                </li> */}
 {/* Users */}
-                <li className="submenu">
+                {/* <li className="submenu">
                   <Link to="#" id="menu-item1" onClick={(e) => {
                     handleClick(e, "menu-item1", "menu-items1")
                   }}>
@@ -195,7 +195,7 @@ const Sidebar = (props) => {
                       <Link className={props?.activeClassName === 'doctor-profile' ? 'active' : ''} to="/doctorprofile">Doctor Profile</Link>
                     </li>
                   </ul>
-                </li>
+                </li> */}
 
                 {/* Logout - Fixed to be inside the menu structure */}
                 <li>
