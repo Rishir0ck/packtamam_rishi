@@ -209,11 +209,11 @@ const Header = () => {
               </div>
             </li>
 
-            <li className="nav-item ">
+            {/* <li className="nav-item ">
               <Link to="/settings" className="hasnotifications nav-link">
                 <img src={settingicon01} alt="" />{" "}
               </Link>
-            </li>
+            </li> */}
           </ul>
 
           <div className="dropdown mobile-user-menu float-end">
