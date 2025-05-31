@@ -194,12 +194,12 @@ const Header = () => {
               </Link>
 
               <div className="dropdown-menu">
-                <Link className="dropdown-item" to="/profile">
+                {/* <Link className="dropdown-item" to="/profile">
                   My Profile
                 </Link>
                 <Link className="dropdown-item" to="/edit-profile">
                   Edit Profile
-                </Link>
+                </Link> */}
                 {/* <Link className="dropdown-item" to="/settings">
                   Settings
                 </Link> */}
@@ -226,12 +226,12 @@ const Header = () => {
               <i className="fa-solid fa-ellipsis-vertical" />
             </Link>
             <div className="dropdown-menu dropdown-menu-end">
-              <Link className="dropdown-item" to="/profile">
+              {/* <Link className="dropdown-item" to="/profile">
                 My Profile
               </Link>
               <Link className="dropdown-item" to="edit-profile.html">
                 Edit Profile
-              </Link>
+              </Link> */}
               {/* <Link className="dropdown-item" to="/settings">
                 Settings
               </Link> */}
