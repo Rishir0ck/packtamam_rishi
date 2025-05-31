@@ -28,6 +28,7 @@ const RestaurantList = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [editSelectedOption, setEditSelectedOption] = useState(null);
+  const [editBusinessSelectedOption, setEditBusinessSelectedOption] = useState(null);
   const [editStatusOption, setEditStatusOption] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
 
@@ -39,6 +40,7 @@ const RestaurantList = () => {
     setEditRecord(record);
     // Pre-populate the form fields with existing data
     setEditSelectedOption(outletOptions.find(option => option.label === record.OutletType));
+    setEditBusinessSelectedOption(businessOptions.find(option => option.label === record.Business));
     setEditStatusOption(statusOptions.find(option => option.value === record.Status));
     setIsEditModalVisible(true);
   };
@@ -58,6 +60,7 @@ const RestaurantList = () => {
     setIsEditModalVisible(false);
     setEditRecord(null);
     setEditSelectedOption(null);
+    setEditBusinessSelectedOption(null);
     setEditStatusOption(null);
   };
 
@@ -65,6 +68,7 @@ const RestaurantList = () => {
     setIsEditModalVisible(false);
     setEditRecord(null);
     setEditSelectedOption(null);
+    setEditBusinessSelectedOption(null);
     setEditStatusOption(null);
   };
 
@@ -78,9 +82,24 @@ const RestaurantList = () => {
     { value: 4, label: "Cafe" },
   ];
 
+  const businessOptions = [
+    { value: 1, label: "Restaurant" },
+    { value: 2, label: "Multiple Restaurant" },
+    { value: 3, label: "Franchise Channel" },
+    { value: 4, label: "Resort" },
+    { value: 5, label: "Catering Service" },
+    { value: 6, label: "Cloud Kitchen" },
+    { value: 7, label: "Kiosk" },
+    { value: 8, label: "Canteen Service" },
+    { value: 9, label: "Theater" },
+    { value: 10, label: "Fastfood Retailer" },
+  ];
+
   const statusOptions = [
     { value: "Active", label: "Active" },
-    { value: "In Active", label: "In Active" }
+    { value: "In Active", label: "In Active" },
+    { value: "Approved", label: "Approved" },
+    { value: "Rejected", label: "Rejected" }
   ];
 
   const datasource = [
@@ -114,7 +133,15 @@ const RestaurantList = () => {
       Business: "Restaurant",
       OutletType: "Cloud Kitchen",
       Name: "Pasta Paradise",
-      Status: "Active",
+      Status: "Approved",
+    },
+    {
+      id: "5",
+      Img: blogimg12,
+      Business: "Kiosk",
+      OutletType: "Kitchen",
+      Name: "Happy Paradise",
+      Status: "Rejected",
     },
   ];
 
@@ -159,6 +186,16 @@ const RestaurantList = () => {
           )}
           {text === "In Active" && (
             <span className="custom-badge status-pink">
+              {text}
+            </span>
+          )}
+          {text === "Approved" && (
+            <span className="custom-badge status-blue">
+              {text}
+            </span>
+          )}
+          {text === "Rejected" && (
+            <span className="custom-badge status-red">
               {text}
             </span>
           )}
@@ -298,35 +335,55 @@ const RestaurantList = () => {
                   <h4>Restaurant Details</h4>
                 </div>
               </div>
-              
+{/* Business Type */}
               <div className="col-12 col-md-6">
-                <div className="form-group select-gender">
-                  <label className="gen-label">
-                    Business Type<span className="login-danger">*</span>
-                  </label>
-                  <div className="form-check-inline">
-                    <label style={{ color: "#403222" }} className="form-check-label">
-                      <input
-                        type="radio"
-                        name="businessType"
-                        className="form-check-input"
-                      />
-                      Restaurant
-                    </label>
-                  </div>
-                  <div className="form-check-inline">
-                    <label style={{ color: "#403222" }} className="form-check-label">
-                      <input
-                        type="radio"
-                        name="businessType"
-                        className="form-check-input"
-                      />
-                      Resort
-                    </label>
-                  </div>
+                <div className="form-group local-forms">
+                  <label>Business Type</label>
+                  <Select
+                    value={selectedOption}
+                    onChange={setSelectedOption}
+                    options={businessOptions}
+                    menuPortalTarget={document.body}
+                    id="search-commodity"
+                    components={{
+                      IndicatorSeparator: () => null,
+                    }}
+                    styles={{
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                      control: (baseStyles, state) => ({
+                        ...baseStyles,
+                        borderColor: state.isFocused
+                          ? "none"
+                          : "2px solid rgba(193, 160, 120, 1);",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 1px #c1a078"
+                          : "none",
+                        "&:hover": {
+                          borderColor: state.isFocused
+                            ? "none"
+                            : "2px solid rgba(193, 160, 120, 1)",
+                        },
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        minHeight: "45px",
+                      }),
+                      dropdownIndicator: (base, state) => ({
+                        ...base,
+                        transform: state.selectProps.menuIsOpen
+                          ? "rotate(-180deg)"
+                          : "rotate(0)",
+                        transition: "250ms",
+                        width: "35px",
+                        height: "35px",
+                      }),
+                    }}
+                  />
                 </div>
               </div>
-
+{/* Outlet Type */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Outlet Type</label>
@@ -374,28 +431,28 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-
+{/* Business Name */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Business Name</label>
                   <input className="form-control" type="text" />
                 </div>
               </div>
-              
+{/* GST NO. */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>GST NO.</label>
                   <input className="form-control" type="text" />
                 </div>
               </div>
-              
+{/* FSSAI NO. */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>FSSAI NO.</label>
                   <input className="form-control" type="text" />
                 </div>
               </div>
-              
+{/* Status */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Status</label>
@@ -443,7 +500,7 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-              
+{/* Image */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-top-form">
                   <label className="local-top">
@@ -464,7 +521,7 @@ const RestaurantList = () => {
                   </div>
                 </div>
               </div>
-
+{/* Submit */}
               <div className="col-12">
                 <div className="doctor-submit text-end">
                   <button
@@ -508,37 +565,55 @@ const RestaurantList = () => {
                   <h4>Restaurant Details</h4>
                 </div>
               </div>
-              
+{/* Business Type */}
               <div className="col-12 col-md-6">
-                <div className="form-group select-gender">
-                  <label className="gen-label">
-                    Business Type<span className="login-danger">*</span>
-                  </label>
-                  <div className="form-check-inline">
-                    <label style={{ color: "#403222" }} className="form-check-label">
-                      <input
-                        type="radio"
-                        name="editBusinessType"
-                        className="form-check-input"
-                        defaultChecked={editRecord?.Business === "Restaurant"}
-                      />
-                      Restaurant
-                    </label>
-                  </div>
-                  <div className="form-check-inline">
-                    <label style={{ color: "#403222" }} className="form-check-label">
-                      <input
-                        type="radio"
-                        name="editBusinessType"
-                        className="form-check-input"
-                        defaultChecked={editRecord?.Business === "Resort"}
-                      />
-                      Resort
-                    </label>
-                  </div>
+                <div className="form-group local-forms">
+                  <label>Business Type</label>
+                  <Select
+                    value={editBusinessSelectedOption}
+                    onChange={setEditSelectedOption}
+                    options={businessOptions}
+                    menuPortalTarget={document.body}
+                    id="edit-search-commodity"
+                    components={{
+                      IndicatorSeparator: () => null,
+                    }}
+                    styles={{
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                      control: (baseStyles, state) => ({
+                        ...baseStyles,
+                        borderColor: state.isFocused
+                          ? "none"
+                          : "2px solid rgba(193, 160, 120, 1);",
+                        boxShadow: state.isFocused
+                          ? "0 0 0 1px #c1a078"
+                          : "none",
+                        "&:hover": {
+                          borderColor: state.isFocused
+                            ? "none"
+                            : "2px solid rgba(193, 160, 120, 1)",
+                        },
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        minHeight: "45px",
+                      }),
+                      dropdownIndicator: (base, state) => ({
+                        ...base,
+                        transform: state.selectProps.menuIsOpen
+                          ? "rotate(-180deg)"
+                          : "rotate(0)",
+                        transition: "250ms",
+                        width: "35px",
+                        height: "35px",
+                      }),
+                    }}
+                  />
                 </div>
               </div>
-
+{/* Outlet Type */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Outlet Type</label>
@@ -586,7 +661,7 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-
+{/* Business Name */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Business Name</label>
@@ -597,21 +672,21 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-              
+{/* GST NO. */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>GST NO.</label>
                   <input className="form-control" type="text" />
                 </div>
               </div>
-              
+{/* FSSAI NO. */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>FSSAI NO.</label>
                   <input className="form-control" type="text" />
                 </div>
               </div>
-              
+{/* Status */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Status</label>
@@ -659,7 +734,7 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-              
+{/* Image */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-top-form">
                   <label className="local-top">
@@ -680,7 +755,7 @@ const RestaurantList = () => {
                   </div>
                 </div>
               </div>
-
+{/* Update */}
               <div className="col-12">
                 <div className="doctor-submit text-end">
                   <button
