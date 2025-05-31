@@ -118,7 +118,7 @@ const Header = () => {
             <img style={{ color: '#403222'}} src={baricon1} alt="" />
           </Link>
           <div className="top-nav-search mob-view">
-            <form>
+            {/* <form>
               <input
                 style={{ color: '#c1a078'}}
                 type="text"
@@ -128,10 +128,10 @@ const Header = () => {
               <Link className="btn">
                 <img style={{ color: '#c1a078'}} src={searchnormal} alt="" />
               </Link>
-            </form>
+            </form> */}
           </div>
           <ul className="nav user-menu float-end">
-            <li className="nav-item dropdown d-none d-sm-block">
+            {/* <li className="nav-item dropdown d-none d-sm-block">
               <Link
                 to="#"
                 className="dropdown-toggle nav-link"
@@ -174,7 +174,7 @@ const Header = () => {
                   <Link to="/user-activity">View all Notifications</Link>
                 </div>
               </div>
-            </li>
+            </li> */}
             
             <li className="nav-item dropdown has-arrow user-profile-list">
               <Link
