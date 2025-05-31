@@ -186,7 +186,7 @@ const Header = () => {
                   <h5 style={{ color: '#c1a078'}}>
                     {user?.displayName || 'Admin'}
                   </h5>
-                  <span>{user?.email || 'Admin'}</span>
+                  <span style={{ color: '#403222'}}>{user?.email || 'Admin'}</span>
                 </div>
                 <span className="user-img">
                   <img src={user06} alt="Admin" />
@@ -200,9 +200,9 @@ const Header = () => {
                 <Link className="dropdown-item" to="/edit-profile">
                   Edit Profile
                 </Link>
-                <Link className="dropdown-item" to="/settings">
+                {/* <Link className="dropdown-item" to="/settings">
                   Settings
-                </Link>
+                </Link> */}
                 <Link className="dropdown-item" to="#" onClick={handleLogoutClick}>
                   Logout
                 </Link>
@@ -232,9 +232,9 @@ const Header = () => {
               <Link className="dropdown-item" to="edit-profile.html">
                 Edit Profile
               </Link>
-              <Link className="dropdown-item" to="/settings">
+              {/* <Link className="dropdown-item" to="/settings">
                 Settings
-              </Link>
+              </Link> */}
               <Link className="dropdown-item" to="#" onClick={handleLogoutClick}>
                 Logout
               </Link>
