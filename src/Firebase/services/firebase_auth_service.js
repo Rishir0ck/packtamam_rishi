@@ -4,9 +4,15 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   updateProfile,
-  sendPasswordResetEmail // Added for password reset functionality
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { auth } from "../config/auth";
+
+// API Configuration
+const API_BASE_URL = "http://64.227.156.136:3000/api";
+const API_ENDPOINTS = {
+  ADMIN_LOGIN: `${API_BASE_URL}/admin/login/admin-email-password`
+};
 
 // Cookie utilities
 const setCookie = (name, value, days = 7) => {
@@ -40,6 +46,50 @@ const getCookie = (name) => {
 // Authentication service class
 class FirebaseAuthService {
   
+  // Call Node.js API with idToken
+  async callAdminLoginAPI(idToken) {
+    try {
+      console.log("🌐 Calling Node.js Admin Login API...");
+      console.log(`   API URL: ${API_ENDPOINTS.ADMIN_LOGIN}`);
+      console.log(`   Token preview: ${idToken.substring(0, 50)}...`);
+      
+      const response = await fetch(API_ENDPOINTS.ADMIN_LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          idToken: idToken
+        })
+      });
+
+      console.log(`📡 API Response Status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ API Error Response: ${errorText}`);
+        throw new Error(`API call failed with status ${response.status}: ${errorText}`);
+      }
+
+      const apiData = await response.json();
+      console.log("✅ Node.js API Response:", apiData);
+      
+      return {
+        success: true,
+        data: apiData,
+        message: "API authentication successful"
+      };
+    } catch (error) {
+      console.error("❌ Node.js API call error:", error);
+      return {
+        success: false,
+        error: error.message,
+        message: "Failed to authenticate with backend API"
+      };
+    }
+  }
+
   // Sign up with email and password
   async signUp(email, password, fullName) {
     try {
@@ -94,32 +144,51 @@ class FirebaseAuthService {
     }
   }
 
-  // Sign in with email and password
+  // Sign in with email and password - Updated to integrate with Node.js API
   async signIn(email, password) {
     try {
       console.log("🔐 Starting sign in process...");
+      
+      // Step 1: Authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      console.log("✅ User signed in successfully:");
+      console.log("✅ Firebase authentication successful:");
       console.log(`   UID: ${user.uid}`);
       console.log(`   Email: ${user.email}`);
       console.log(`   Display Name: ${user.displayName || 'Not set'}`);
       
-      // Get JWT token
+      // Step 2: Get JWT token from Firebase
       const token = await user.getIdToken();
-      console.log("🎫 JWT Token obtained:");
+      console.log("🎫 Firebase JWT Token obtained:");
       console.log(`   Token length: ${token.length} characters`);
       console.log(`   Token preview: ${token.substring(0, 50)}...`);
       
-      // Store UID and JWT token in cookies
+      // Step 3: Call Node.js API with the idToken
+      console.log("🌐 Calling Node.js API for backend authentication...");
+      const apiResult = await this.callAdminLoginAPI(token);
+      
+      if (!apiResult.success) {
+        console.error("❌ Backend API authentication failed:", apiResult.error);
+        // You can choose to proceed with Firebase auth only or fail completely
+        // For now, we'll log the error but continue with Firebase auth
+        console.warn("⚠️ Continuing with Firebase authentication only");
+      } else {
+        console.log("✅ Backend API authentication successful");
+        // Store any additional data from the API response if needed
+        if (apiResult.data) {
+          setCookie('apiAuthData', JSON.stringify(apiResult.data));
+        }
+      }
+      
+      // Step 4: Store user data in cookies
       console.log("💾 Storing user data in cookies...");
       setCookie('userUID', user.uid);
       setCookie('userToken', token);
       setCookie('userName', user.displayName || '');
       setCookie('userEmail', user.email);
       
-      console.log("✅ Sign in completed successfully!");
+      console.log("✅ Complete sign in process finished!");
       
       return {
         success: true,
@@ -129,7 +198,10 @@ class FirebaseAuthService {
           displayName: user.displayName,
           token
         },
-        message: "Login successful!"
+        apiResult: apiResult, // Include API result for debugging
+        message: apiResult.success 
+          ? "Login successful! Backend authenticated." 
+          : "Login successful! (Firebase only - Backend API unavailable)"
       };
     } catch (error) {
       console.error("❌ Sign in error:", error);
@@ -170,21 +242,22 @@ class FirebaseAuthService {
     }
   }
 
-  // Sign out
+  // Sign out - Updated to clear API auth data
   async signOut() {
     try {
       console.log("🚪 Starting sign out process...");
       await signOut(auth);
       console.log("✅ Firebase sign out successful");
       
-      // Remove cookies
+      // Remove all cookies including API auth data
       console.log("🗑️ Removing user data cookies...");
       removeCookie('userUID');
       removeCookie('userToken');
       removeCookie('userName');
       removeCookie('userEmail');
+      removeCookie('apiAuthData');
       
-      console.log("✅ Sign out completed successfully!");
+      console.log("✅ Complete sign out process finished!");
       
       return {
         success: true,
@@ -216,28 +289,31 @@ class FirebaseAuthService {
     return isAuth;
   }
 
-  // Get current user data from cookies
+  // Get current user data from cookies - Updated to include API auth data
   getCurrentUser() {
     console.log("👤 Getting current user from cookies...");
     if (this.isAuthenticated()) {
+      const apiAuthData = getCookie('apiAuthData');
       const userData = {
         uid: getCookie('userUID'),
         token: getCookie('userToken'),
         displayName: getCookie('userName'),
-        email: getCookie('userEmail')
+        email: getCookie('userEmail'),
+        apiAuthData: apiAuthData ? JSON.parse(apiAuthData) : null
       };
       console.log("✅ Current user data retrieved:");
       console.log(`   UID: ${userData.uid}`);
       console.log(`   Email: ${userData.email}`);
       console.log(`   Display Name: ${userData.displayName}`);
       console.log(`   Token: ${userData.token ? 'Present' : 'Missing'}`);
+      console.log(`   API Auth Data: ${userData.apiAuthData ? 'Present' : 'Missing'}`);
       return userData;
     }
     console.log("❌ No authenticated user found");
     return null;
   }
 
-  // Refresh token
+  // Refresh token - Updated to re-authenticate with API
   async refreshToken() {
     try {
       console.log("🔄 Starting token refresh...");
@@ -248,8 +324,16 @@ class FirebaseAuthService {
         console.log(`   New token length: ${token.length} characters`);
         console.log(`   New token preview: ${token.substring(0, 50)}...`);
         
+        // Re-authenticate with Node.js API using the new token
+        console.log("🌐 Re-authenticating with Node.js API...");
+        const apiResult = await this.callAdminLoginAPI(token);
+        
         console.log("💾 Storing refreshed token in cookies...");
         setCookie('userToken', token);
+        
+        if (apiResult.success && apiResult.data) {
+          setCookie('apiAuthData', JSON.stringify(apiResult.data));
+        }
         
         console.log("✅ Token refresh completed successfully!");
         return token;

@@ -62,7 +62,7 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
+  // Handle form submission - Updated with API integration
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -74,23 +74,51 @@ const Login = () => {
     setMessage("");
 
     try {
+      console.log("🚀 Starting login process...");
+      console.log(`📧 Email: ${formData.email}`);
+      
+      // This now calls both Firebase auth AND Node.js API
       const result = await FirebaseAuthService.signIn(
         formData.email, 
         formData.password
       );
 
+      console.log("📊 Login result:", result);
+
       if (result.success) {
-        setMessage(result.message);
+        // Check if backend API authentication was successful
+        const apiSuccess = result.apiResult?.success;
+        
+        if (apiSuccess) {
+          console.log("✅ Both Firebase and API authentication successful");
+          setMessage("Login successful! Redirecting...");
+        } else {
+          console.log("⚠️ Firebase auth successful, API auth failed");
+          setMessage("Login successful! (Backend API unavailable - continuing with limited access)");
+        }
+        
+        // Log authentication details for debugging
+        console.log("🔐 Authentication Details:");
+        console.log(`   Firebase: ✅ Success`);
+        console.log(`   Backend API: ${apiSuccess ? '✅ Success' : '❌ Failed'}`);
+        console.log(`   User UID: ${result.user.uid}`);
+        console.log(`   User Email: ${result.user.email}`);
+        
+        if (result.apiResult?.data) {
+          console.log(`   API Response:`, result.apiResult.data);
+        }
+        
         // Redirect to dashboard after successful login
         setTimeout(() => {
           navigate("/admin-dashboard");
         }, 1500);
       } else {
+        console.error("❌ Authentication failed:", result.message);
         setMessage(result.message);
       }
     } catch (error) {
+      console.error("❌ Unexpected login error:", error);
       setMessage("An unexpected error occurred. Please try again.");
-      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
@@ -130,7 +158,13 @@ const Login = () => {
                       
                       {/* Success/Error Message */}
                       {message && (
-                        <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} mb-3`}>
+                        <div className={`alert ${
+                          message.includes('successful') || message.includes('Redirecting') 
+                            ? 'alert-success' 
+                            : message.includes('unavailable') 
+                              ? 'alert-warning'
+                              : 'alert-danger'
+                        } mb-3`}>
                           {message}
                         </div>
                       )}
@@ -201,17 +235,7 @@ const Login = () => {
                         {/* Remember Me & Forgot Password */}
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <div className="form-check">
-                            {/* <input
-                              className="form-check-input"
-                              type="checkbox"
-                              name="rememberMe"
-                              id="rememberMe"
-                              checked={formData.rememberMe}
-                              onChange={handleInputChange}
-                            /> */}
-                            {/* <label className="form-check-label" htmlFor="rememberMe">
-                              Remember me
-                            </label> */}
+                            {/* Remember me functionality can be added here if needed */}
                           </div>
                           <Link
                             to="/forgotpassword"
@@ -234,7 +258,7 @@ const Login = () => {
                             {loading ? (
                               <>
                                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Logging in...
+                                Authenticating...
                               </>
                             ) : (
                               "Login"

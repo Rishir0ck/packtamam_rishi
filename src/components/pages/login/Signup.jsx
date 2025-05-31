@@ -100,26 +100,53 @@ const Signup = () => {
     setMessage("");
 
     try {
+      console.log("🚀 Starting signup process...");
       const result = await FirebaseAuthService.signUp(
         formData.email, 
         formData.password, 
         formData.fullName
       );
 
+      console.log("📊 Signup result:", result);
+
       if (result.success) {
-        setMessage(result.message);
+        // Check if API integration was successful
+        const apiStatus = result.apiResult ? result.apiResult.success : false;
+        
+        console.log(`🎯 Firebase Success: Yes, API Success: ${apiStatus ? 'Yes' : 'No'}`);
+        
+        if (apiStatus) {
+          setMessage("Account created successfully! You're now registered with both Firebase and our backend system.");
+          console.log("✅ Full integration successful - both Firebase and API");
+        } else {
+          setMessage("Account created with Firebase! Note: Backend integration is currently unavailable, but you can still use the app.");
+          console.log("⚠️ Partial success - Firebase only, API failed");
+        }
+
         // Redirect to dashboard after successful signup
         setTimeout(() => {
           navigate("/admin-dashboard");
-        }, 1500);
+        }, 2000); // Increased timeout to 2 seconds to show the message
       } else {
-        setMessage(result.message);
+        console.error("❌ Signup failed:", result);
+        setMessage(result.message || "Account creation failed. Please try again.");
       }
     } catch (error) {
+      console.error("💥 Unexpected signup error:", error);
       setMessage("An unexpected error occurred. Please try again.");
-      console.error("Signup error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Determine message type for styling
+  const getMessageType = () => {
+    if (message.includes('successful') || message.includes('created')) {
+      return 'success';
+    } else if (message.includes('Note:') || message.includes('unavailable')) {
+      return 'warning';
+    } else {
+      return 'danger';
     }
   };
 
@@ -155,10 +182,24 @@ const Signup = () => {
                       </div>
                       <h3 className="text-center mb-4">Getting Started</h3>
                       
-                      {/* Success/Error Message */}
+                      {/* Success/Error/Warning Message */}
                       {message && (
-                        <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} mb-3`}>
-                          {message}
+                        <div className={`alert alert-${getMessageType()} mb-3`} role="alert">
+                          <div className="d-flex align-items-start">
+                            <div className="flex-grow-1">
+                              {message}
+                            </div>
+                            {/* Show different icons based on message type */}
+                            {getMessageType() === 'success' && (
+                              <i className="fas fa-check-circle text-success ms-2"></i>
+                            )}
+                            {getMessageType() === 'warning' && (
+                              <i className="fas fa-exclamation-triangle text-warning ms-2"></i>
+                            )}
+                            {getMessageType() === 'danger' && (
+                              <i className="fas fa-times-circle text-danger ms-2"></i>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -175,6 +216,7 @@ const Signup = () => {
                             name="fullName"
                             value={formData.fullName}
                             onChange={handleInputChange}
+                            placeholder="Enter your full name"
                             required
                           />
                           {errors.fullName && (
@@ -193,6 +235,7 @@ const Signup = () => {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
+                            placeholder="Enter your email address"
                             required
                           />
                           {errors.email && (
@@ -212,6 +255,7 @@ const Signup = () => {
                               name="password"
                               value={formData.password}
                               onChange={handleInputChange}
+                              placeholder="Enter your password"
                               style={{ paddingRight: "40px" }}
                               required
                             />
@@ -230,6 +274,9 @@ const Signup = () => {
                                 height: "20px",
                                 width: "20px",
                               }}
+                              role="button"
+                              tabIndex={0}
+                              aria-label="Toggle password visibility"
                             >
                               {passwordVisible ? (
                                 <EyeOff size={20} />
@@ -256,6 +303,7 @@ const Signup = () => {
                               name="confirmPassword"
                               value={formData.confirmPassword}
                               onChange={handleInputChange}
+                              placeholder="Confirm your password"
                               style={{ paddingRight: "40px" }}
                               required
                             />
