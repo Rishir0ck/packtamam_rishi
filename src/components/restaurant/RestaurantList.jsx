@@ -99,7 +99,8 @@ const RestaurantList = () => {
     { value: "Active", label: "Active" },
     { value: "In Active", label: "In Active" },
     { value: "Approved", label: "Approved" },
-    { value: "Rejected", label: "Rejected" }
+    { value: "Rejected", label: "Rejected" },
+    { value: "Fraudulent", label: "Fraudulent" }
   ];
 
   const datasource = [
@@ -117,7 +118,7 @@ const RestaurantList = () => {
       Business: "Restaurant",
       OutletType: "Cloud Kitchen",
       Name: "Burger Bliss",
-      Status: "Active",
+      Status: "Fraudulent",
     },
     {
       id: "3",
@@ -196,6 +197,11 @@ const RestaurantList = () => {
           )}
           {text === "Rejected" && (
             <span className="custom-badge status-red">
+              {text}
+            </span>
+          )}
+          {text === "Fraudulent" && (
+            <span className="custom-badge status-orange">
               {text}
             </span>
           )}
