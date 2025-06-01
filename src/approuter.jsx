@@ -21,15 +21,10 @@ import SettingsChangePassword from "./components/settings/SettingsChangePassword
 import SettingsOthers from "./components/settings/SettingsOthers";
 
 //------------------Users-------------------
-import DoctorList from "./components/users/DoctorList";
-import AddDoctor from "./components/users/AddDoctor";
-import EditDoctor from "./components/users/EditDoctor";
-import DoctorProfile from "./components/users/DoctorProfile";
+import UserList from "./components/users/UserList";
 
 //----------------Restaurant--------------------
 import RestaurantList from "./components/restaurant/RestaurantList";
-import AddRestaurant from "./components/restaurant/AddRestaurant";
-import EditRestaurant from "./components/restaurant/EditRestaurant";
 
 //-----------------Pricing-----------------------
 import ScheduleList from "./components/pricing/ScheduleList";
@@ -132,19 +127,11 @@ const Approuter = () => {
           />
           <Route path="/settingsothers" element={<SettingsOthers />} />
          
-          {/* Doctor  */}
-          <Route path="/doctorlist" element={<DoctorList />} />
-          <Route path="/add-doctor" element={<AddDoctor />} />
-          <Route path="/editdoctor" element={<EditDoctor />} />
-          <Route path="/doctorprofile" element={<DoctorProfile />} />
-          {/* <Route path="/doctor-setting" element={<Doctor_Settings />} /> */}
-
-         
+          {/* User  */}
+          <Route path="/userlist" element={<UserList />} />         
 
           {/* ---------restaurant--------- */}
           <Route path="/restaurantList" element={<RestaurantList />} />
-          <Route path="/addrestaurant" element={<AddRestaurant />} />
-          <Route path="/editrestaurant" element={<EditRestaurant />} />
 
           {/* -------------pricing-------------- */}
           <Route path="/schedulelist" element={<ScheduleList />} />

@@ -3,7 +3,14 @@ import React, { useState, useEffect } from "react";
 import { Table, Modal, message, Spin } from "antd";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
-import {  imagesend,   plusicon, blogimg12,  blogimg2,  blogimg4,  blogimg6, } from "../imagepath";
+import {
+  imagesend,
+  plusicon,
+  blogimg12,
+  blogimg2,
+  blogimg4,
+  blogimg6,
+} from "../imagepath";
 import { onShowSizeChange, itemRender } from "../Pagination";
 import { Link } from "react-router-dom";
 import Select from "react-select";
@@ -18,25 +25,28 @@ const RestaurantList = () => {
   const [datasource, setDatasource] = useState([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [outletTypesLoading, setOutletTypesLoading] = useState(false);
+  const [outletOptions, setOutletOptions] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
   });
 
   // API configuration
   const API_BASE_URL = "http://64.227.156.136:3000/api/admin";
-  const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo";
+  const BEARER_TOKEN =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo";
 
-  // Fetch business list from API
-  const fetchBusinessList = async (page = 1, perPage = 10) => {
-    setLoading(true);
+  // Fetch outlet types from API
+  const fetchOutletTypes = async () => {
+    setOutletTypesLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/business-list?page=${page}&per_page=${perPage}`, {
-        method: 'GET',
+      const response = await fetch(`${API_BASE_URL}/outlet_types`, {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${BEARER_TOKEN}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -45,49 +55,102 @@ const RestaurantList = () => {
       }
 
       const data = await response.json();
-      
+
+      // Transform API data to match select options format
+      const transformedOptions =
+        data.data?.map((item) => ({
+          value: item.id,
+          label: item.name || item.outlet_type || item.type, // Use appropriate field name
+        })) || [];
+
+      setOutletOptions(transformedOptions);
+    } catch (error) {
+      console.error("Error fetching outlet types:", error);
+      message.error("Failed to fetch outlet types. Using default options.");
+      // Fallback to default options if API fails
+      //#region
+      // setOutletOptions([
+        //   { value: 1, label: "Restaurant" },
+        //   { value: 2, label: "Multiple Restaurant" },
+        //   { value: 3, label: "Franchise Channel" },
+        //   { value: 4, label: "Resort" },
+        //   { value: 5, label: "Catering Service" },
+        //   { value: 6, label: "Cloud Kitchen" },
+        //   { value: 7, label: "Kiosk" },
+        //   { value: 8, label: "Canteen Service" },
+        //   { value: 9, label: "Theater" },
+        //   { value: 10, label: "Fastfood Retailer" },
+        // ]);
+        //#endregion
+    } finally {
+      setOutletTypesLoading(false);
+    }
+  };
+
+  // Fetch business list from API
+  const fetchBusinessList = async (page = 1, perPage = 10) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/business-list?page=${page}&per_page=${perPage}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${BEARER_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
       // Transform API data to match table structure
-      const transformedData = data.data?.map((item, index) => ({
-        id: item.id || `${page}-${index}`,
-        business_id: item.id, // Store original business ID
-        Img: blogimg4, // Default image since API doesn't provide image
-        Business: item.business_name || 'N/A',
-        OutletType: item.outlet_type || 'N/A',
-        Status: item.status || 'Approved', // Default status if not provided
-        ...item // Include all original data
-      })) || [];
+      const transformedData =
+        data.data?.map((item, index) => ({
+          id: item.id || `${page}-${index}`,
+          business_id: item.id, // Store original business ID
+          outlet_type_id: item.outlet_type_id, // Store outlet type ID
+          Img: blogimg4, // Default image since API doesn't provide image
+          Business: item.business_name || "N/A",
+          OutletType: item.outlet_type || "N/A",
+          Status: item.status || "Approved", // Default status if not provided
+          ...item, // Include all original data
+        })) || [];
 
       setDatasource(transformedData);
-      
+
       // Update pagination
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         current: page,
         total: data.total || data.pagination?.total || transformedData.length,
-        pageSize: perPage
+        pageSize: perPage,
       }));
-
     } catch (error) {
-      console.error('Error fetching business list:', error);
-      message.error('Failed to fetch business list. Please try again.');
+      console.error("Error fetching business list:", error);
+      message.error("Failed to fetch business list. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify business API call
-  const verifyBusiness = async (businessId, status) => {
+  // Update business API call (for outlet type and status)
+  const updateBusiness = async (businessId, updates) => {
     setUpdateLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/verify-business`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/update-business`, {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${BEARER_TOKEN}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           business_id: businessId,
-          status: status
+          ...updates,
         }),
       });
 
@@ -98,7 +161,37 @@ const RestaurantList = () => {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error verifying business:', error);
+      console.error("Error updating business:", error);
+      throw error;
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  // Verify business API call (keeping original for backward compatibility)
+  const verifyBusiness = async (businessId, status) => {
+    setUpdateLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-business`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          business_id: businessId,
+          status: status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error verifying business:", error);
       throw error;
     } finally {
       setUpdateLoading(false);
@@ -107,6 +200,7 @@ const RestaurantList = () => {
 
   // Initial data load
   useEffect(() => {
+    fetchOutletTypes();
     fetchBusinessList(1, 10);
   }, []);
 
@@ -122,8 +216,16 @@ const RestaurantList = () => {
   const showEditModal = (record) => {
     setEditRecord(record);
     // Pre-populate the form fields with existing data
-    setEditSelectedOption(outletOptions.find(option => option.label === record.OutletType));
-    setEditStatusOption(statusOptions.find(option => option.value === record.Status));
+    setEditSelectedOption(
+      outletOptions.find(
+        (option) =>
+          option.label === record.OutletType ||
+          option.value === record.outlet_type_id
+      )
+    );
+    setEditStatusOption(
+      statusOptions.find((option) => option.value === record.Status)
+    );
     setIsEditModalVisible(true);
   };
 
@@ -139,36 +241,65 @@ const RestaurantList = () => {
 
   const handleEditModalOk = async () => {
     if (!editRecord || !editStatusOption) {
-      message.error('Please select a status');
+      message.error("Please select a status");
       return;
     }
 
     try {
-      // Call verify business API
-      await verifyBusiness(editRecord.business_id, editStatusOption.value);
-      
-      message.success('Business status updated successfully!');
-      
+      // Prepare updates object
+      const updates = {
+        status: editStatusOption.value,
+      };
+
+      // Add outlet type if it was changed
+      if (
+        editSelectedOption &&
+        editSelectedOption.value !== editRecord.outlet_type_id
+      ) {
+        updates.outlet_type_id = editSelectedOption.value;
+      }
+
+      // Try to use the update business API first, fallback to verify business API
+      try {
+        await updateBusiness(editRecord.business_id, updates);
+      } catch (updateError) {
+        // If update business API doesn't exist, use verify business API for status only
+        console.log(
+          "Update business API not available, using verify business API"
+        );
+        await verifyBusiness(editRecord.business_id, editStatusOption.value);
+      }
+
+      message.success("Business updated successfully!");
+
       // Update the local data source to reflect changes immediately
-      setDatasource(prevData => 
-        prevData.map(item => 
-          item.business_id === editRecord.business_id 
-            ? { ...item, Status: editStatusOption.value }
+      setDatasource((prevData) =>
+        prevData.map((item) =>
+          item.business_id === editRecord.business_id
+            ? {
+                ...item,
+                Status: editStatusOption.value,
+                OutletType: editSelectedOption
+                  ? editSelectedOption.label
+                  : item.OutletType,
+                outlet_type_id: editSelectedOption
+                  ? editSelectedOption.value
+                  : item.outlet_type_id,
+              }
             : item
         )
       );
-      
+
       // Close modal and reset form
       setIsEditModalVisible(false);
       setEditRecord(null);
       setEditSelectedOption(null);
       setEditStatusOption(null);
-      
+
       // Optionally refresh the entire list to ensure data consistency
       // fetchBusinessList(pagination.current, pagination.pageSize);
-      
     } catch (error) {
-      message.error('Failed to update business status. Please try again.');
+      message.error("Failed to update business. Please try again.");
     }
   };
 
@@ -183,23 +314,10 @@ const RestaurantList = () => {
     // Handle file loading logic here
   };
 
-  const outletOptions = [
-    { value: 1, label: "Restaurant" },
-    { value: 2, label: "Multiple Restaurant" },
-    { value: 3, label: "Franchise Channel" },
-    { value: 4, label: "Resort" },
-    { value: 5, label: "Catering Service" },
-    { value: 6, label: "Cloud Kitchen" },
-    { value: 7, label: "Kiosk" },
-    { value: 8, label: "Canteen Service" },
-    { value: 9, label: "Theater" },
-    { value: 10, label: "Fastfood Retailer" },
-  ];
-
   const statusOptions = [
     { value: "Approved", label: "Approved" },
     { value: "Rejected", label: "Rejected" },
-    { value: "Fraudulent", label: "Fraudulent" }
+    { value: "Fraudulent", label: "Fraudulent" },
   ];
 
   const columns = [
@@ -226,24 +344,18 @@ const RestaurantList = () => {
       dataIndex: "OutletType",
     },
     {
-      title: 'Status',
-      dataIndex: 'Status',
+      title: "Status",
+      dataIndex: "Status",
       render: (text, record) => (
         <div>
           {text === "Approved" && (
-            <span className="custom-badge status-green">
-              {text}
-            </span>
+            <span className="custom-badge status-green">{text}</span>
           )}
           {text === "Rejected" && (
-            <span className="custom-badge status-red">
-              {text}
-            </span>
+            <span className="custom-badge status-red">{text}</span>
           )}
           {text === "Fraudulent" && (
-            <span className="custom-badge status-orange">
-              {text}
-            </span>
+            <span className="custom-badge status-orange">{text}</span>
           )}
         </div>
       ),
@@ -264,8 +376,8 @@ const RestaurantList = () => {
                 <i className="fas fa-ellipsis-v" />
               </Link>
               <div className="dropdown-menu dropdown-menu-end">
-                <Link 
-                  className="dropdown-item" 
+                <Link
+                  className="dropdown-item"
                   to="#"
                   onClick={(e) => {
                     e.preventDefault();
@@ -297,7 +409,7 @@ const RestaurantList = () => {
       <Sidebar
         id="menu-item4"
         id1="menu-items4"
-        activeClassName="appoinment-list"
+        // activeClassName="appoinment-list"
       />
       <>
         <div className="page-wrapper">
@@ -326,9 +438,8 @@ const RestaurantList = () => {
                       <div className="row align-items-center">
                         <div className="col">
                           <div className="doctor-table-blk">
-                            <h3>Restaurant List</h3>
+                            <h3 style={{ color: "#403222" }}>Restaurant List</h3>
                             <div className="doctor-search-blk">
-                              <div className="top-nav-search table-search-blk"></div>
                               <div className="add-group">
                                 <button
                                   onClick={showAddModal}
@@ -376,6 +487,7 @@ const RestaurantList = () => {
           width={600}
           footer={null}
           className="add-restaurant-modal"
+          centered
         >
           <form>
             <div className="row">
@@ -384,7 +496,7 @@ const RestaurantList = () => {
                   <h4>Restaurant Details</h4>
                 </div>
               </div>
-{/* Outlet Type */}
+              {/* Outlet Type */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Outlet Type</label>
@@ -392,6 +504,7 @@ const RestaurantList = () => {
                     value={selectedOption}
                     onChange={setSelectedOption}
                     options={outletOptions}
+                    isLoading={outletTypesLoading}
                     menuPortalTarget={document.body}
                     id="search-commodity"
                     components={{
@@ -432,7 +545,7 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-{/* Status */}
+              {/* Status */}
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Status</label>
@@ -480,11 +593,11 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-{/* Submit */}
+              {/* Submit */}
               <div className="col-12">
                 <div className="doctor-submit text-end">
                   <button
-                    style={{backgroundColor: "#c1a078",color: "#fff"}}
+                    style={{ backgroundColor: "#c1a078", color: "#fff" }}
                     type="button"
                     onClick={handleAddModalOk}
                     className="btn btn-primary submit-form me-2"
@@ -492,7 +605,7 @@ const RestaurantList = () => {
                     Submit
                   </button>
                   <button
-                   style={{backgroundColor: "#c1a078",color: "#fff",}}
+                    style={{ backgroundColor: "#c1a078", color: "#fff" }}
                     type="button"
                     onClick={handleAddModalCancel}
                     className="btn btn-primary cancel-form"
@@ -514,6 +627,7 @@ const RestaurantList = () => {
           width={600}
           footer={null}
           className="edit-restaurant-modal"
+          centered
         >
           <Spin spinning={updateLoading}>
             <form>
@@ -523,33 +637,36 @@ const RestaurantList = () => {
                     <h4>Restaurant Details</h4>
                   </div>
                 </div>
-  {/* Business Name Display */}
+                {/* Business Name Display */}
                 <div className="col-12 col-md-6">
                   <div className="form-group local-forms">
                     <label>Business Name</label>
                     <input
                       className="form-control"
                       type="text"
-                      value={editRecord?.Business || ''}
+                      value={editRecord?.Business || ""}
                       disabled
                       style={{
-                        backgroundColor: '#f8f9fa',
-                        borderColor: '#dee2e6'
+                        backgroundColor: "#f8f9fa",
+                        borderColor: "#dee2e6",
                       }}
                     />
                   </div>
                 </div>
-  {/* Outlet Type */}
+                {/* Outlet Type - Now Editable */}
                 <div className="col-12 col-md-6">
                   <div className="form-group local-forms">
-                    <label>Outlet Type</label>
+                    <label>
+                      Outlet Type <span style={{ color: "red" }}>*</span>
+                    </label>
                     <Select
                       value={editSelectedOption}
                       onChange={setEditSelectedOption}
                       options={outletOptions}
+                      isLoading={outletTypesLoading}
                       menuPortalTarget={document.body}
                       id="edit-search-commodity"
-                      isDisabled={true} // Disable outlet type editing
+                      placeholder="Select Outlet Type"
                       components={{
                         IndicatorSeparator: () => null,
                       }}
@@ -574,7 +691,6 @@ const RestaurantList = () => {
                           borderRadius: "10px",
                           fontSize: "14px",
                           minHeight: "45px",
-                          backgroundColor: state.isDisabled ? '#f8f9fa' : 'white',
                         }),
                         dropdownIndicator: (base, state) => ({
                           ...base,
@@ -589,10 +705,12 @@ const RestaurantList = () => {
                     />
                   </div>
                 </div>
-  {/* Status */}
+                {/* Status */}
                 <div className="col-12 col-md-6">
                   <div className="form-group local-forms">
-                    <label>Status <span style={{color: 'red'}}>*</span></label>
+                    <label>
+                      Status <span style={{ color: "red" }}>*</span>
+                    </label>
                     <Select
                       value={editStatusOption}
                       onChange={setEditStatusOption}
@@ -637,19 +755,21 @@ const RestaurantList = () => {
                     />
                   </div>
                 </div>
-  {/* Current Status Display */}
+                {/* Current Status Display */}
                 <div className="col-12 col-md-6">
                   <div className="form-group local-forms">
                     <label>Current Status</label>
-                    <div style={{ 
-                      padding: '10px', 
-                      border: '2px solid rgba(193, 160, 120, 1)', 
-                      borderRadius: '10px',
-                      minHeight: '45px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      backgroundColor: '#f8f9fa'
-                    }}>
+                    <div
+                      style={{
+                        padding: "10px",
+                        border: "2px solid rgba(193, 160, 120, 1)",
+                        borderRadius: "10px",
+                        minHeight: "45px",
+                        display: "flex",
+                        alignItems: "center",
+                        backgroundColor: "#f8f9fa",
+                      }}
+                    >
                       {editRecord?.Status === "Approved" && (
                         <span className="custom-badge status-green">
                           {editRecord?.Status}
@@ -668,20 +788,20 @@ const RestaurantList = () => {
                     </div>
                   </div>
                 </div>
-  {/* Update */}
+                {/* Update */}
                 <div className="col-12">
                   <div className="doctor-submit text-end">
                     <button
-                      style={{backgroundColor: "#c1a078",color: "#fff"}}
+                      style={{ backgroundColor: "#c1a078", color: "#fff" }}
                       type="button"
                       onClick={handleEditModalOk}
                       className="btn btn-primary submit-form me-2"
                       disabled={updateLoading}
                     >
-                      {updateLoading ? 'Updating...' : 'Update'}
+                      {updateLoading ? "Updating..." : "Update"}
                     </button>
                     <button
-                     style={{backgroundColor: "#c1a078",color: "#fff"}}
+                      style={{ backgroundColor: "#c1a078", color: "#fff" }}
                       type="button"
                       onClick={handleEditModalCancel}
                       className="btn btn-primary cancel-form"

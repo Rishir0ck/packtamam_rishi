@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import FirebaseAuthService from '../Firebase/services/firebase_auth_service'; // Adjust path as needed
 import LogoutConfirmationModal from './../popupConfitmation/LogoutConfirmation'; // Adjust path as needed
 import { blog, restaurant, dashboard, doctor, doctorschedule, logout, menuicon04, menuicon06, menuicon08, menuicon09, menuicon10, menuicon11, menuicon12, menuicon14, menuicon15, menuicon16, patients, sidemenu, packtamam1 } from './imagepath';
-import Scrollbars from "react-custom-scrollbars-2";
+// Removed react-custom-scrollbars-2 import
 
 const Sidebar = (props) => {
   const [sidebar, setSidebar] = useState("");
@@ -82,17 +82,20 @@ const Sidebar = (props) => {
   return (
     <>
       <div className="sidebar" id="sidebar">
-        <Scrollbars
-          autoHide
-          autoHideTimeout={1000}
-          autoHideDuration={200}
-          autoHeight
-          autoHeightMin={0}
-          autoHeightMax="95vh"
-          thumbMinSize={30}
-          universal={false}
-          hideTracksWhenNotNeeded={true}
-        >
+        <div className="sidebar-scroll-container" style={{
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollbarWidth: 'none', /* Firefox */
+          msOverflowStyle: 'none', /* IE and Edge */
+        }}>
+          <style>
+            {`
+              .sidebar-scroll-container::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, Opera */
+              }
+            `}
+          </style>
           <div className="sidebar-inner slimscroll">
             <div id="sidebar-menu" className="sidebar-menu"
               onMouseLeave={expandMenu}
@@ -101,7 +104,7 @@ const Sidebar = (props) => {
               <ul>
                 <li className="menu-title">Main</li>
 
-                {/* Dashboard - Fixed to be a simple menu item without submenu */}
+{/* Dashboard - Fixed to be a simple menu item without submenu */}
                 <li>
                   <Link 
                     to="/admin-dashboard" 
@@ -172,30 +175,14 @@ const Sidebar = (props) => {
                   </ul>
                 </li> */}
 {/* Users */}
-                {/* <li className="submenu">
-                  <Link to="#" id="menu-item1" onClick={(e) => {
-                    handleClick(e, "menu-item1", "menu-items1")
-                  }}>
+                <li className="submenu">
+                  <Link to="/userlist" id="menu-item1" onClick={(e) => {handleClick(e, "menu-item1", "menu-items1")}}>
                     <span className="menu-side">
-                      <img src={doctor} alt="" />
+                      <img className='img-fluid' src={doctor} alt="" />
                     </span>{" "}
-                    <span style={{ color: '#c1a078'}}> Users </span> <span className="menu-arrow" />
+                    <span style={{ color: '#c1a078'}}> Users </span> 
                   </Link>
-                  <ul style={{ display: sidebar === 'Doctors' ? 'block' : 'none' }} className="menu-items1">
-                    <li>
-                      <Link className={props?.activeClassName === 'doctor-list' ? 'active' : ''} to="/doctorlist">Doctor List</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'add-doctor' ? 'active' : ''} to="/add-doctor">Add Doctor</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'edit-doctor' ? 'active' : ''} to="/editdoctor">Edit Doctor</Link>
-                    </li>
-                    <li>
-                      <Link className={props?.activeClassName === 'doctor-profile' ? 'active' : ''} to="/doctorprofile">Doctor Profile</Link>
-                    </li>
-                  </ul>
-                </li> */}
+                </li>
 
                 {/* Logout - Fixed to be inside the menu structure */}
                 <li>
@@ -210,7 +197,7 @@ const Sidebar = (props) => {
               </ul>
             </div>
           </div>
-        </Scrollbars>
+        </div>
       </div>
 
       {/* Logout Confirmation Modal */}
