@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
-import { Table, Modal } from "antd";
+import React, { useState, useEffect } from "react";
+import { Table, Modal, message, Spin } from "antd";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 import {  imagesend,   plusicon, blogimg12,  blogimg2,  blogimg4,  blogimg6, } from "../imagepath";
@@ -15,6 +15,73 @@ const RestaurantList = () => {
   const [editSelectedOption, setEditSelectedOption] = useState(null);
   const [editStatusOption, setEditStatusOption] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
+  const [datasource, setDatasource] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  // API configuration
+  const API_BASE_URL = "http://64.227.156.136:3000/api/admin";
+  const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo";
+
+  // Fetch business list from API
+  const fetchBusinessList = async (page = 1, perPage = 10) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/business-list?page=${page}&per_page=${perPage}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${BEARER_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API data to match table structure
+      const transformedData = data.data?.map((item, index) => ({
+        id: item.id || `${page}-${index}`,
+        Img: blogimg4, // Default image since API doesn't provide image
+        Business: item.business_name || 'N/A',
+        OutletType: item.outlet_type || 'N/A',
+        Status: item.status || 'Approved', // Default status if not provided
+        ...item // Include all original data
+      })) || [];
+
+      setDatasource(transformedData);
+      
+      // Update pagination
+      setPagination(prev => ({
+        ...prev,
+        current: page,
+        total: data.total || data.pagination?.total || transformedData.length,
+        pageSize: perPage
+      }));
+
+    } catch (error) {
+      console.error('Error fetching business list:', error);
+      message.error('Failed to fetch business list. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data load
+  useEffect(() => {
+    fetchBusinessList(1, 10);
+  }, []);
+
+  // Handle table pagination change
+  const handleTableChange = (paginationInfo) => {
+    fetchBusinessList(paginationInfo.current, paginationInfo.pageSize);
+  };
 
   const showAddModal = () => {
     setIsAddModalVisible(true);
@@ -57,7 +124,6 @@ const RestaurantList = () => {
     // Handle file loading logic here
   };
 
-
   const outletOptions = [
     { value: 1, label: "Restaurant" },
     { value: 2, label: "Multiple Restaurant" },
@@ -75,30 +141,6 @@ const RestaurantList = () => {
     { value: "Approved", label: "Approved" },
     { value: "Rejected", label: "Rejected" },
     { value: "Fraudulent", label: "Fraudulent" }
-  ];
-
-  const datasource = [
-    {
-      id: "2",
-      Img: blogimg4,
-      Business: "Restaurant",
-      OutletType: "Cloud Kitchen",
-      Status: "Fraudulent",
-    },
-    {
-      id: "4",
-      Img: blogimg12,
-      Business: "Restaurant",
-      OutletType: "Cloud Kitchen",
-      Status: "Approved",
-    },
-    {
-      id: "5",
-      Img: blogimg12,
-      Business: "Kiosk",
-      OutletType: "Kitchen",
-      Status: "Rejected",
-    },
   ];
 
   const columns = [
@@ -243,18 +285,21 @@ const RestaurantList = () => {
                     </div>
                     {/* /Table Header */}
                     <div className="table-responsive doctor-list">
-                      <Table
-                        pagination={{
-                          total: datasource.length,
-                          showTotal: (total, range) =>
-                            `Showing ${range[0]} to ${range[1]} of ${total} entries`,
-                          onShowSizeChange: onShowSizeChange,
-                          itemRender: itemRender,
-                        }}
-                        columns={columns}
-                        dataSource={datasource}
-                        rowKey={(record) => record.id}
-                      />
+                      <Spin spinning={loading}>
+                        <Table
+                          pagination={{
+                            ...pagination,
+                            showTotal: (total, range) =>
+                              `Showing ${range[0]} to ${range[1]} of ${total} entries`,
+                            onShowSizeChange: onShowSizeChange,
+                            itemRender: itemRender,
+                          }}
+                          columns={columns}
+                          dataSource={datasource}
+                          rowKey={(record) => record.id}
+                          onChange={handleTableChange}
+                        />
+                      </Spin>
                     </div>
                   </div>
                 </div>
