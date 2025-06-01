@@ -17,6 +17,7 @@ const RestaurantList = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [datasource, setDatasource] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -48,6 +49,7 @@ const RestaurantList = () => {
       // Transform API data to match table structure
       const transformedData = data.data?.map((item, index) => ({
         id: item.id || `${page}-${index}`,
+        business_id: item.id, // Store original business ID
         Img: blogimg4, // Default image since API doesn't provide image
         Business: item.business_name || 'N/A',
         OutletType: item.outlet_type || 'N/A',
@@ -70,6 +72,36 @@ const RestaurantList = () => {
       message.error('Failed to fetch business list. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Verify business API call
+  const verifyBusiness = async (businessId, status) => {
+    setUpdateLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-business`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BEARER_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          business_id: businessId,
+          status: status
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error verifying business:', error);
+      throw error;
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -105,12 +137,39 @@ const RestaurantList = () => {
     setSelectedOption(null); // Reset form
   };
 
-  const handleEditModalOk = () => {
-    // Handle edit form submission here
-    setIsEditModalVisible(false);
-    setEditRecord(null);
-    setEditSelectedOption(null);
-    setEditStatusOption(null);
+  const handleEditModalOk = async () => {
+    if (!editRecord || !editStatusOption) {
+      message.error('Please select a status');
+      return;
+    }
+
+    try {
+      // Call verify business API
+      await verifyBusiness(editRecord.business_id, editStatusOption.value);
+      
+      message.success('Business status updated successfully!');
+      
+      // Update the local data source to reflect changes immediately
+      setDatasource(prevData => 
+        prevData.map(item => 
+          item.business_id === editRecord.business_id 
+            ? { ...item, Status: editStatusOption.value }
+            : item
+        )
+      );
+      
+      // Close modal and reset form
+      setIsEditModalVisible(false);
+      setEditRecord(null);
+      setEditSelectedOption(null);
+      setEditStatusOption(null);
+      
+      // Optionally refresh the entire list to ensure data consistency
+      // fetchBusinessList(pagination.current, pagination.pageSize);
+      
+    } catch (error) {
+      message.error('Failed to update business status. Please try again.');
+    }
   };
 
   const handleEditModalCancel = () => {
@@ -456,132 +515,185 @@ const RestaurantList = () => {
           footer={null}
           className="edit-restaurant-modal"
         >
-          <form>
-            <div className="row">
-              <div className="col-12">
-                <div className="form-heading">
-                  <h4>Restaurant Details</h4>
+          <Spin spinning={updateLoading}>
+            <form>
+              <div className="row">
+                <div className="col-12">
+                  <div className="form-heading">
+                    <h4>Restaurant Details</h4>
+                  </div>
                 </div>
-              </div>
-{/* Outlet Type */}
-              <div className="col-12 col-md-6">
-                <div className="form-group local-forms">
-                  <label>Outlet Type</label>
-                  <Select
-                    value={editSelectedOption}
-                    onChange={setEditSelectedOption}
-                    options={outletOptions}
-                    menuPortalTarget={document.body}
-                    id="edit-search-commodity"
-                    components={{
-                      IndicatorSeparator: () => null,
-                    }}
-                    styles={{
-                      menuPortal: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                      }),
-                      control: (baseStyles, state) => ({
-                        ...baseStyles,
-                        borderColor: state.isFocused
-                          ? "none"
-                          : "2px solid rgba(193, 160, 120, 1);",
-                        boxShadow: state.isFocused
-                          ? "0 0 0 1px #c1a078"
-                          : "none",
-                        "&:hover": {
+  {/* Business Name Display */}
+                <div className="col-12 col-md-6">
+                  <div className="form-group local-forms">
+                    <label>Business Name</label>
+                    <input
+                      className="form-control"
+                      type="text"
+                      value={editRecord?.Business || ''}
+                      disabled
+                      style={{
+                        backgroundColor: '#f8f9fa',
+                        borderColor: '#dee2e6'
+                      }}
+                    />
+                  </div>
+                </div>
+  {/* Outlet Type */}
+                <div className="col-12 col-md-6">
+                  <div className="form-group local-forms">
+                    <label>Outlet Type</label>
+                    <Select
+                      value={editSelectedOption}
+                      onChange={setEditSelectedOption}
+                      options={outletOptions}
+                      menuPortalTarget={document.body}
+                      id="edit-search-commodity"
+                      isDisabled={true} // Disable outlet type editing
+                      components={{
+                        IndicatorSeparator: () => null,
+                      }}
+                      styles={{
+                        menuPortal: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                        }),
+                        control: (baseStyles, state) => ({
+                          ...baseStyles,
                           borderColor: state.isFocused
                             ? "none"
-                            : "2px solid rgba(193, 160, 120, 1)",
-                        },
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        minHeight: "45px",
-                      }),
-                      dropdownIndicator: (base, state) => ({
-                        ...base,
-                        transform: state.selectProps.menuIsOpen
-                          ? "rotate(-180deg)"
-                          : "rotate(0)",
-                        transition: "250ms",
-                        width: "35px",
-                        height: "35px",
-                      }),
-                    }}
-                  />
+                            : "2px solid rgba(193, 160, 120, 1);",
+                          boxShadow: state.isFocused
+                            ? "0 0 0 1px #c1a078"
+                            : "none",
+                          "&:hover": {
+                            borderColor: state.isFocused
+                              ? "none"
+                              : "2px solid rgba(193, 160, 120, 1)",
+                          },
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          minHeight: "45px",
+                          backgroundColor: state.isDisabled ? '#f8f9fa' : 'white',
+                        }),
+                        dropdownIndicator: (base, state) => ({
+                          ...base,
+                          transform: state.selectProps.menuIsOpen
+                            ? "rotate(-180deg)"
+                            : "rotate(0)",
+                          transition: "250ms",
+                          width: "35px",
+                          height: "35px",
+                        }),
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-{/* Status */}
-              <div className="col-12 col-md-6">
-                <div className="form-group local-forms">
-                  <label>Status</label>
-                  <Select
-                    value={editStatusOption}
-                    onChange={setEditStatusOption}
-                    options={statusOptions}
-                    menuPortalTarget={document.body}
-                    placeholder="Select Status"
-                    components={{
-                      IndicatorSeparator: () => null,
-                    }}
-                    styles={{
-                      menuPortal: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                      }),
-                      control: (baseStyles, state) => ({
-                        ...baseStyles,
-                        borderColor: state.isFocused
-                          ? "none"
-                          : "2px solid rgba(193, 160, 120, 1);",
-                        boxShadow: state.isFocused
-                          ? "0 0 0 1px #c1a078"
-                          : "none",
-                        "&:hover": {
+  {/* Status */}
+                <div className="col-12 col-md-6">
+                  <div className="form-group local-forms">
+                    <label>Status <span style={{color: 'red'}}>*</span></label>
+                    <Select
+                      value={editStatusOption}
+                      onChange={setEditStatusOption}
+                      options={statusOptions}
+                      menuPortalTarget={document.body}
+                      placeholder="Select Status"
+                      components={{
+                        IndicatorSeparator: () => null,
+                      }}
+                      styles={{
+                        menuPortal: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                        }),
+                        control: (baseStyles, state) => ({
+                          ...baseStyles,
                           borderColor: state.isFocused
                             ? "none"
-                            : "2px solid rgba(193, 160, 120, 1)",
-                        },
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        minHeight: "45px",
-                      }),
-                      dropdownIndicator: (base, state) => ({
-                        ...base,
-                        transform: state.selectProps.menuIsOpen
-                          ? "rotate(-180deg)"
-                          : "rotate(0)",
-                        transition: "250ms",
-                        width: "35px",
-                        height: "35px",
-                      }),
-                    }}
-                  />
+                            : "2px solid rgba(193, 160, 120, 1);",
+                          boxShadow: state.isFocused
+                            ? "0 0 0 1px #c1a078"
+                            : "none",
+                          "&:hover": {
+                            borderColor: state.isFocused
+                              ? "none"
+                              : "2px solid rgba(193, 160, 120, 1)",
+                          },
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          minHeight: "45px",
+                        }),
+                        dropdownIndicator: (base, state) => ({
+                          ...base,
+                          transform: state.selectProps.menuIsOpen
+                            ? "rotate(-180deg)"
+                            : "rotate(0)",
+                          transition: "250ms",
+                          width: "35px",
+                          height: "35px",
+                        }),
+                      }}
+                    />
+                  </div>
+                </div>
+  {/* Current Status Display */}
+                <div className="col-12 col-md-6">
+                  <div className="form-group local-forms">
+                    <label>Current Status</label>
+                    <div style={{ 
+                      padding: '10px', 
+                      border: '2px solid rgba(193, 160, 120, 1)', 
+                      borderRadius: '10px',
+                      minHeight: '45px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: '#f8f9fa'
+                    }}>
+                      {editRecord?.Status === "Approved" && (
+                        <span className="custom-badge status-green">
+                          {editRecord?.Status}
+                        </span>
+                      )}
+                      {editRecord?.Status === "Rejected" && (
+                        <span className="custom-badge status-red">
+                          {editRecord?.Status}
+                        </span>
+                      )}
+                      {editRecord?.Status === "Fraudulent" && (
+                        <span className="custom-badge status-orange">
+                          {editRecord?.Status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+  {/* Update */}
+                <div className="col-12">
+                  <div className="doctor-submit text-end">
+                    <button
+                      style={{backgroundColor: "#c1a078",color: "#fff"}}
+                      type="button"
+                      onClick={handleEditModalOk}
+                      className="btn btn-primary submit-form me-2"
+                      disabled={updateLoading}
+                    >
+                      {updateLoading ? 'Updating...' : 'Update'}
+                    </button>
+                    <button
+                     style={{backgroundColor: "#c1a078",color: "#fff"}}
+                      type="button"
+                      onClick={handleEditModalCancel}
+                      className="btn btn-primary cancel-form"
+                      disabled={updateLoading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
-{/* Update */}
-              <div className="col-12">
-                <div className="doctor-submit text-end">
-                  <button
-                    style={{backgroundColor: "#c1a078",color: "#fff"}}
-                    type="button"
-                    onClick={handleEditModalOk}
-                    className="btn btn-primary submit-form me-2"
-                  >
-                    Update
-                  </button>
-                  <button
-                   style={{backgroundColor: "#c1a078",color: "#fff"}}
-                    type="button"
-                    onClick={handleEditModalCancel}
-                    className="btn btn-primary cancel-form"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+            </form>
+          </Spin>
         </Modal>
 
         {/* Delete Modal */}
