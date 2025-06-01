@@ -3,14 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Modal, message, Spin } from "antd";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
-import {
-  imagesend,
-  plusicon,
-  blogimg12,
-  blogimg2,
-  blogimg4,
-  blogimg6,
-} from "../imagepath";
+import {imagesend,plusicon,blogimg4,} from "../imagepath";
 import { onShowSizeChange, itemRender } from "../Pagination";
 import { Link } from "react-router-dom";
 import Select from "react-select";

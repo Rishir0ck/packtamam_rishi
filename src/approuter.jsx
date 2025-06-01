@@ -46,15 +46,9 @@ import Add_Tax from "./components/accounts/Add_Tax";
 
 import Inbox from "./components/email/Inbox";
 //--------------Inventory-------------------
-import AddLeave from "./components/inventory/AddLeave";
-import Attendence from "./components/inventory/Attendence";
-import Leave from "./components/inventory/Leave";
-import EditStaff from "./components/inventory/EditStaff";
-import EditLeave from "./components/inventory/EditLeave";
-import Holiday from "./components/inventory/Holiday";
-import StaffList from "./components/inventory/StafList";
-import StaffProfile from "./components/inventory/StaffProfile";
-
+import AddInventory from "./components/inventory/AddInventory";
+import EditInventory from "./components/inventory/EditInventory";
+import InventoryList from "./components/inventory/InventoryList";
 
 
 import ComposeMail from "./components/email/ComposeMail";
@@ -139,14 +133,9 @@ const Approuter = () => {
           <Route path="/editschedule" element={<EditSchedule />} />
           
           {/* ------inventory------- */}
-          <Route path="/stafflist" element={<StaffList />} />
-          <Route path="/editstaff" element={<EditStaff />} />
-          <Route path="/staffprofile" element={<StaffProfile />} />
-          <Route path="/leave" element={<Leave />} />
-          <Route path="/add-leave" element={<AddLeave />} />
-          <Route path="/editleave" element={<EditLeave />} />
-          <Route path="/attendence" element={<Attendence />} />
-          <Route path="/holiday" element={<Holiday />} />
+          <Route path="/inventorylist" element={<InventoryList />} />
+          <Route path="/editinventory" element={<EditInventory />} />
+          <Route path="/addinventory" element={<AddInventory />} />
           {/* Accounts */}
           <Route path="/providentfund" element={<ProvidentFund />} />
           <Route path="/add-providerfund" element={<Add_ProviderFund />} />
