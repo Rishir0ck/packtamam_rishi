@@ -267,7 +267,7 @@ const Login = () => {
                         </div>
                       </form>
 
-                      <div className="text-center mb-3">
+                      {/* <div className="text-center mb-3">
                         <p className="mb-1">
                           Need an account?{" "}
                           <Link
@@ -277,7 +277,7 @@ const Login = () => {
                             Sign Up
                           </Link>
                         </p>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>

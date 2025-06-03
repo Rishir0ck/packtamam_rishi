@@ -107,8 +107,8 @@ const Sidebar = (props) => {
 {/* Dashboard - Fixed to be a simple menu item without submenu */}
                 <li>
                   <Link 
-                    to="/admin-dashboard" 
-                    className={props?.activeClassName === 'admin-dashboard' ? 'active' : ''}
+                    to="/dashboard" 
+                    className={props?.activeClassName === 'dashboard' ? 'active' : ''}
                   >
                     <span className="menu-side">
                       <img className='img-fluid' src={dashboard} alt="" />
@@ -123,6 +123,15 @@ const Sidebar = (props) => {
                       <img className='img-fluid' src={menuicon06} alt="" />
                     </span>
                     <span style={{ color: '#c1a078'}}> Restaurant </span> 
+                  </Link>
+                </li>
+{/* Management */}
+                <li className="submenu">
+                  <Link to="/managementlist" id="menu-item3" onClick={(e) => handleClick(e, "menu-item3", "menu-items3")}>
+                    <span className="menu-side">
+                      <img className='img-fluid' src={menuicon08} alt="" />
+                    </span>
+                    <span style={{ color: '#c1a078'}}> Management </span> 
                   </Link>
                 </li>
 {/* Inventory */}

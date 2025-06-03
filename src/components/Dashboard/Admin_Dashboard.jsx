@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import FeatherIcon from "feather-icons-react/build/FeatherIcon";
 // import DonutChart from "./DonutChart";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
-import PatientChart from "./PaitentChart";
+import Sidebar from "../Sidebar";
+import Header from "../Header";
+// import PatientChart from "./Admin_Dashboard/PaitentChart";
 import Select from "react-select";
 import {
   // Avatar2,
@@ -22,10 +22,10 @@ import {
   // profile_add,
   // scissor,
   // user001,
-} from "../../imagepath";
+} from "../imagepath";
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
-import FirebaseAuthService from "../../../Firebase/services/firebase_auth_service";
+import FirebaseAuthService from "../../Firebase/services/firebase_auth_service";
 
 import {
   AlertTriangle,
@@ -107,7 +107,7 @@ const Admin_Dashboard = () => {
       <Sidebar
         id="menu-item"
         id1="menu-items"
-        activeClassName="admin-dashboard"
+        activeClassName="dashboard"
       />
       <>
         <div className="page-wrapper">
@@ -334,8 +334,8 @@ const Admin_Dashboard = () => {
                         />
                       </div>
                     </div>
-                    <div id="patient-chart" />
-                    <PatientChart />
+                    {/* <div id="patient-chart" />
+                    <PatientChart /> */}
                   </div>
                 </div>
               </div>

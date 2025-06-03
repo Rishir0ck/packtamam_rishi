@@ -46,10 +46,10 @@ import Add_Tax from "./components/accounts/Add_Tax";
 
 import Inbox from "./components/email/Inbox";
 //--------------Inventory-------------------
-import AddInventory from "./components/inventory/AddInventory";
-import EditInventory from "./components/inventory/EditInventory";
 import InventoryList from "./components/inventory/InventoryList";
 
+//--------------Management-------------------
+import ManagementList from "./components/management/ManagementList";
 
 import ComposeMail from "./components/email/ComposeMail";
 import MailView from "./components/email/MailView";
@@ -68,7 +68,7 @@ import EditProfile from "./components/pages/login/EditProfile";
 import BlankPage from "./components/pages/login/BlankPage";
 
 //-----------Dashboard-------------------
-import Admin_Dashboard from "./components/Dashboard/Admin_Dashboard/Admin_Dashboard";
+import Admin_Dashboard from "./components/Dashboard/Admin_Dashboard";
 
 
 import Edit_Provident from "./components/accounts/Edit_Provident";
@@ -127,6 +127,9 @@ const Approuter = () => {
           {/* ---------restaurant--------- */}
           <Route path="/restaurantList" element={<RestaurantList />} />
 
+          {/* ---------management--------- */}
+          <Route path="/managementList" element={<ManagementList />} />
+
           {/* -------------pricing-------------- */}
           <Route path="/schedulelist" element={<ScheduleList />} />
           <Route path="/addschedule" element={<AddSchedule />} />
@@ -134,8 +137,7 @@ const Approuter = () => {
           
           {/* ------inventory------- */}
           <Route path="/inventorylist" element={<InventoryList />} />
-          <Route path="/editinventory" element={<EditInventory />} />
-          <Route path="/addinventory" element={<AddInventory />} />
+
           {/* Accounts */}
           <Route path="/providentfund" element={<ProvidentFund />} />
           <Route path="/add-providerfund" element={<Add_ProviderFund />} />
@@ -165,7 +167,7 @@ const Approuter = () => {
           
           
           {/* -------------Dashboard------------ */}
-          <Route path="/admin-dashboard" element={<Admin_Dashboard />} />
+          <Route path="/dashboard" element={<Admin_Dashboard />} />
         </Routes>
       </BrowserRouter>
       <div className="sidebar-overlay"></div>
