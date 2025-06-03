@@ -106,7 +106,7 @@ const Header = () => {
       <div className="main-wrapper">
         <div className="header">
           <div className="header-left">
-            <Link to="/admin-dashboard" className="logo">
+            <Link to="/dashboard" className="logo">
               <img src={packtamam1} width={35} height={35} alt="" />{" "}
               <span style={{ color: '#403222'}}>PackTamam</span>
             </Link>

@@ -65,7 +65,7 @@ const Profile = () => {
             <div className="col-sm-7">
               <ul className="breadcrumb">
                 <li className="breadcrumb-item">
-                  <Link style={{ color: "#403222" }} to="/admin-dashboard" className="text-dark">
+                  <Link style={{ color: "#403222" }} to="/dashboard" className="text-dark">
                     Dashboard
                   </Link>
                 </li>

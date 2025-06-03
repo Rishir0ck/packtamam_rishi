@@ -110,7 +110,7 @@ const Login = () => {
         
         // Redirect to dashboard after successful login
         setTimeout(() => {
-          navigate("/admin-dashboard");
+          navigate("/dashboard");
         }, 1500);
       } else {
         console.error("❌ Authentication failed:", result.message);

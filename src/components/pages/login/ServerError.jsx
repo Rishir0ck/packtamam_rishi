@@ -17,7 +17,7 @@ const ServerError = () => {
       Internal Server Error
     </h3>
     <p>You do not have permission to view this resource</p>
-    <Link to="/admin-dashboard" className="btn btn-primary go-home">
+    <Link to="/dashboard" className="btn btn-primary go-home">
       Go to Home
     </Link>
   </div>

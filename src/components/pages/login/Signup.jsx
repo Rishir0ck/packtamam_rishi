@@ -125,7 +125,7 @@ const Signup = () => {
 
         // Redirect to dashboard after successful signup
         setTimeout(() => {
-          navigate("/admin-dashboard");
+          navigate("/dashboard");
         }, 2000); // Increased timeout to 2 seconds to show the message
       } else {
         console.error("❌ Signup failed:", result);

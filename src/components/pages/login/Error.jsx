@@ -17,7 +17,7 @@ const Error = () => {
       Service Unavailable
     </h3>
     <p>You may have mistyped the address or the page may have moved.</p>
-    <Link to="/admin-dashboard" className="btn btn-primary go-home">
+    <Link to="/dashboard" className="btn btn-primary go-home">
       Back to Home
     </Link>
   </div>
