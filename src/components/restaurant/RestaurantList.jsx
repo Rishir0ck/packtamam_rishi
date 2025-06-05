@@ -40,16 +40,13 @@ const RestaurantList = () => {
     rejected: "/rejected-business-list",
     query: "/query-business-list",
     updateStatus: "/update-business-status",
-    // outletTypes: "/outlet_types"
   };
 
   const statusOptions = [
     { value: "Pending", label: "Pending" },
     { value: "Approved", label: "Approved" },
     { value: "Rejected", label: "Rejected" },
-    { value: "Fraudulent", label: "Fraudulent" },
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
+    { value: "Query", label: "Query" },
   ];
 
   // Utility functions
@@ -65,6 +62,48 @@ const RestaurantList = () => {
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
+  };
+
+  // Update individual tab count
+  const updateTabCount = (tabKey, count) => {
+    setState(prevState => ({
+      ...prevState,
+      tabCounts: {
+        ...prevState.tabCounts,
+        [tabKey]: count
+      }
+    }));
+  };
+
+  // Fetch all tab counts
+  const fetchAllTabCounts = async () => {
+    const tabs = ['pending', 'approved', 'rejected', 'query'];
+    
+    const countPromises = tabs.map(async (tab) => {
+      try {
+        const endpoint = `${API_ENDPOINTS[tab]}?page=1&per_page=1`;
+        const data = await apiCall(endpoint);
+        return { tab, count: data.total || data.pagination?.total || 0 };
+      } catch (error) {
+        console.error(`Error fetching ${tab} count:`, error);
+        return { tab, count: 0 };
+      }
+    });
+
+    try {
+      const results = await Promise.all(countPromises);
+      const newCounts = {};
+      results.forEach(({ tab, count }) => {
+        newCounts[tab] = count;
+      });
+      
+      setState(prevState => ({
+        ...prevState,
+        tabCounts: newCounts
+      }));
+    } catch (error) {
+      console.error("Error fetching tab counts:", error);
+    }
   };
 
   // Fetch data for specific tab
@@ -97,8 +136,9 @@ const RestaurantList = () => {
         }
       });
 
-      // Update tab count for current tab
-      updateTabCount(tabKey, data.total || data.pagination?.total || transformedData.length);
+      // Update tab count for current tab with fresh data
+      const currentTabCount = data.total || data.pagination?.total || transformedData.length;
+      updateTabCount(tabKey, currentTabCount);
 
     } catch (error) {
       console.error(`Error fetching ${tabKey} business list:`, error);
@@ -120,57 +160,13 @@ const RestaurantList = () => {
     return statusMap[tabKey] || "Unknown";
   };
 
-  // Update individual tab count
-  const updateTabCount = (tabKey, count) => {
-    updateState(prevState => ({
-      tabCounts: {
-        ...prevState.tabCounts,
-        [tabKey]: count
-      }
-    }));
-  };
-
-  // Fetch all tab counts (optional - for initial load)
-  const fetchAllTabCounts = async () => {
-    const tabs = ['pending', 'approved', 'rejected', 'query'];
-    
-    for (const tab of tabs) {
-      try {
-        const endpoint = `${API_ENDPOINTS[tab]}?page=1&per_page=1`;
-        const data = await apiCall(endpoint);
-        updateTabCount(tab, data.total || data.pagination?.total || 0);
-      } catch (error) {
-        console.error(`Error fetching ${tab} count:`, error);
-        updateTabCount(tab, 0);
-      }
-    }
-  };
-
-  // const fetchOutletTypes = async () => {
-  //   updateState({ outletTypesLoading: true });
-  //   try {
-  //     const data = await apiCall(API_ENDPOINTS.outletTypes);
-  //     const transformedOptions = data.data?.map(item => ({
-  //       value: item.id,
-  //       label: item.name || item.outlet_type || item.type,
-  //     })) || [];
-  //     updateState({ outletOptions: transformedOptions });
-  //   } catch (error) {
-  //     console.error("Error fetching outlet types:", error);
-  //     message.error("Failed to fetch outlet types. Using default options.");
-  //   } finally {
-  //     updateState({ outletTypesLoading: false });
-  //   }
-  // };
-
   const updateBusinessStatus = async (businessId, updates) => {
     updateState({ updateLoading: true });
     try {
-      // Using the update-business-status endpoint
       const response = await apiCall(API_ENDPOINTS.updateStatus, {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify({ 
-          business_id: businessId, 
+          id: businessId, 
           ...updates 
         }),
       });
@@ -187,7 +183,7 @@ const RestaurantList = () => {
     const statusMap = { 
       approve: "Approved", 
       reject: "Rejected", 
-      fraud: "Fraudulent" 
+      query: "Query", 
     };
     
     try {
@@ -200,11 +196,11 @@ const RestaurantList = () => {
       );
       updateState({ datasource: updatedData });
       
-      // Refresh current tab data to get accurate count
-      await fetchDataByTab(state.activeTab, state.pagination.current, state.pagination.pageSize);
-      
-      // Optionally refresh all tab counts
+      // Refresh ALL tab counts to get accurate numbers
       await fetchAllTabCounts();
+      
+      // Also refresh current tab data
+      await fetchDataByTab(state.activeTab, state.pagination.current, state.pagination.pageSize);
       
     } catch (error) {
       message.error(`Failed to ${action} business. Please try again.`);
@@ -242,15 +238,17 @@ const RestaurantList = () => {
       const statusChanged = state.editStatusOption.value !== state.editRecord.Status;
       
       if (statusChanged) {
-        // Remove from current view and refresh
+        // Remove from current view and refresh all counts
         const updatedData = state.datasource.filter(item => 
           item.business_id !== state.editRecord.business_id
         );
         updateState({ datasource: updatedData });
         
+        // Refresh ALL tab counts
+        await fetchAllTabCounts();
+        
         // Refresh current tab
         await fetchDataByTab(state.activeTab, state.pagination.current, state.pagination.pageSize);
-        await fetchAllTabCounts();
       } else {
         // Update in place if status didn't change
         const updatedData = state.datasource.map(item =>
@@ -324,10 +322,7 @@ const RestaurantList = () => {
     const statusColors = {
       Pending: "status-yellow", 
       Approved: "status-green", 
-      Active: "status-green",
       Rejected: "status-red", 
-      Fraudulent: "status-orange", 
-      Inactive: "status-gray",
       Query: "status-blue"
     };
     return <span className={`custom-badge ${statusColors[text] || "status-gray"}`}>{text}</span>;
@@ -371,9 +366,11 @@ const RestaurantList = () => {
 
   // Effects and handlers
   useEffect(() => {
-    // fetchOutletTypes();
-    fetchAllTabCounts(); // Get all tab counts initially
-    fetchDataByTab("pending", 1, 10); // Load pending data by default
+    // Initial load - fetch all tab counts first
+    fetchAllTabCounts().then(() => {
+      // Then load pending data by default
+      fetchDataByTab("pending", 1, 10);
+    });
   }, []);
 
   const handleTableChange = (paginationInfo) => {
@@ -504,31 +501,6 @@ const RestaurantList = () => {
                   />
                 </div>
               </div>
-
-              {/* <div className="col-12 col-md-6">
-                <div className="form-group local-forms">
-                  <label>Outlet Type <span style={{ color: "red" }}>*</span></label>
-                  <Select
-                    value={state.editSelectedOption}
-                    onChange={(option) => updateState({ editSelectedOption: option })}
-                    options={state.outletOptions}
-                    isLoading={state.outletTypesLoading}
-                    menuPortalTarget={document.body}
-                    placeholder="Select Outlet Type"
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      control: (base, state) => ({
-                        ...base,
-                        borderColor: state.isFocused ? "none" : "2px solid rgba(193, 160, 120, 1)",
-                        boxShadow: state.isFocused ? "0 0 0 1px #c1a078" : "none",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        minHeight: "45px",
-                      }),
-                    }}
-                  />
-                </div>
-              </div> */}
 
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
