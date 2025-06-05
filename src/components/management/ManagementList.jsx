@@ -19,18 +19,18 @@ const ManagementList = () => {
   const [selectedOption, setSelectedOption] = useState(null);
 
   const datasource = [
-    {
-      id: 1,
-      Img: blogimg2,
-      Name: "Pepperoni Pizza",
-      RestaurantCount: "5",
-      BusinessName: "Pizza.com",
-      OutletType: "Anand",
-      TotalOrder: "Anand",
-      PendingOrder: "Anand",
-      RejectOrder: "Anand",
-      Status: "Leagal",
-      FIELD9: "",
+    // {
+    //   id: 1,
+    //   Img: blogimg2,
+    //   Name: "Pepperoni Pizza",
+    //   RestaurantCount: "5",
+    //   BusinessName: "Pizza.com",
+    //   OutletType: "Anand",
+    //   TotalOrder: "Anand",
+    //   PendingOrder: "Anand",
+    //   RejectOrder: "Anand",
+    //   Status: "Leagal",
+    //   FIELD9: "",
     // },
     // {
     //   id: 2,
@@ -70,7 +70,7 @@ const ManagementList = () => {
     //   RejectOrder: "Vadodara",
     //   Status: "Leagal",
     //   FIELD9: "",
-    },
+    // },
   ];
 
    
