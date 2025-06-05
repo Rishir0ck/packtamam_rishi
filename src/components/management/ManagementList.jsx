@@ -12,24 +12,25 @@ import { onShowSizeChange, itemRender } from "../Pagination";
 const ManagementList = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
   const datasource = [
-    // {
-    //   id: 1,
-    //   Img: blogimg2,
-    //   Name: "Pepperoni Pizza",
-    //   RestaurantCount: "5",
-    //   BusinessName: "Pizza.com",
-    //   OutletType: "Anand",
-    //   TotalOrder: "Anand",
-    //   PendingOrder: "Anand",
-    //   RejectOrder: "Anand",
-    //   Status: "Leagal",
-    //   FIELD9: "",
+    {
+      id: 1,
+      Img: blogimg2,
+      Name: "Pepperoni Pizza",
+      RestaurantCount: "5",
+      BusinessName: "Pizza.com",
+      OutletType: "Anand",
+      TotalOrder: "Anand",
+      PendingOrder: "Anand",
+      RejectOrder: "Anand",
+      Status: "Leagal",
+      FIELD9: "",
     // },
     // {
     //   id: 2,
@@ -69,7 +70,7 @@ const ManagementList = () => {
     //   RejectOrder: "Vadodara",
     //   Status: "Leagal",
     //   FIELD9: "",
-    // },
+    },
   ];
 
    
@@ -77,6 +78,11 @@ const ManagementList = () => {
    const handleAddModalCancel = () => {
     setIsAddModalVisible(false);
     setSelectedOption(null); // Reset form
+  };
+
+  const handleEditModalCancel = () => {
+    setShowEditModal(false);
+    setSelectedRecord(null); // Reset selected record
   };
 
   const handleAddSubmit = (e) => {
@@ -96,6 +102,11 @@ const ManagementList = () => {
   const handleEdit = (record) => {
     setSelectedRecord(record);
     setShowEditModal(true);
+  };
+
+  const handleView = (record) => {
+    setSelectedRecord(record);
+    setShowViewModal(true);
   };
   
   const columns = [
@@ -178,6 +189,14 @@ const ManagementList = () => {
                 <Link 
                   className="dropdown-item" 
                   to="#"
+                  onClick={() => handleView(record)}
+                >
+                  <i className="far fa-eye me-2" />
+                  View
+                </Link>
+                <Link 
+                  className="dropdown-item" 
+                  to="#"
                   onClick={() => handleEdit(record)}
                 >
                   <i className="far fa-edit me-2" />
@@ -234,16 +253,6 @@ const ManagementList = () => {
                               {" "}
                               Management List
                             </h3>
-                            <div className="doctor-search-blk">
-                              <div className="add-group">
-                                <button
-                                  onClick={() => setShowAddModal(true)}
-                                  className="btn btn-primary add-pluss ms-2"
-                                >
-                                  <img src={plusicon} alt="#" />
-                                </button>
-                              </div>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -269,8 +278,8 @@ const ManagementList = () => {
           </div>
         </div>
 
-        {/* Add Management Modal */}
-        {showAddModal && (
+        {/* View Details Modal */}
+        {showViewModal && selectedRecord && (
           <div 
             className="modal fade show d-block" 
             style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
@@ -279,169 +288,127 @@ const ManagementList = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h4 className="modal-title" style={{ color: "#403222" }}>Add New Management</h4>
+                  <h4 className="modal-title" style={{ color: "#403222" }}>View Details</h4>
                   <button 
                     type="button" 
                     className="btn-close" 
                     aria-label="Close"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => setShowViewModal(false)}
                   ></button>
                 </div>
                 <div className="modal-body">
-                  <form onSubmit={handleAddSubmit}>
-                    <div className="row">
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Restauarant Name <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="text"
-                            placeholder="Enter Restauarant name"
-                            required
+                  <div className="card">
+                    <div className="card-body">
+                      <div className="row mb-4">
+                        <div className="col-12 text-center">
+                          <img
+                            className="avatar-img rounded-circle mb-3"
+                            src={selectedRecord.Img}
+                            alt="Restaurant"
+                            style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                           />
+                          <h4 style={{ color: "#403222" }}>{selectedRecord.Name}</h4>
                         </div>
                       </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Business Name <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="text"
-                            placeholder="Enter Business name"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Restaurant Count <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="number"
-                            placeholder="Enter Restaurant Count"
-                            step="1"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Outlet Type <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="text"
-                            placeholder="Enter Outlet Type"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Total Order <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="number"
-                            placeholder="Enter Total Order"
-                            step="1"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Pending Order <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="number"
-                            placeholder="Enter Pending Order"
-                            step="1"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <div className="form-group local-forms">
-                          <label>
-                            Reject Order <span className="login-danger">*</span>
-                          </label>
-                          <input
-                            className="form-control"
-                            type="number"
-                            placeholder="Enter Reject Order"
-                            step="1"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12">
-                        <div className="form-group select-gender">
-                          <label className="gen-label">
-                            Status <span className="login-danger">*</span>
-                          </label>
-                          <div className="form-check-inline">
-                            <label className="form-check-label">
-                              <input
-                                type="radio"
-                                name="status"
-                                className="form-check-input"
-                                value="Leagal"
-                                defaultChecked
-                              />
-                              Leagal
-                            </label>
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Business Name</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.BusinessName}
+                              </p>
+                            </div>
                           </div>
-                          <div className="form-check-inline">
-                            <label className="form-check-label">
-                              <input
-                                type="radio"
-                                name="status"
-                                className="form-check-input"
-                                value="Fraud"
-                              />
-                              Fraud
-                            </label>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Restaurant Count</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.RestaurantCount}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Outlet Type</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.OutletType}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Total Orders</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.TotalOrder}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Pending Orders</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.PendingOrder}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <div className="card bg-light">
+                            <div className="card-body p-3">
+                              <h6 className="card-title text-muted mb-1">Rejected Orders</h6>
+                              <p className="card-text h5 mb-0" style={{ color: "#403222" }}>
+                                {selectedRecord.RejectOrder}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="row">
+                        <div className="col-12">
+                          <div className="card bg-light">
+                            <div className="card-body p-3 text-center">
+                              <h6 className="card-title text-muted mb-1">Status</h6>
+                              <div>
+                                {selectedRecord.Status === "Leagal" && (
+                                  <span className="badge bg-success fs-6 px-3 py-2">
+                                    {selectedRecord.Status}
+                                  </span>
+                                )}
+                                {selectedRecord.Status === "Fraud" && (
+                                  <span className="badge bg-danger fs-6 px-3 py-2">
+                                    {selectedRecord.Status}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="modal-footer">
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        style={{
-                          backgroundColor: "#c1a078",
-                          borderColor: "#c1a078",
-                          color: "#fff",
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setShowViewModal(false)}
+                    style={{
+                            backgroundColor: "#c1a078",
+                            borderColor: "#c1a078",
+                            color: "#fff",
                         }}
-                      >
-                        Submit
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleAddModalCancel}
-                        style={{
-                          backgroundColor: "#c1a078",
-                          borderColor: "#c1a078",
-                          color: "#fff",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
@@ -503,6 +470,7 @@ const ManagementList = () => {
                           <input
                             className="form-control"
                             type="number"
+                            defaultValue={selectedRecord.RestaurantCount}
                             placeholder="Enter count"
                             step="1"
                             required
@@ -530,6 +498,7 @@ const ManagementList = () => {
                           <input
                             className="form-control"
                             type="number"
+                            defaultValue={selectedRecord.TotalOrder}
                             placeholder="Enter count"
                             step="1"
                             required
@@ -544,6 +513,7 @@ const ManagementList = () => {
                           <input
                             className="form-control"
                             type="number"
+                            defaultValue={selectedRecord.PendingOrder}
                             placeholder="Enter count"
                             step="1"
                             required
@@ -558,6 +528,7 @@ const ManagementList = () => {
                           <input
                             className="form-control"
                             type="number"
+                            defaultValue={selectedRecord.RejectOrder}
                             placeholder="Enter count"
                             step="1"
                             required
@@ -601,25 +572,25 @@ const ManagementList = () => {
                         type="submit"
                         className="btn btn-primary"
                         style={{
-                          backgroundColor: "#c1a078",
-                          borderColor: "#c1a078",
-                          color: "#fff",
+                            backgroundColor: "#c1a078",
+                            borderColor: "#c1a078",
+                            color: "#fff",
                         }}
                       >
                         Update
                       </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleAddModalCancel}
-                        style={{
-                          backgroundColor: "#c1a078",
-                          borderColor: "#c1a078",
-                          color: "#fff",
+                        <button
+                          type="button"
+                          className="btn btn-primary me-2"
+                          onClick={handleEditModalCancel}
+                          style={{
+                            backgroundColor: "#c1a078",
+                            borderColor: "#c1a078",
+                            color: "#fff",
                         }}
-                      >
-                        Cancel
-                      </button>
+                        >
+                          Cancel
+                        </button>
                     </div>
                   </form>
                 </div>
