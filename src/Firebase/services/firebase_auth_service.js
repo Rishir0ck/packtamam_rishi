@@ -9,7 +9,7 @@ import {
 import { auth } from "../config/auth";
 
 // API Configuration
-const API_BASE_URL = "http://64.227.156.136:3000/api";
+const API_BASE_URL = "http://167.71.228.10:3000/api";
 const API_ENDPOINTS = {
   ADMIN_LOGIN: `${API_BASE_URL}/admin/login/admin-email-password`
 };

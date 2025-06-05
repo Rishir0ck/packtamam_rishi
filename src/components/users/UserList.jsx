@@ -18,7 +18,7 @@ const UserList = () => {
   const [loading, setLoading] = useState(false);
 
   // API Configuration
-  const API_BASE_URL = "http://64.227.156.136:3000/api/admin";
+  const API_BASE_URL = "http://167.71.228.10:3000/api/admin";
   const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo";
 
   const department = [
