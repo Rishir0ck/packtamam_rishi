@@ -15,7 +15,7 @@ const RestaurantList = () => {
   const [state, setState] = useState({
     datasource: [],
     activeTab: "pending",
-    tabCounts: { pending: 0, approved: 0, others: 0 },
+    tabCounts: { pending: 0, approved: 0, rejected: 0, query: 0 },
     pagination: { current: 1, pageSize: 10, total: 0 },
     loading: false,
     updateLoading: false,
@@ -31,6 +31,16 @@ const RestaurantList = () => {
   const API_CONFIG = {
     baseUrl: "http://167.71.228.10:3000/api/admin",
     token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo"
+  };
+
+  // API endpoints mapping
+  const API_ENDPOINTS = {
+    pending: "/pending-business-list",
+    approved: "/approved-business-list", 
+    rejected: "/rejected-business-list",
+    query: "/query-business-list",
+    updateStatus: "/update-business-status",
+    // outletTypes: "/outlet_types"
   };
 
   const statusOptions = [
@@ -57,60 +67,26 @@ const RestaurantList = () => {
     return response.json();
   };
 
-  const getFilteredData = () => {
-    const filters = {
-      pending: ["Pending", "Pending Approval", "Under Review"],
-      approved: ["Approved", "Active"],
-      others: ["Rejected", "Fraudulent", "Suspended", "Inactive"]
-    };
-    return state.datasource.filter(item => 
-      filters[state.activeTab]?.includes(item.Status) || state.activeTab === "all"
-    );
-  };
-
-  const updateTabCounts = (data) => {
-    const counts = {
-      pending: data.filter(item => ["Pending", "Pending Approval", "Under Review"].includes(item.Status)).length,
-      approved: data.filter(item => ["Approved", "Active"].includes(item.Status)).length,
-      others: data.filter(item => ["Rejected", "Fraudulent", "Suspended", "Inactive"].includes(item.Status)).length,
-    };
-    updateState({ tabCounts: counts });
-  };
-
-  // API functions
-  const fetchOutletTypes = async () => {
-    updateState({ outletTypesLoading: true });
-    try {
-      const data = await apiCall("/outlet_types");
-      const transformedOptions = data.data?.map(item => ({
-        value: item.id,
-        label: item.name || item.outlet_type || item.type,
-      })) || [];
-      updateState({ outletOptions: transformedOptions });
-    } catch (error) {
-      console.error("Error fetching outlet types:", error);
-      message.error("Failed to fetch outlet types. Using default options.");
-    } finally {
-      updateState({ outletTypesLoading: false });
-    }
-  };
-
-  const fetchBusinessList = async (page = 1, perPage = 10) => {
+  // Fetch data for specific tab
+  const fetchDataByTab = async (tabKey, page = 1, perPage = 10) => {
     updateState({ loading: true });
     try {
-      const data = await apiCall(`/business-list?page=${page}&per_page=${perPage}`);
+      const endpoint = `${API_ENDPOINTS[tabKey]}?page=${page}&per_page=${perPage}`;
+      const data = await apiCall(endpoint);
+      
       const transformedData = data.data?.map((item, index) => ({
-        id: item.id || `${page}-${index}`,
+        id: item.id || `${tabKey}-${page}-${index}`,
         business_id: item.id,
         outlet_type_id: item.outlet_type_id,
         Img: blogimg4,
         Business: item.business_name || "N/A",
         OutletType: item.outlet_type || "N/A",
-        Status: item.status || "Pending",
+        Status: item.status || getDefaultStatusForTab(tabKey),
         Email: item.email || "N/A",
         ...item,
       })) || [];
 
+      // Update current tab data
       updateState({
         datasource: transformedData,
         pagination: {
@@ -120,38 +96,116 @@ const RestaurantList = () => {
           pageSize: perPage,
         }
       });
-      updateTabCounts(transformedData);
+
+      // Update tab count for current tab
+      updateTabCount(tabKey, data.total || data.pagination?.total || transformedData.length);
+
     } catch (error) {
-      console.error("Error fetching business list:", error);
-      message.error("Failed to fetch business list. Please try again.");
+      console.error(`Error fetching ${tabKey} business list:`, error);
+      message.error(`Failed to fetch ${tabKey} business list. Please try again.`);
+      updateState({ datasource: [] });
     } finally {
       updateState({ loading: false });
     }
   };
 
-  const updateBusiness = async (businessId, updates) => {
+  // Get default status based on tab
+  const getDefaultStatusForTab = (tabKey) => {
+    const statusMap = {
+      pending: "Pending",
+      approved: "Approved", 
+      rejected: "Rejected",
+      query: "Query"
+    };
+    return statusMap[tabKey] || "Unknown";
+  };
+
+  // Update individual tab count
+  const updateTabCount = (tabKey, count) => {
+    updateState(prevState => ({
+      tabCounts: {
+        ...prevState.tabCounts,
+        [tabKey]: count
+      }
+    }));
+  };
+
+  // Fetch all tab counts (optional - for initial load)
+  const fetchAllTabCounts = async () => {
+    const tabs = ['pending', 'approved', 'rejected', 'query'];
+    
+    for (const tab of tabs) {
+      try {
+        const endpoint = `${API_ENDPOINTS[tab]}?page=1&per_page=1`;
+        const data = await apiCall(endpoint);
+        updateTabCount(tab, data.total || data.pagination?.total || 0);
+      } catch (error) {
+        console.error(`Error fetching ${tab} count:`, error);
+        updateTabCount(tab, 0);
+      }
+    }
+  };
+
+  // const fetchOutletTypes = async () => {
+  //   updateState({ outletTypesLoading: true });
+  //   try {
+  //     const data = await apiCall(API_ENDPOINTS.outletTypes);
+  //     const transformedOptions = data.data?.map(item => ({
+  //       value: item.id,
+  //       label: item.name || item.outlet_type || item.type,
+  //     })) || [];
+  //     updateState({ outletOptions: transformedOptions });
+  //   } catch (error) {
+  //     console.error("Error fetching outlet types:", error);
+  //     message.error("Failed to fetch outlet types. Using default options.");
+  //   } finally {
+  //     updateState({ outletTypesLoading: false });
+  //   }
+  // };
+
+  const updateBusinessStatus = async (businessId, updates) => {
     updateState({ updateLoading: true });
     try {
-      return await apiCall("/update-business", {
+      // Using the update-business-status endpoint
+      const response = await apiCall(API_ENDPOINTS.updateStatus, {
         method: "PUT",
-        body: JSON.stringify({ business_id: businessId, ...updates }),
+        body: JSON.stringify({ 
+          business_id: businessId, 
+          ...updates 
+        }),
       });
+      return response;
+    } catch (error) {
+      console.error("Error updating business status:", error);
+      throw error;
     } finally {
       updateState({ updateLoading: false });
     }
   };
 
   const handleBusinessAction = async (businessId, action) => {
-    const statusMap = { approve: "Approved", reject: "Rejected", fraud: "Fraudulent" };
+    const statusMap = { 
+      approve: "Approved", 
+      reject: "Rejected", 
+      fraud: "Fraudulent" 
+    };
+    
     try {
-      await updateBusiness(businessId, { status: statusMap[action] });
+      await updateBusinessStatus(businessId, { status: statusMap[action] });
       message.success(`Business ${action}d successfully!`);
       
-      const updatedData = state.datasource.map(item =>
-        item.business_id === businessId ? { ...item, Status: statusMap[action] } : item
+      // Remove item from current view since it will move to different tab
+      const updatedData = state.datasource.filter(item => 
+        item.business_id !== businessId
       );
       updateState({ datasource: updatedData });
-      updateTabCounts(updatedData);
+      
+      // Refresh current tab data to get accurate count
+      await fetchDataByTab(state.activeTab, state.pagination.current, state.pagination.pageSize);
+      
+      // Optionally refresh all tab counts
+      await fetchAllTabCounts();
+      
     } catch (error) {
       message.error(`Failed to ${action} business. Please try again.`);
     }
@@ -181,28 +235,44 @@ const RestaurantList = () => {
         updates.outlet_type_id = state.editSelectedOption.value;
       }
 
-      await updateBusiness(state.editRecord.business_id, updates);
+      await updateBusinessStatus(state.editRecord.business_id, updates);
       message.success("Business updated successfully!");
 
-      const updatedData = state.datasource.map(item =>
-        item.business_id === state.editRecord.business_id
-          ? {
-              ...item,
-              Status: state.editStatusOption.value,
-              OutletType: state.editSelectedOption ? state.editSelectedOption.label : item.OutletType,
-              outlet_type_id: state.editSelectedOption ? state.editSelectedOption.value : item.outlet_type_id,
-            }
-          : item
-      );
+      // If status changed, item might move to different tab
+      const statusChanged = state.editStatusOption.value !== state.editRecord.Status;
+      
+      if (statusChanged) {
+        // Remove from current view and refresh
+        const updatedData = state.datasource.filter(item => 
+          item.business_id !== state.editRecord.business_id
+        );
+        updateState({ datasource: updatedData });
+        
+        // Refresh current tab
+        await fetchDataByTab(state.activeTab, state.pagination.current, state.pagination.pageSize);
+        await fetchAllTabCounts();
+      } else {
+        // Update in place if status didn't change
+        const updatedData = state.datasource.map(item =>
+          item.business_id === state.editRecord.business_id
+            ? {
+                ...item,
+                Status: state.editStatusOption.value,
+                OutletType: state.editSelectedOption ? state.editSelectedOption.label : item.OutletType,
+                outlet_type_id: state.editSelectedOption ? state.editSelectedOption.value : item.outlet_type_id,
+              }
+            : item
+        );
+        updateState({ datasource: updatedData });
+      }
 
       updateState({
-        datasource: updatedData,
         isEditModalVisible: false,
         editRecord: null,
         editSelectedOption: null,
         editStatusOption: null
       });
-      updateTabCounts(updatedData);
+
     } catch (error) {
       message.error("Failed to update business. Please try again.");
     }
@@ -252,8 +322,13 @@ const RestaurantList = () => {
 
   const renderStatus = (text) => {
     const statusColors = {
-      Pending: "status-yellow", Approved: "status-green", Active: "status-green",
-      Rejected: "status-red", Fraudulent: "status-orange", Inactive: "status-gray"
+      Pending: "status-yellow", 
+      Approved: "status-green", 
+      Active: "status-green",
+      Rejected: "status-red", 
+      Fraudulent: "status-orange", 
+      Inactive: "status-gray",
+      Query: "status-blue"
     };
     return <span className={`custom-badge ${statusColors[text] || "status-gray"}`}>{text}</span>;
   };
@@ -296,16 +371,22 @@ const RestaurantList = () => {
 
   // Effects and handlers
   useEffect(() => {
-    fetchOutletTypes();
-    fetchBusinessList(1, 10);
+    // fetchOutletTypes();
+    fetchAllTabCounts(); // Get all tab counts initially
+    fetchDataByTab("pending", 1, 10); // Load pending data by default
   }, []);
 
   const handleTableChange = (paginationInfo) => {
-    fetchBusinessList(paginationInfo.current, paginationInfo.pageSize);
+    fetchDataByTab(state.activeTab, paginationInfo.current, paginationInfo.pageSize);
   };
 
   const handleTabChange = (key) => {
-    updateState({ activeTab: key, pagination: { ...state.pagination, current: 1 } });
+    updateState({ 
+      activeTab: key, 
+      pagination: { ...state.pagination, current: 1 },
+      datasource: [] // Clear current data
+    });
+    fetchDataByTab(key, 1, 10);
   };
 
   // Render tab content
@@ -326,13 +407,13 @@ const RestaurantList = () => {
           <Table
             pagination={{
               ...state.pagination,
-              total: getFilteredData().length,
               showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} entries`,
               onShowSizeChange,
               itemRender,
+              onChange: handleTableChange,
             }}
             columns={columns}
-            dataSource={getFilteredData()}
+            dataSource={state.datasource}
             rowKey={(record) => record.id}
           />
         </Spin>
@@ -376,11 +457,14 @@ const RestaurantList = () => {
                         "Review and approve/reject new restaurant applications."
                       )}
                     </TabPane>
-                    <TabPane tab={`Approved & Rejected (${state.tabCounts.approved})`} key="approved">
-                      {renderTabContent("Approved & Rejected Restaurants", regularColumns)}
+                    <TabPane tab={`Approved (${state.tabCounts.approved})`} key="approved">
+                      {renderTabContent("Approved Restaurants", regularColumns)}
                     </TabPane>
-                    <TabPane tab={`Others (${state.tabCounts.others})`} key="others">
-                      {renderTabContent("Other Status Restaurants", regularColumns)}
+                    <TabPane tab={`Rejected (${state.tabCounts.rejected})`} key="rejected">
+                      {renderTabContent("Rejected Restaurants", regularColumns)}
+                    </TabPane>
+                    <TabPane tab={`Query (${state.tabCounts.query})`} key="query">
+                      {renderTabContent("Query Status Restaurants", regularColumns)}
                     </TabPane>
                   </Tabs>
                 </div>
@@ -421,7 +505,7 @@ const RestaurantList = () => {
                 </div>
               </div>
 
-              <div className="col-12 col-md-6">
+              {/* <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
                   <label>Outlet Type <span style={{ color: "red" }}>*</span></label>
                   <Select
@@ -444,7 +528,7 @@ const RestaurantList = () => {
                     }}
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="col-12 col-md-6">
                 <div className="form-group local-forms">
