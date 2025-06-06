@@ -1,16 +1,106 @@
-import React, { useState } from "react";
-import { Table } from "antd";
+import React, { useState, useEffect } from "react";
+import { Table, message, Spin, Card, Avatar, Space, Tag, Button, Row, Col } from "antd";
 import { Link } from "react-router-dom";
+import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Header from "../Header";
 import Sidebar from "../Sidebar";
-import { imagesend } from "../imagepath";
+import { imagesend, blogimg4 } from "../imagepath";
 import { onShowSizeChange, itemRender } from "../Pagination";
 
 const ManagementList = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [datasource, setDatasource] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
 
-  const datasource = []; // Empty array as in original
+  // API configuration
+  const API_CONFIG = {
+    baseUrl: "http://167.71.228.10:3000/api/admin",
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo"
+  };
+
+  // Fallback image URL or use your default image
+  const getImageUrl = (profilePicture) => {
+    if (profilePicture && profilePicture.startsWith('http')) {
+      return profilePicture;
+    }
+    return blogimg4;
+  };
+
+  // Fetch approved restaurants
+  const fetchApprovedRestaurants = async (page = 1, perPage = 10) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${API_CONFIG.baseUrl}/approved-business-list?page=${page}&per_page=${perPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${API_CONFIG.token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const transformedData = data.data?.map((item, index) => {
+        console.log('Item profile_picture:', item.profile_picture);
+        
+        return {
+          id: item.id || `approved-${page}-${index}`,
+          Name: item.business_name || "N/A",
+          BusinessName: item.business_name || "N/A",
+          RestaurantCount: "1",
+          OutletType: item.outlet_type || "N/A",
+          TotalOrder: "0",
+          PendingOrder: "0",
+          RejectOrder: "0",
+          Status: "Legal",
+          Email: item.email || "N/A",
+          Img: getImageUrl(item.profile_picture),
+          business_id: item.id,
+          outlet_type_id: item.outlet_type_id,
+          owner_name: item.owner_name || "N/A",
+          mobile_number: item.mobile_number || "N/A",
+          location: item.location || "N/A",
+          ...item,
+        };
+      }) || [];
+
+      console.log('Transformed data:', transformedData);
+
+      setDatasource(transformedData);
+      setPagination({
+        current: page,
+        pageSize: perPage,
+        total: data.total || data.pagination?.total || transformedData.length,
+      });
+
+    } catch (error) {
+      console.error("Error fetching approved restaurants:", error);
+      message.error("Failed to fetch approved restaurants. Please try again.");
+      setDatasource([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApprovedRestaurants(1, 10);
+  }, []);
+
+  const handleTableChange = (paginationInfo) => {
+    fetchApprovedRestaurants(paginationInfo.current, paginationInfo.pageSize);
+  };
 
   const openModal = (type, record = null) => {
     setActiveModal(type);
@@ -28,81 +118,205 @@ const ManagementList = () => {
     closeModal();
   };
 
+  const handleImageError = (e) => {
+    console.log('Image failed to load:', e.target.src);
+    e.target.src = blogimg4;
+  };
+
   const columns = [
     {
-      title: "Restaurant Name",
-      dataIndex: "Name",
+      title: "Restaurant Details",
+      key: "restaurant",
+      width: 280,
       render: (text, record) => (
-        <h2 className="profile-image">
-          <Link to="#" className="avatar avatar-sm me-2">
-            <img className="avatar-img rounded-circle" src={record.Img} alt="rounded circle" />
-          </Link>
-          <Link to="#">{record.Name}</Link>
-        </h2>
-      ),
-    },
-    { title: "Business Name", dataIndex: "BusinessName" },
-    { title: "Restaurant Count", dataIndex: "RestaurantCount" },
-    { title: "Outlet Type", dataIndex: "OutletType" },
-    { title: "Total Order", dataIndex: "TotalOrder" },
-    { title: "Pending Order", dataIndex: "PendingOrder" },
-    { title: "Reject Order", dataIndex: "RejectOrder" },
-    {
-      title: 'Status',
-      dataIndex: 'Status',
-      render: (text) => (
-        <span className={`custom-badge ${text === "Legal" ? "status-green" : "status-red"}`}>
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: "",
-      render: (_, record) => (
-        <div className="text-end">
-          <div className="dropdown dropdown-action">
-            <Link to="#" className="action-icon dropdown-toggle" data-bs-toggle="dropdown">
-              <i className="fas fa-ellipsis-v" />
-            </Link>
-            <div className="dropdown-menu dropdown-menu-end">
-              <Link className="dropdown-item" to="#" onClick={() => openModal('view', record)}>
-                <i className="far fa-eye me-2" /> View
-              </Link>
-              <Link className="dropdown-item" to="#" onClick={() => openModal('edit', record)}>
-                <i className="far fa-edit me-2" /> Edit
-              </Link>
-              <Link className="dropdown-item" to="#" data-bs-toggle="modal" data-bs-target="#delete_patient">
-                <i className="fa fa-trash-alt m-r-5"></i> Delete
-              </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Avatar 
+            size={48}
+            src={record.Img}
+            style={{ 
+              border: '2px solid #f0f0f0',
+              flexShrink: 0
+            }}
+            onError={handleImageError}
+          />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ 
+              fontWeight: 600, 
+              color: '#403222', 
+              fontSize: '14px',
+              marginBottom: '2px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {record.Name}
+            </div>
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#666',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {record.owner_name}
             </div>
           </div>
         </div>
       ),
     },
+    { 
+      title: "Contact Info", 
+      key: "contact",
+      width: 200,
+      render: (_, record) => (
+        <div>
+          <div style={{ fontSize: '13px', marginBottom: '4px', color: '#403222' }}>
+            {record.Email}
+          </div>
+          <div style={{ fontSize: '13px', color: '#666' }}>
+            {record.mobile_number}
+          </div>
+        </div>
+      )
+    },
+    { 
+      title: "Location", 
+      dataIndex: "location",
+      width: 150,
+      render: (text) => (
+        <div style={{ 
+          fontSize: '13px', 
+          color: '#666',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {text}
+        </div>
+      )
+    },
+    { 
+      title: "Outlet Type", 
+      dataIndex: "OutletType",
+      width: 120,
+      render: (text) => (
+        <Tag 
+          color="blue" 
+          style={{ 
+            borderRadius: '16px',
+            fontSize: '12px',
+            padding: '2px 12px'
+          }}
+        >
+          {text}
+        </Tag>
+      )
+    },
+    {
+      title: 'Status',
+      dataIndex: 'Status',
+      width: 100,
+      render: (text) => (
+        <Tag 
+          color={text === "Legal" ? "success" : "error"}
+          style={{ 
+            borderRadius: '16px',
+            fontSize: '12px',
+            padding: '2px 12px',
+            fontWeight: 500
+          }}
+        >
+          {text}
+        </Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 120,
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => openModal('view', record)}
+            style={{ color: '#c1a078' }}
+            size="small"
+          />
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => openModal('edit', record)}
+            style={{ color: '#c1a078' }}
+            size="small"
+          />
+          <Button
+            type="text"
+            icon={<DeleteOutlined />}
+            style={{ color: '#ff4d4f' }}
+            size="small"
+            data-bs-toggle="modal" 
+            data-bs-target="#delete_patient"
+          />
+        </Space>
+      ),
+    },
   ];
 
-  const renderFormField = (label, name, type = "text", required = true) => (
-    <div className="col-12 col-md-6">
-      <div className="form-group local-forms">
-        <label>{label} {required && <span className="login-danger">*</span>}</label>
+  const renderFormField = (label, name, type = "text", required = true, colSpan = 6) => (
+    <div className={`col-12 col-md-${colSpan}`}>
+      <div className="form-group" style={{ marginBottom: '20px' }}>
+        <label style={{ 
+          fontSize: '14px', 
+          fontWeight: 500, 
+          color: '#403222',
+          marginBottom: '8px',
+          display: 'block'
+        }}>
+          {label} {required && <span style={{ color: '#ff4d4f' }}>*</span>}
+        </label>
         <input
           className="form-control"
           type={type}
           name={name}
           defaultValue={selectedRecord?.[name] || ""}
           required={required}
+          style={{
+            borderRadius: '6px',
+            border: '1px solid #d9d9d9',
+            padding: '10px 12px',
+            fontSize: '14px'
+          }}
           {...(type === "number" && { step: "1", placeholder: "Enter count" })}
         />
       </div>
     </div>
   );
 
-  const renderInfoCard = (title, value) => (
-    <div className="col-md-6 mb-3">
-      <div className="card bg-light">
-        <div className="card-body p-3">
-          <h6 className="card-title text-muted mb-1">{title}</h6>
-          <p className="card-text h5 mb-0" style={{ color: "#403222" }}>{value}</p>
+  const renderInfoCard = (title, value, colSpan = 6) => (
+    <div className={`col-md-${colSpan} mb-3`}>
+      <div style={{
+        background: '#fafafa',
+        border: '1px solid #f0f0f0',
+        borderRadius: '8px',
+        padding: '16px'
+      }}>
+        <div style={{ 
+          fontSize: '12px', 
+          color: '#8c8c8c', 
+          marginBottom: '4px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}>
+          {title}
+        </div>
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: 500, 
+          color: '#403222',
+          wordBreak: 'break-word'
+        }}>
+          {value || 'N/A'}
         </div>
       </div>
     </div>
@@ -112,45 +326,92 @@ const ManagementList = () => {
     if (!activeModal || !selectedRecord) return null;
 
     const isView = activeModal === 'view';
-    const isEdit = activeModal === 'edit';
 
     return (
       <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role="dialog">
         <div className="modal-dialog modal-lg modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h4 className="modal-title" style={{ color: "#403222" }}>
-                {isView ? 'View Details' : 'Edit Management'}
+          <div className="modal-content" style={{ borderRadius: '12px', border: 'none' }}>
+            <div className="modal-header" style={{ 
+              borderBottom: '1px solid #f0f0f0',
+              padding: '20px 24px'
+            }}>
+              <h4 className="modal-title" style={{ 
+                color: "#403222", 
+                fontSize: '18px',
+                fontWeight: 600,
+                margin: 0
+              }}>
+                {isView ? 'Restaurant Details' : 'Edit Restaurant'}
               </h4>
-              <button type="button" className="btn-close" onClick={closeModal}></button>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={closeModal}
+                style={{ fontSize: '16px' }}
+              ></button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body" style={{ padding: '24px' }}>
               {isView ? (
-                <div className="card">
-                  <div className="card-body">
-                    <div className="row mb-4">
-                      <div className="col-12 text-center">
-                        <img className="avatar-img rounded-circle mb-3" src={selectedRecord.Img} 
-                             alt="Restaurant" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
-                        <h4 style={{ color: "#403222" }}>{selectedRecord.Name}</h4>
-                      </div>
+                <div>
+                  <div className="row mb-4">
+                    <div className="col-12 text-center">
+                      <Avatar 
+                        size={80}
+                        src={selectedRecord.Img}
+                        style={{ 
+                          border: '3px solid #f0f0f0',
+                          marginBottom: '16px'
+                        }}
+                        onError={handleImageError}
+                      />
+                      <h4 style={{ 
+                        color: "#403222", 
+                        fontSize: '20px',
+                        fontWeight: 600,
+                        margin: 0
+                      }}>
+                        {selectedRecord.Name}
+                      </h4>
                     </div>
-                    <div className="row">
-                      {renderInfoCard("Business Name", selectedRecord.BusinessName)}
-                      {renderInfoCard("Restaurant Count", selectedRecord.RestaurantCount)}
-                      {renderInfoCard("Outlet Type", selectedRecord.OutletType)}
-                      {renderInfoCard("Total Orders", selectedRecord.TotalOrder)}
-                      {renderInfoCard("Pending Orders", selectedRecord.PendingOrder)}
-                      {renderInfoCard("Rejected Orders", selectedRecord.RejectOrder)}
-                      <div className="col-12">
-                        <div className="card bg-light">
-                          <div className="card-body p-3 text-center">
-                            <h6 className="card-title text-muted mb-1">Status</h6>
-                            <span className={`badge fs-6 px-3 py-2 ${selectedRecord.Status === "Legal" ? "bg-success" : "bg-danger"}`}>
-                              {selectedRecord.Status}
-                            </span>
-                          </div>
+                  </div>
+                  <div className="row">
+                    {renderInfoCard("Business Name", selectedRecord.BusinessName)}
+                    {renderInfoCard("Owner Name", selectedRecord.owner_name)}
+                    {renderInfoCard("Email Address", selectedRecord.Email)}
+                    {renderInfoCard("Mobile Number", selectedRecord.mobile_number)}
+                    {renderInfoCard("Location", selectedRecord.location)}
+                    {renderInfoCard("Outlet Type", selectedRecord.OutletType)}
+                    {renderInfoCard("GST Number", selectedRecord.gst_no)}
+                    {renderInfoCard("FSSAI Number", selectedRecord.fssai_no)}
+                    {renderInfoCard("PAN Number", selectedRecord.pan)}
+                    <div className="col-12">
+                      <div style={{
+                        background: '#fafafa',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#8c8c8c', 
+                          marginBottom: '8px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Status
                         </div>
+                        <Tag 
+                          color={selectedRecord.Status === "Legal" ? "success" : "error"}
+                          style={{ 
+                            fontSize: '14px',
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            fontWeight: 500
+                          }}
+                        >
+                          {selectedRecord.Status}
+                        </Tag>
                       </div>
                     </div>
                   </div>
@@ -160,41 +421,80 @@ const ManagementList = () => {
                   <div className="row">
                     {renderFormField("Restaurant Name", "Name")}
                     {renderFormField("Business Name", "BusinessName")}
-                    {renderFormField("Restaurant Count", "RestaurantCount", "number")}
+                    {renderFormField("Owner Name", "owner_name")}
+                    {renderFormField("Email Address", "Email", "email")}
+                    {renderFormField("Mobile Number", "mobile_number", "tel")}
+                    {renderFormField("Location", "location")}
                     {renderFormField("Outlet Type", "OutletType")}
-                    {renderFormField("Total Order", "TotalOrder", "number")}
-                    {renderFormField("Pending Order", "PendingOrder", "number")}
-                    {renderFormField("Reject Order", "RejectOrder", "number")}
+                    {renderFormField("GST Number", "gst_no")}
+                    {renderFormField("FSSAI Number", "fssai_no")}
+                    {renderFormField("PAN Number", "pan")}
                     <div className="col-12 col-md-6">
-                      <div className="form-group select-gender">
-                        <label className="gen-label">Status <span className="login-danger">*</span></label>
-                        {["Legal", "Fraud"].map(status => (
-                          <div key={status} className="form-check-inline">
-                            <label className="form-check-label">
-                              <input type="radio" name="editStatus" className="form-check-input" 
-                                     value={status} defaultChecked={selectedRecord.Status === status} />
+                      <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 500, 
+                          color: '#403222',
+                          marginBottom: '12px',
+                          display: 'block'
+                        }}>
+                          Status <span style={{ color: '#ff4d4f' }}>*</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                          {["Legal", "Fraud"].map(status => (
+                            <label key={status} style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '8px',
+                              cursor: 'pointer',
+                              fontSize: '14px'
+                            }}>
+                              <input 
+                                type="radio" 
+                                name="editStatus" 
+                                value={status} 
+                                defaultChecked={selectedRecord.Status === status}
+                                style={{ marginRight: '4px' }}
+                              />
                               {status}
                             </label>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </form>
               )}
             </div>
-            <div className="modal-footer">
-              <button type={isEdit ? "submit" : "button"} className="btn btn-primary" 
-                      onClick={isView ? closeModal : undefined}
-                      style={{ backgroundColor: "#c1a078", borderColor: "#c1a078", color: "#fff" }}>
-                {isView ? 'Close' : 'Update'}
-              </button>
-              {isEdit && (
-                <button type="button" className="btn btn-primary me-2" onClick={closeModal}
-                        style={{ backgroundColor: "#c1a078", borderColor: "#c1a078", color: "#fff" }}>
-                  Cancel
-                </button>
-              )}
+            <div className="modal-footer" style={{ 
+              borderTop: '1px solid #f0f0f0',
+              padding: '20px 24px'
+            }}>
+              <Space>
+                <Button 
+                  onClick={closeModal}
+                  style={{ 
+                    borderRadius: '6px',
+                    padding: '8px 20px'
+                  }}
+                >
+                  {isView ? 'Close' : 'Cancel'}
+                </Button>
+                {!isView && (
+                  <Button 
+                    type="primary"
+                    onClick={(e) => handleSubmit(e, 'edit')}
+                    style={{ 
+                      backgroundColor: "#c1a078", 
+                      borderColor: "#c1a078",
+                      borderRadius: '6px',
+                      padding: '8px 20px'
+                    }}
+                  >
+                    Update
+                  </Button>
+                )}
+              </Space>
             </div>
           </div>
         </div>
@@ -207,47 +507,107 @@ const ManagementList = () => {
       <Header />
       <Sidebar id="menu-item3" id1="menu-items3" activeClassName="staff-list" />
       <div className="page-wrapper">
-        <div className="content">
-          <div className="page-header">
-            <div className="row">
-              <div className="col-sm-12">
-                <ul className="breadcrumb">
-                  <li className="breadcrumb-item">
-                    <Link style={{ color: "#403222" }} to="#">Management</Link>
-                  </li>
-                </ul>
-              </div>
+        <div className="content" style={{ padding: '24px' }}>
+          {/* Page Header */}
+          <div style={{ marginBottom: '24px' }}>
+            <nav style={{ marginBottom: '16px' }}>
+              <ol className="breadcrumb" style={{ 
+                background: 'transparent', 
+                padding: 0, 
+                margin: 0,
+                fontSize: '14px'
+              }}>
+                <li className="breadcrumb-item">
+                  <Link style={{ color: "#c1a078", textDecoration: 'none' }} to="#">
+                    Management
+                  </Link>
+                </li>
+              </ol>
+            </nav>
+            <div style={{
+              background: 'linear-gradient(135deg, #c1a078 0%, #d4b896 100%)',
+              borderRadius: '12px',
+              padding: '24px',
+              color: 'white'
+            }}>
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: '24px', 
+                fontWeight: 600,
+                marginBottom: '4px'
+              }}>
+                Restaurant Management
+              </h2>
+              <p style={{ 
+                margin: 0, 
+                opacity: 0.9,
+                fontSize: '14px'
+              }}>
+                Manage approved restaurants and their details
+              </p>
             </div>
           </div>
-          <div className="row">
-            <div className="col-sm-12">
-              <div className="card card-table show-entire">
-                <div className="card-body">
-                  <div className="page-table-header mb-2">
-                    <div className="row align-items-center">
-                      <div className="col">
-                        <div className="doctor-table-blk">
-                          <h3 style={{ color: "#403222" }}>Management List</h3>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="table-responsive doctor-list">
-                    <Table
-                      pagination={{
-                        showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} entries`,
-                        onShowSizeChange,
-                        itemRender,
-                      }}
-                      columns={columns}
-                      dataSource={datasource}
-                      rowKey="id"
-                    />
-                  </div>
-                </div>
-              </div>
+
+          {/* Main Content */}
+          <Card 
+            style={{ 
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #f0f0f0'
+            }}
+            bodyStyle={{ padding: '24px' }}
+          >
+            <div style={{ marginBottom: '20px' }}>
+              <Row justify="space-between" align="middle">
+                <Col>
+                  <h3 style={{ 
+                    color: "#403222", 
+                    margin: 0,
+                    fontSize: '18px',
+                    fontWeight: 600
+                  }}>
+                    Restaurant List
+                  </h3>
+                  <p style={{ 
+                    color: "#8c8c8c", 
+                    margin: 0,
+                    fontSize: '14px',
+                    marginTop: '4px'
+                  }}>
+                    {pagination.total} restaurants found
+                  </p>
+                </Col>
+              </Row>
             </div>
-          </div>
+
+            <Spin spinning={loading}>
+              <Table
+                columns={columns}
+                dataSource={datasource}
+                rowKey="id"
+                pagination={{
+                  ...pagination,
+                  showTotal: (total, range) => 
+                    `Showing ${range[0]}-${range[1]} of ${total} entries`,
+                  onShowSizeChange,
+                  itemRender,
+                  onChange: handleTableChange,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  style: { marginTop: '16px' }
+                }}
+                style={{
+                  '.ant-table-thead > tr > th': {
+                    backgroundColor: '#fafafa',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    color: '#403222'
+                  }
+                }}
+                scroll={{ x: 1000 }}
+              />
+            </Spin>
+          </Card>
         </div>
       </div>
 
@@ -256,14 +616,32 @@ const ManagementList = () => {
       {/* Delete Modal */}
       <div id="delete_patient" className="modal fade delete-modal" role="dialog">
         <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body text-center">
-              <img src={imagesend} alt="#" width={50} height={46} />
-              <h3>Are you sure want to delete this?</h3>
-              <div className="m-t-20">
-                <Link to="#" className="btn btn-white me-2" data-bs-dismiss="modal">Close</Link>
-                <button type="submit" className="btn btn-danger">Delete</button>
-              </div>
+          <div className="modal-content" style={{ borderRadius: '12px', border: 'none' }}>
+            <div className="modal-body text-center" style={{ padding: '32px' }}>
+              <img src={imagesend} alt="Delete" width={50} height={46} style={{ marginBottom: '16px' }} />
+              <h3 style={{ 
+                color: '#403222', 
+                fontSize: '18px',
+                fontWeight: 600,
+                marginBottom: '8px'
+              }}>
+                Confirm Deletion
+              </h3>
+              <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
+                Are you sure you want to delete this restaurant?
+              </p>
+              <Space>
+                <Button data-bs-dismiss="modal" style={{ borderRadius: '6px' }}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="primary" 
+                  danger 
+                  style={{ borderRadius: '6px' }}
+                >
+                  Delete
+                </Button>
+              </Space>
             </div>
           </div>
         </div>
