@@ -57,21 +57,32 @@ const ManagementList = () => {
         
         return {
           id: item.id || `approved-${page}-${index}`,
-          Name: item.business_name || "N/A",
-          BusinessName: item.business_name || "N/A",
-          RestaurantCount: "1",
+          Img: getImageUrl(item.profile_picture),
+          owner_name: item.owner_name || "N/A",
+          mobile_number: item.mobile_number || "N/A",
+          Email: item.email || "N/A",
+          Business_type: item.business_type || "N/A",
           OutletType: item.outlet_type || "N/A",
+          BusinessName: item.business_name || "N/A",
+          legal_entity_name: item.legal_entity_name || "N/A",
+          franchise_code: item.franchise_code || "N/A",
+          Name: item.business_name || "N/A",
+          Address: item.address || "N/A",
+          Location: item.location || "N/A",
+          Pincode: item.pincode || "N/A",
+          Landmark: item.landmark || "N/A",
+          City: item.city || "N/A",
+          gst_no: item.gst_no || "N/A",
+          fssai_no: item.fssai_no || "N/A",
+          pan: item.pan || "N/A",
+          RestaurantCount: "1",
           TotalOrder: "0",
           PendingOrder: "0",
           RejectOrder: "0",
-          Status: "Legal",
-          Email: item.email || "N/A",
-          Img: getImageUrl(item.profile_picture),
+          Status: "Legal", // Default status, can be updated based on actual data",
+          //   Status: item.status || "N/A",
           business_id: item.id,
           outlet_type_id: item.outlet_type_id,
-          owner_name: item.owner_name || "N/A",
-          mobile_number: item.mobile_number || "N/A",
-          location: item.location || "N/A",
           ...item,
         };
       }) || [];
@@ -376,14 +387,22 @@ const ManagementList = () => {
                   </div>
                   <div className="row">
                     {renderInfoCard("Business Name", selectedRecord.BusinessName)}
+                    {renderInfoCard("Legal Entity Name", selectedRecord.legal_entity_name)}
+                    {renderInfoCard("Franchise Code", selectedRecord.franchise_code)}
                     {renderInfoCard("Owner Name", selectedRecord.owner_name)}
                     {renderInfoCard("Email Address", selectedRecord.Email)}
                     {renderInfoCard("Mobile Number", selectedRecord.mobile_number)}
                     {renderInfoCard("Location", selectedRecord.location)}
+                    {renderInfoCard("Business Type", selectedRecord.Business_type)}
                     {renderInfoCard("Outlet Type", selectedRecord.OutletType)}
                     {renderInfoCard("GST Number", selectedRecord.gst_no)}
                     {renderInfoCard("FSSAI Number", selectedRecord.fssai_no)}
                     {renderInfoCard("PAN Number", selectedRecord.pan)}
+                    {renderInfoCard("Address", selectedRecord.Address)}
+                    {renderInfoCard("Location", selectedRecord.Location)}
+                    {renderInfoCard("Pincode", selectedRecord.Pincode)}
+                    {renderInfoCard("Landmark", selectedRecord.Landmark)}
+                    {renderInfoCard("City", selectedRecord.City)}
                     <div className="col-12">
                       <div style={{
                         background: '#fafafa',
@@ -419,16 +438,24 @@ const ManagementList = () => {
               ) : (
                 <form onSubmit={(e) => handleSubmit(e, 'edit')}>
                   <div className="row">
-                    {renderFormField("Restaurant Name", "Name")}
+                    {/* {renderFormField("Restaurant Name", "Name")} */}
                     {renderFormField("Business Name", "BusinessName")}
+                    {renderFormField("Legal Entity Name", "legal_entity_name")}
+                    {renderFormField("Franchise Code", "franchise_code")}
                     {renderFormField("Owner Name", "owner_name")}
                     {renderFormField("Email Address", "Email", "email")}
                     {renderFormField("Mobile Number", "mobile_number", "tel")}
                     {renderFormField("Location", "location")}
+                    {renderFormField("Business Type", "Business_type")}
                     {renderFormField("Outlet Type", "OutletType")}
                     {renderFormField("GST Number", "gst_no")}
                     {renderFormField("FSSAI Number", "fssai_no")}
                     {renderFormField("PAN Number", "pan")}
+                    {renderFormField("Address", "Address")}
+                    {renderFormField("Location", "Location")}
+                    {renderFormField("Pincode", "Pincode")}
+                    {renderFormField("Landmark", "Landmark")}
+                    {renderFormField("City", "City")}
                     <div className="col-12 col-md-6">
                       <div className="form-group" style={{ marginBottom: '20px' }}>
                         <label style={{ 
@@ -518,7 +545,7 @@ const ManagementList = () => {
                 fontSize: '14px'
               }}>
                 <li className="breadcrumb-item">
-                  <Link style={{ color: "#c1a078", textDecoration: 'none' }} to="#">
+                  <Link style={{ color: "#403222" }} to="#">
                     Management
                   </Link>
                 </li>
@@ -541,7 +568,8 @@ const ManagementList = () => {
               <p style={{ 
                 margin: 0, 
                 opacity: 0.9,
-                fontSize: '14px'
+                fontSize: '14px',
+                color: '#403222',
               }}>
                 Manage approved restaurants and their details
               </p>

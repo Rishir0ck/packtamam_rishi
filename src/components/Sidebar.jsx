@@ -135,14 +135,14 @@ const Sidebar = (props) => {
                   </Link>
                 </li>
 {/* Inventory */}
-                <li className="submenu">
+                {/* <li className="submenu">
                   <Link to="/inventorylist" id="menu-item3" onClick={(e) => handleClick(e, "menu-item3", "menu-items3")}>
                     <span className="menu-side">
                       <img className='img-fluid' src={menuicon08} alt="" />
                     </span>{" "}
                     <span style={{ color: '#c1a078'}}> Inventory </span>
                   </Link>
-                </li>
+                </li> */}
 {/* Pricing */}
                 {/* <li className="submenu">
                   <Link to="#" id="menu-item5" onClick={(e) => handleClick(e, "menu-item5", "menu-items5")}>
@@ -164,16 +164,16 @@ const Sidebar = (props) => {
                   </ul>
                 </li> */}
 {/* Users */}
-                <li className="submenu">
+                {/* <li className="submenu">
                   <Link to="/userlist" id="menu-item1" onClick={(e) => {handleClick(e, "menu-item1", "menu-items1")}}>
                     <span className="menu-side">
                       <img className='img-fluid' src={doctor} alt="" />
                     </span>{" "}
                     <span style={{ color: '#c1a078'}}> Users </span> 
                   </Link>
-                </li>
+                </li> */}
 
-                {/* Logout - Fixed to be inside the menu structure */}
+{/* Logout - Fixed to be inside the menu structure */}
                 <li>
                   <Link to="#" onClick={handleLogoutClick}>
                     <span className="menu-side">

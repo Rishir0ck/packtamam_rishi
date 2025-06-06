@@ -4,7 +4,7 @@ import FeatherIcon from "feather-icons-react/build/FeatherIcon";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 // import PatientChart from "./Admin_Dashboard/PaitentChart";
-import Select from "react-select";
+// import Select from "react-select";
 import {
   // Avatar2,
   // Avatar3,
@@ -28,16 +28,16 @@ import CountUp from "react-countup";
 import FirebaseAuthService from "../../Firebase/services/firebase_auth_service";
 
 import {
-  AlertTriangle,
+  // AlertTriangle,
   ListChecks,
-  Users,
+  // Users,
   IndianRupee,
   ShoppingCart,
   Activity,
 } from "lucide-react";
 
 const Admin_Dashboard = () => {
-  const [selectedOption, setSelectedOption] = useState(null);
+  // const [selectedOption, setSelectedOption] = useState(null);
   const [currentGreeting, setCurrentGreeting] = useState("");
   const [currentUser, setCurrentUser] = useState("Admin");
   
@@ -272,11 +272,11 @@ const Admin_Dashboard = () => {
             <div className="row">
               <div className="col-12 col-md-12 col-lg-6 col-flex">
                 <div className="card">
-                  <div className="card-body">
+                  {/* <div className="card-body">
                     <div className="chart-title patient-visit">
                       <h4>Monthly Order Summary</h4>
                       <div>
-                        {/* <ul className="nav chat-user-total">
+                        <ul className="nav chat-user-total">
                           <li>
                             <i
                               className="fa fa-circle current-users"
@@ -291,7 +291,7 @@ const Admin_Dashboard = () => {
                             />{" "}
                             Female 25%
                           </li>
-                        </ul> */}
+                        </ul> 
                       </div>
                       <div className="form-group mb-0">
                         <Select
@@ -335,12 +335,12 @@ const Admin_Dashboard = () => {
                       </div>
                     </div>
                     {/* <div id="patient-chart" />
-                    <PatientChart /> */}
-                  </div>
+                    <PatientChart /> 
+                  </div> */}
                 </div>
               </div>
               {/* ************************** */}
-              <div className="col-12 col-md-12 col-lg-6 col-flex">
+              {/* <div className="col-12 col-md-12 col-lg-6 col-flex">
                 <div className="card">
                   <div className="card-body">
                     <div className="chart-title">
@@ -387,7 +387,7 @@ const Admin_Dashboard = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
