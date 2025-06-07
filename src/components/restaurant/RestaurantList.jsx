@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   message,
@@ -812,9 +811,13 @@ const RestaurantList = () => {
                 >
                   {/* Showing Entries Text */}
                   <div style={{ fontSize: "14px", color: "#595959" }}>
-                    Showing {pagination.pageSize * (pagination.current - 1) + 1}–
-                    {Math.min(pagination.pageSize * pagination.current, pagination.total)} of{" "}
-                    {pagination.total} entries
+                    Showing {pagination.pageSize * (pagination.current - 1) + 1}
+                    –
+                    {Math.min(
+                      pagination.pageSize * pagination.current,
+                      pagination.total
+                    )}{" "}
+                    of {pagination.total} entries
                   </div>
 
                   {/* Pagination Controls */}
@@ -822,14 +825,15 @@ const RestaurantList = () => {
                     current={pagination.current}
                     total={pagination.total}
                     pageSize={pagination.pageSize}
-                    onChange={(page, pageSize) => fetchDataByTab(activeTab, page, pageSize)}
+                    onChange={(page, pageSize) =>
+                      fetchDataByTab(activeTab, page, pageSize)
+                    }
                     showSizeChanger
                     showQuickJumper
                     pageSizeOptions={["12", "24", "48", "96"]}
                   />
                 </div>
               )}
-
             </Spin>
           </Card>
         </div>
