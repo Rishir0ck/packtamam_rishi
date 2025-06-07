@@ -135,14 +135,14 @@ const Sidebar = (props) => {
                   </Link>
                 </li>
 {/* Inventory */}
-                {/* <li className="submenu">
+                <li className="submenu">
                   <Link to="/inventorylist" id="menu-item3" onClick={(e) => handleClick(e, "menu-item3", "menu-items3")}>
                     <span className="menu-side">
                       <img className='img-fluid' src={menuicon08} alt="" />
                     </span>{" "}
                     <span style={{ color: '#c1a078'}}> Inventory </span>
                   </Link>
-                </li> */}
+                </li>
 {/* Pricing */}
                 {/* <li className="submenu">
                   <Link to="#" id="menu-item5" onClick={(e) => handleClick(e, "menu-item5", "menu-items5")}>
