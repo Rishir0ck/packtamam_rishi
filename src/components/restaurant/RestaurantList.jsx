@@ -689,7 +689,7 @@ const RestaurantList = () => {
               >
                 Restaurant Management
               </h2>
-              <p style={{ margin: 0, opacity: 0.9, fontSize: "14px" }}>
+              <p style={{ margin: 0, opacity: 0.9, fontSize: "14px", color: '#403222', }}>
                 Manage restaurant applications and onboarding process
               </p>
             </div>
