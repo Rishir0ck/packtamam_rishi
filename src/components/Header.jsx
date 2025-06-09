@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import FirebaseAuthService from "../Firebase/services/firebase_auth_service"; // Adjust path as needed
+import FirebaseAuthService from "../Firebase/services/firebaseAuthService"; // Adjust path as needed
 import LogoutConfirmationModal from "../popupConfitmation/LogoutConfirmation"; // Adjust path as needed
 import {
   logo,

@@ -3,10 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { packtamam, packtamambanner } from "../../imagepath";
 import { useState } from "react";
 import { Eye, EyeOff } from "feather-icons-react/build/IconComponents";
-import FirebaseAuthService from "../../../Firebase/services/firebase_auth_service";
+import { useAuthGuard } from "../../../Firebase/hooks/useAuthGuard";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login, loading: authLoading } = useAuthGuard();
   
   // Form states
   const [formData, setFormData] = useState({
@@ -40,6 +41,17 @@ const Login = () => {
         [name]: ""
       }));
     }
+    
+    // Clear global message when user starts typing
+    if (message) {
+      setMessage("");
+    }
+  };
+
+  // Basic email validation function
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   // Validate form
@@ -49,7 +61,7 @@ const Login = () => {
     // Email validation
     if (!formData.email) {
       newErrors.email = "Email is required";
-    } else if (!FirebaseAuthService.validateEmail(formData.email)) {
+    } else if (!validateEmail(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
@@ -62,7 +74,7 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission - Updated with API integration
+  // Handle form submission with real authentication
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -72,57 +84,50 @@ const Login = () => {
 
     setLoading(true);
     setMessage("");
+    setErrors({});
 
     try {
-      console.log("🚀 Starting login process...");
+      console.log("🚀 Starting authentication process...");
       console.log(`📧 Email: ${formData.email}`);
       
-      // This now calls both Firebase auth AND Node.js API
-      const result = await FirebaseAuthService.signIn(
-        formData.email, 
-        formData.password
-      );
-
-      console.log("📊 Login result:", result);
-
+      // Call the authentication service
+      const result = await login(formData.email, formData.password);
+      
       if (result.success) {
-        // Check if backend API authentication was successful
-        const apiSuccess = result.apiResult?.success;
-        
-        if (apiSuccess) {
-          console.log("✅ Both Firebase and API authentication successful");
-          setMessage("Login successful! Redirecting...");
-        } else {
-          console.log("⚠️ Firebase auth successful, API auth failed");
-          setMessage("Login successful! (Backend API unavailable - continuing with limited access)");
-        }
-        
-        // Log authentication details for debugging
-        console.log("🔐 Authentication Details:");
-        console.log(`   Firebase: ✅ Success`);
-        console.log(`   Backend API: ${apiSuccess ? '✅ Success' : '❌ Failed'}`);
-        console.log(`   User UID: ${result.user.uid}`);
-        console.log(`   User Email: ${result.user.email}`);
-        
-        if (result.apiResult?.data) {
-          console.log(`   API Response:`, result.apiResult.data);
-        }
+        console.log("✅ Complete authentication successful");
+        setMessage("Login successful! Redirecting to dashboard...");
         
         // Redirect to dashboard after successful login
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
+        
       } else {
-        console.error("❌ Authentication failed:", result.message);
-        setMessage(result.message);
+        console.error("❌ Authentication failed:", result);
+        
+        // Handle different types of errors
+        let errorMessage = result.error || "Authentication failed";
+        
+        // Handle step-specific errors
+        if (result.step === 'firebase_auth') {
+          errorMessage = `Firebase Authentication Error: ${result.error}`;
+        } else if (result.step === 'server_auth') {
+          errorMessage = `Server Authentication Error: ${result.error}`;
+        }
+        
+        setMessage(errorMessage);
       }
+      
     } catch (error) {
-      console.error("❌ Unexpected login error:", error);
+      console.error("❌ Unexpected authentication error:", error);
       setMessage("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  // Check if loading (either form loading or auth loading)
+  const isLoading = loading || authLoading;
 
   return (
     <div>
@@ -161,7 +166,7 @@ const Login = () => {
                         <div className={`alert ${
                           message.includes('successful') || message.includes('Redirecting') 
                             ? 'alert-success' 
-                            : message.includes('unavailable') 
+                            : message.includes('Server Authentication Error')
                               ? 'alert-warning'
                               : 'alert-danger'
                         } mb-3`}>
@@ -182,6 +187,7 @@ const Login = () => {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
+                            disabled={isLoading}
                             required
                           />
                           {errors.email && (
@@ -202,6 +208,7 @@ const Login = () => {
                               value={formData.password}
                               onChange={handleInputChange}
                               style={{ paddingRight: "40px" }}
+                              disabled={isLoading}
                               required
                             />
                             <span
@@ -211,8 +218,8 @@ const Login = () => {
                                 top: "50%",
                                 right: "12px",
                                 transform: "translateY(-50%)",
-                                cursor: "pointer",
-                                color: "#6c757d",
+                                cursor: isLoading ? "not-allowed" : "pointer",
+                                color: isLoading ? "#ccc" : "#6c757d",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -239,7 +246,11 @@ const Login = () => {
                           </div>
                           <Link
                             to="/forgotpassword"
-                            style={{ color: "#403222", fontWeight: 600 }}
+                            style={{ 
+                              color: isLoading ? "#ccc" : "#403222", 
+                              fontWeight: 600,
+                              pointerEvents: isLoading ? "none" : "auto"
+                            }}
                           >
                             Forgot Password?
                           </Link>
@@ -249,13 +260,14 @@ const Login = () => {
                           <button
                             className="btn btn-block"
                             type="submit"
-                            disabled={loading}
+                            disabled={isLoading}
                             style={{
                               backgroundColor: "#c1a078",
                               color: "#fff",
+                              opacity: isLoading ? 0.7 : 1
                             }}
                           >
-                            {loading ? (
+                            {isLoading ? (
                               <>
                                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 Authenticating...

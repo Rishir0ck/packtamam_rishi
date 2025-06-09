@@ -25,7 +25,6 @@ import {
 } from "../imagepath";
 import { Link } from "react-router-dom";
 import CountUp from "react-countup";
-import FirebaseAuthService from "../../Firebase/services/firebase_auth_service";
 
 import {
   // AlertTriangle,
@@ -64,24 +63,21 @@ const Admin_Dashboard = () => {
     }
   };
 
-  // Function to get current user information
-  const getCurrentUser = async () => {
-    try {
-      const user = await FirebaseAuthService.getCurrentUser();
-      if (user) {
-        // Extract name from email or use displayName
-        const userName = user.displayName || 
-                        user.email?.split('@')[0]?.replace(/[._]/g, ' ')
-                                  .split(' ')
-                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                  .join(' ') || 
-                        'Admin';
-        setCurrentUser(userName);
-      }
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      setCurrentUser("Admin"); // Fallback
-    }
+  // Function to get current user information (mock data)
+  const getCurrentUser = () => {
+    // Mock user data instead of Firebase
+    const mockUser = {
+      displayName: "Admin User",
+      email: "admin@packtamam.com"
+    };
+    
+    const userName = mockUser.displayName || 
+                    mockUser.email?.split('@')[0]?.replace(/[._]/g, ' ')
+                              .split(' ')
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(' ') || 
+                    'Admin';
+    setCurrentUser(userName);
   };
 
   // Update greeting every minute and get user on component mount
@@ -89,7 +85,7 @@ const Admin_Dashboard = () => {
     // Set initial greeting
     setCurrentGreeting(getTimeBasedGreeting());
     
-    // Get current user
+    // Get current user (mock data)
     getCurrentUser();
     
     // Update greeting every minute

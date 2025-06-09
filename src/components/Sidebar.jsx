@@ -2,7 +2,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
-import FirebaseAuthService from '../Firebase/services/firebase_auth_service'; // Adjust path as needed
+import FirebaseAuthService from '../Firebase/services/firebaseAuthService'; // Adjust path as needed
 import LogoutConfirmationModal from './../popupConfitmation/LogoutConfirmation'; // Adjust path as needed
 import { blog, restaurant, dashboard, doctor, doctorschedule, logout, menuicon04, menuicon06, menuicon08, menuicon09, menuicon10, menuicon11, menuicon12, menuicon14, menuicon15, menuicon16, patients, sidemenu, packtamam1 } from './imagepath';
 // Removed react-custom-scrollbars-2 import

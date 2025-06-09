@@ -1,6 +1,6 @@
-// config/firebase.js
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+// src/config/firebase.js
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyApl7ShTZKCahBSt9sWweYDChLJERiwQ-4",
@@ -13,7 +13,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = initializeApp(firebaseConfig);
 
-export default app;
+// Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+export default app;
