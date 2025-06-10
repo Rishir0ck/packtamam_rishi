@@ -340,37 +340,37 @@ class AdminService {
     return this.makeFormDataRequest('POST', '/api/admin/add-products', formData);
   }
 
-  async updateProduct(productId, productData) {
-    const formData = new FormData();
+  // async updateProduct(productId, productData) {
+  //   const formData = new FormData();
     
-    // Add product ID
-    formData.append('id', productId);
+  //   // Add product ID
+  //   formData.append('id', productId);
     
-    // Add all the product fields to FormData
-    formData.append('name', productData.name || '');
-    formData.append('category_id', productData.category_id || '');
-    formData.append('material_id', productData.material_id || '');
-    formData.append('hsn_code', productData.hsn_code || '');
-    formData.append('shape', productData.shape || '');
-    formData.append('colour', productData.colour || '');
-    formData.append('specs', productData.specs || '');
-    formData.append('quality', productData.quality || '');
+  //   // Add all the product fields to FormData
+  //   formData.append('name', productData.name || '');
+  //   formData.append('category_id', productData.category_id || '');
+  //   formData.append('material_id', productData.material_id || '');
+  //   formData.append('hsn_code', productData.hsn_code || '');
+  //   formData.append('shape', productData.shape || '');
+  //   formData.append('colour', productData.colour || '');
+  //   formData.append('specs', productData.specs || '');
+  //   formData.append('quality', productData.quality || '');
 
-    // Add images if provided
-    if (productData.images && productData.images.length > 0) {
-      productData.images.forEach((image) => {
-        if (image.originFileObj) {
-          formData.append(`images`, image.originFileObj);
-        }
-      });
-    }
+  //   // Add images if provided
+  //   if (productData.images && productData.images.length > 0) {
+  //     productData.images.forEach((image) => {
+  //       if (image.originFileObj) {
+  //         formData.append(`images`, image.originFileObj);
+  //       }
+  //     });
+  //   }
 
-    return this.makeFormDataRequest('POST', '/api/admin/update-products', formData);
-  }
+  //   return this.makeFormDataRequest('POST', '/api/admin/update-products', formData);
+  // }
 
-  async deleteProduct(productId) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/delete-products', { id: productId });
-  }
+  // async deleteProduct(productId) {
+  //   return this.makeAuthenticatedRequest('POST', '/api/admin/delete-products', { id: productId });
+  // }
 
   // ========== USER DATA API METHODS ==========
 

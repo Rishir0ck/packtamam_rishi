@@ -2,18 +2,15 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
   Table, Input, Select, Button, message, Modal, Row, Col, Card, Avatar, Tag, 
-  Space, Form,
-  //  InputNumber,
-   Upload, Image, Spin
+  Space, Form, Upload, Image, Spin
 } from "antd";
 import { 
-  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, 
+  SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, 
   AppstoreOutlined, UnorderedListOutlined, InboxOutlined, ReloadOutlined
 } from "@ant-design/icons";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 import { onShowSizeChange, itemRender } from "../Pagination";
-// import AdminService from "../services/adminService";
 import AdminService from "../../Firebase/services/adminApiService";
 
 const { Dragger } = Upload;
@@ -29,17 +26,15 @@ const InventoryList = () => {
     showViewModal: false,
     selectedRecord: null,
     uploadedImages: [],
-    products: [],
-    categories: [],
-    materials: []
+    products: [], // Fixed: Initialize as empty array
+    categories: [], // Fixed: Initialize as empty array
+    materials: [] // Fixed: Initialize as empty array
   });
 
   const [form] = Form.useForm();
 
-  // Utility function to update state
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
 
-  // Load initial data
   useEffect(() => {
     loadData();
   }, []);
@@ -54,9 +49,9 @@ const InventoryList = () => {
       ]);
 
       updateState({
-        products: productsRes.success ? productsRes.data : [],
-        categories: categoriesRes.success ? categoriesRes.data : [],
-        materials: materialsRes.success ? materialsRes.data : [],
+        products: Array.isArray(productsRes.data) ? productsRes.data : [], // Fixed: Ensure array
+        categories: Array.isArray(categoriesRes.data) ? categoriesRes.data : [], // Fixed: Ensure array
+        materials: Array.isArray(materialsRes.data) ? materialsRes.data : [], // Fixed: Ensure array
         loading: false
       });
 
@@ -69,15 +64,14 @@ const InventoryList = () => {
     }
   };
 
-  // Filter products based on search and category
-  const filteredData = state.products.filter(item => {
-    const matchesSearch = Object.values(item).some(value => 
+  // Fixed: Added safety check for array before filtering
+  const filteredData = (state.products || []).filter(item => {
+    const matchesSearch = Object.values(item || {}).some(value => 
       value?.toString().toLowerCase().includes(state.searchText.toLowerCase())
     );
     return matchesSearch && (!state.filterCategory || item.category_id === state.filterCategory);
   });
 
-  // Modal handlers
   const openModal = (type, record = null) => {
     if (type === 'add') {
       form.resetFields();
@@ -94,7 +88,6 @@ const InventoryList = () => {
         quality: record.quality
       });
       
-      // Convert existing images to upload format
       const existingImages = record.images?.map((img, index) => ({
         uid: index,
         name: `image-${index}`,
@@ -123,7 +116,6 @@ const InventoryList = () => {
     form.resetFields();
   };
 
-  // Handle form submission
   const handleSubmit = async (values) => {
     const submitData = {
       ...values,
@@ -133,17 +125,14 @@ const InventoryList = () => {
     updateState({ loading: true });
     
     try {
-      let result;
-      if (state.showEditModal && state.selectedRecord) {
-        result = await AdminService.updateProduct(state.selectedRecord.id, submitData);
-      } else {
-        result = await AdminService.addProduct(submitData);
-      }
+      const result = state.showEditModal && state.selectedRecord
+        ? await AdminService.updateProduct(state.selectedRecord.id, submitData)
+        : await AdminService.addProduct(submitData);
 
       if (result.success) {
         message.success(state.showEditModal ? 'Product updated successfully!' : 'Product added successfully!');
         closeModals();
-        loadData(); // Reload data
+        loadData();
       } else {
         message.error(result.error || 'Failed to save product');
       }
@@ -154,30 +143,6 @@ const InventoryList = () => {
     }
   };
 
-  // Handle product deletion
-  const handleDelete = async (productId) => {
-    Modal.confirm({
-      title: 'Delete Product',
-      content: 'Are you sure you want to delete this product?',
-      okText: 'Yes, Delete',
-      okType: 'danger',
-      cancelText: 'No',
-      onOk: async () => {
-        updateState({ loading: true });
-        const result = await AdminService.deleteProduct(productId);
-        
-        if (result.success) {
-          message.success('Product deleted successfully!');
-          loadData(); // Reload data
-        } else {
-          message.error(result.error || 'Failed to delete product');
-        }
-        updateState({ loading: false });
-      }
-    });
-  };
-
-  // Image upload configuration
   const uploadProps = {
     name: 'file',
     multiple: true,
@@ -211,7 +176,6 @@ const InventoryList = () => {
     listType: "picture-card"
   };
 
-  // Get category/material name by ID
   const getCategoryName = (categoryId) => {
     const category = state.categories.find(cat => cat.id === categoryId);
     return category?.name || 'Unknown';
@@ -222,7 +186,6 @@ const InventoryList = () => {
     return material?.name || 'Unknown';
   };
 
-  // Table columns
   const columns = [
     { 
       title: "Product", 
@@ -291,18 +254,11 @@ const InventoryList = () => {
         <Space>
           <Button type="text" icon={<EyeOutlined />} onClick={() => openModal('view', record)} />
           <Button type="text" icon={<EditOutlined />} onClick={() => openModal('edit', record)} />
-          <Button 
-            type="text" 
-            icon={<DeleteOutlined />} 
-            danger 
-            onClick={() => handleDelete(record.id)}
-          />
         </Space>
       )
     }
   ];
 
-  // Form Modal Component
   const FormModal = ({ show, onClose, isEdit, title }) => (
     <Modal 
       title={
@@ -324,7 +280,6 @@ const InventoryList = () => {
       destroyOnClose
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        {/* Image Upload */}
         <Card title="Product Images" size="small" style={{ marginBottom: "16px" }}>
           <Dragger {...uploadProps}>
             <p className="ant-upload-drag-icon">
@@ -334,24 +289,15 @@ const InventoryList = () => {
           </Dragger>
         </Card>
 
-        {/* Basic Information */}
         <Card title="Product Details" size="small" style={{ marginBottom: "16px" }}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item 
-                name="name" 
-                label="Product Name" 
-                rules={[{ required: true, message: 'Please enter product name' }]}
-              >
+              <Form.Item name="name" label="Product Name" rules={[{ required: true, message: 'Please enter product name' }]}>
                 <Input placeholder="Enter product name" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item 
-                name="category_id" 
-                label="Category" 
-                rules={[{ required: true, message: 'Please select category' }]}
-              >
+              <Form.Item name="category_id" label="Category" rules={[{ required: true, message: 'Please select category' }]}>
                 <Select placeholder="Select category">
                   {state.categories.map(category => (
                     <Select.Option key={category.id} value={category.id}>
@@ -362,11 +308,7 @@ const InventoryList = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item 
-                name="material_id" 
-                label="Material" 
-                rules={[{ required: true, message: 'Please select material' }]}
-              >
+              <Form.Item name="material_id" label="Material" rules={[{ required: true, message: 'Please select material' }]}>
                 <Select placeholder="Select material">
                   {state.materials.map(material => (
                     <Select.Option key={material.id} value={material.id}>
@@ -377,11 +319,7 @@ const InventoryList = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item 
-                name="hsn_code" 
-                label="HSN Code" 
-                rules={[{ required: true, message: 'Please enter HSN code' }]}
-              >
+              <Form.Item name="hsn_code" label="HSN Code" rules={[{ required: true, message: 'Please enter HSN code' }]}>
                 <Input placeholder="Enter HSN code" />
               </Form.Item>
             </Col>
@@ -412,7 +350,6 @@ const InventoryList = () => {
           </Row>
         </Card>
 
-        {/* Form Actions */}
         <div style={{ textAlign: "right" }}>
           <Space>
             <Button onClick={onClose}>Cancel</Button>
@@ -432,7 +369,6 @@ const InventoryList = () => {
     title: PropTypes.string.isRequired 
   };
 
-  // Card View Component
   const CardView = ({ data }) => (
     <Row gutter={[16, 16]}>
       {data.map(item => (
@@ -448,8 +384,7 @@ const InventoryList = () => {
             } 
             actions={[
               <EyeOutlined key="view" onClick={() => openModal('view', item)} />, 
-              <EditOutlined key="edit" onClick={() => openModal('edit', item)} />, 
-              <DeleteOutlined key="delete" onClick={() => handleDelete(item.id)} />
+              <EditOutlined key="edit" onClick={() => openModal('edit', item)} />
             ]}
           >
             <Card.Meta 
@@ -477,7 +412,6 @@ const InventoryList = () => {
       <Sidebar id="menu-item3" id1="menu-items3" activeClassName="staff-list" />
       <div className="page-wrapper">
         <div className="content">
-          {/* Header */}
           <div style={{ 
             background: "linear-gradient(135deg, #c1a078 0%, #d4b896 100%)", 
             borderRadius: "12px", 
@@ -492,7 +426,6 @@ const InventoryList = () => {
           <div className="row">
             <div className="col-sm-12">
               <Card style={{ borderRadius: "12px" }}>
-                {/* Controls */}
                 <div style={{ marginBottom: "24px" }}>
                   <Row justify="space-between" align="middle">
                     <Col>
@@ -502,11 +435,7 @@ const InventoryList = () => {
                     </Col>
                     <Col>
                       <Space>
-                        <Button 
-                          icon={<ReloadOutlined />} 
-                          onClick={loadData} 
-                          loading={state.loading}
-                        >
+                        <Button icon={<ReloadOutlined />} onClick={loadData} loading={state.loading}>
                           Refresh
                         </Button>
                         <Button 
@@ -523,11 +452,7 @@ const InventoryList = () => {
                         >
                           Card
                         </Button>
-                        <Button 
-                          type="primary" 
-                          icon={<PlusOutlined />} 
-                          onClick={() => openModal('add')}
-                        >
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('add')}>
                           Add Product
                         </Button>
                       </Space>
@@ -535,7 +460,6 @@ const InventoryList = () => {
                   </Row>
                 </div>
 
-                {/* Filters */}
                 <Row gutter={16} style={{ marginBottom: "24px" }}>
                   <Col xs={24} sm={12}>
                     <Input 
@@ -562,7 +486,6 @@ const InventoryList = () => {
                   </Col>
                 </Row>
 
-                {/* Data Display */}
                 <Spin spinning={state.loading}>
                   {state.viewMode === "grid" ? (
                     <Table 
@@ -586,7 +509,6 @@ const InventoryList = () => {
         </div>
       </div>
       
-      {/* Modals */}
       <FormModal 
         show={state.showAddModal} 
         onClose={closeModals} 
@@ -601,7 +523,6 @@ const InventoryList = () => {
         title="Edit Product"
       />
       
-      {/* View Modal */}
       <Modal 
         title="Product Details"
         open={state.showViewModal} 
@@ -611,7 +532,6 @@ const InventoryList = () => {
       >
         {state.selectedRecord && (
           <div>
-            {/* Product Images */}
             {state.selectedRecord.images?.length > 0 && (
               <div style={{ marginBottom: "16px" }}>
                 <Image.PreviewGroup>
