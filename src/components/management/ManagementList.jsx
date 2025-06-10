@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Table, message, Spin, Card, Avatar, Space, Tag, Button, Row, Col } from "antd";
-import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, message, Spin, Card, Avatar, Space, Tag, Button, Row, Col, Input, Switch, } from "antd";
+import { EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined, ShopOutlined } from '@ant-design/icons';
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 import { imagesend, blogimg4 } from "../imagepath";
-// import { onShowSizeChange, itemRender } from "../Pagination";
-import AdminService from "../../Firebase/services/adminApiService"; // Import your AdminService
+import AdminService from "../../Firebase/services/adminApiService";
 
 const ManagementList = () => {
   const [activeModal, setActiveModal] = useState(null);
@@ -13,13 +12,18 @@ const ManagementList = () => {
   const [datasource, setDatasource] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  
+  // Outlet management states
+  const [outlets, setOutlets] = useState([]);
+  const [outletLoading, setOutletLoading] = useState(false);
+  const [newOutletName, setNewOutletName] = useState('');
+  const [addingOutlet, setAddingOutlet] = useState(false);
 
   const getImageUrl = (profilePicture) => profilePicture?.startsWith('http') ? profilePicture : blogimg4;
 
   const fetchApprovedRestaurants = async (page = 1, perPage = 10) => {
     setLoading(true);
     try {
-      // Check if user is authenticated
       if (!AdminService.isAuthenticated()) {
         message.error("Please login to access this page");
         setDatasource([]);
@@ -27,9 +31,6 @@ const ManagementList = () => {
         return;
       }
 
-      console.log(`🔍 Fetching approved restaurants - Page: ${page}, Per Page: ${perPage}`);
-      
-      // Use AdminService to fetch approved business list
       const result = await AdminService.getApprovedBusinessList(page, perPage);
       
       if (!result.success) {
@@ -37,12 +38,9 @@ const ManagementList = () => {
       }
 
       const responseData = result.data;
-      console.log("✅ Approved restaurants data received:", responseData);
-
-      // Transform the data to match your component structure
       const transformedData = responseData.data?.map((item, index) => ({
         id: item.id || `approved-${page}-${index}`,
-        key: item.id || `approved-${page}-${index}`, // Add key for React Table
+        key: item.id || `approved-${page}-${index}`,
         Img: getImageUrl(item.profile_picture),
         owner_name: item.owner_name || "N/A",
         mobile_number: item.mobile_number || "N/A",
@@ -62,15 +60,13 @@ const ManagementList = () => {
         gst_no: item.gst_no || "N/A",
         fssai_no: item.fssai_no || "N/A",
         pan: item.pan || "N/A",
-        Status: item.status || "Approved", // Set status as Approved since we're fetching approved list
+        Status: item.status || "Approved",
         created_at: item.created_at,
         updated_at: item.updated_at,
         ...item
       })) || [];
 
       setDatasource(transformedData);
-      
-      // Set pagination info
       setPagination({
         current: page,
         pageSize: perPage,
@@ -80,21 +76,15 @@ const ManagementList = () => {
         showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} entries`
       });
 
-      console.log(`✅ Successfully loaded ${transformedData.length} approved restaurants`);
-
     } catch (error) {
       console.error("❌ Error fetching approved restaurants:", error);
-      
-      // Handle specific error cases
       if (error.message.includes('Session expired') || error.message.includes('authentication')) {
         message.error("Session expired. Please login again.");
-        // You might want to redirect to login page here
       } else if (error.message.includes('Cannot connect to server')) {
         message.error("Cannot connect to server. Please check your internet connection.");
       } else {
         message.error(`Failed to fetch approved restaurants: ${error.message}`);
       }
-      
       setDatasource([]);
       setPagination({ current: 1, pageSize: 10, total: 0 });
     } finally {
@@ -102,12 +92,69 @@ const ManagementList = () => {
     }
   };
 
-  // Update business status (for edit functionality)
+  // Fetch outlets from API
+  const fetchOutlets = async () => {
+    setOutletLoading(true);
+    try {
+      const result = await AdminService.getOutlets();
+      if (result.success) {
+        setOutlets(result.data.outlets || result.data || []);
+      } else {
+        throw new Error(result.error || 'Failed to fetch outlets');
+      }
+    } catch (error) {
+      console.error("❌ Error fetching outlets:", error);
+      message.error(`Failed to fetch outlets: ${error.message}`);
+      setOutlets([]);
+    } finally {
+      setOutletLoading(false);
+    }
+  };
+
+  // Add new outlet
+  const addOutlet = async () => {
+    if (!newOutletName.trim()) {
+      message.warning('Please enter outlet name');
+      return;
+    }
+
+    setAddingOutlet(true);
+    try {
+      const result = await AdminService.addOutlet(newOutletName.trim());
+      if (result.success) {
+        message.success('Outlet added successfully');
+        setNewOutletName('');
+        await fetchOutlets(); // Refresh outlets list
+      } else {
+        throw new Error(result.error || 'Failed to add outlet');
+      }
+    } catch (error) {
+      console.error("❌ Error adding outlet:", error);
+      message.error(`Failed to add outlet: ${error.message}`);
+    } finally {
+      setAddingOutlet(false);
+    }
+  };
+
+  // Update outlet status
+  const updateOutletStatus = async (outletId, isActive) => {
+    try {
+      const result = await AdminService.updateOutlet(outletId, isActive);
+      if (result.success) {
+        message.success(`Outlet ${isActive ? 'activated' : 'deactivated'} successfully`);
+        await fetchOutlets(); // Refresh outlets list
+      } else {
+        throw new Error(result.error || 'Failed to update outlet');
+      }
+    } catch (error) {
+      console.error("❌ Error updating outlet:", error);
+      message.error(`Failed to update outlet: ${error.message}`);
+    }
+  };
+
   const updateRestaurantStatus = async (id, newStatus) => {
     try {
       setLoading(true);
-      console.log(`🔄 Updating restaurant status - ID: ${id}, Status: ${newStatus}`);
-      
       const result = await AdminService.updateBusinessStatus(id, newStatus);
       
       if (!result.success) {
@@ -115,12 +162,8 @@ const ManagementList = () => {
       }
 
       message.success('Restaurant status updated successfully');
-      
-      // Refresh the data
       await fetchApprovedRestaurants(pagination.current, pagination.pageSize);
-      
       closeModal();
-      console.log("✅ Restaurant status updated successfully");
       
     } catch (error) {
       console.error("❌ Error updating restaurant status:", error);
@@ -131,7 +174,6 @@ const ManagementList = () => {
   };
 
   useEffect(() => {
-    // Check authentication on component mount
     if (AdminService.isAuthenticated()) {
       fetchApprovedRestaurants(1, 10);
     } else {
@@ -140,20 +182,21 @@ const ManagementList = () => {
   }, []);
 
   const handleTableChange = (paginationInfo) => {
-    console.log("📄 Table pagination changed:", paginationInfo);
     fetchApprovedRestaurants(paginationInfo.current, paginationInfo.pageSize);
   };
 
   const openModal = (type, record = null) => { 
     setActiveModal(type); 
     setSelectedRecord(record); 
-    console.log(`📝 Opening ${type} modal for:`, record?.Name || 'new record');
+    if (type === 'edit') {
+      fetchOutlets(); // Fetch outlets when opening edit modal
+    }
   };
   
   const closeModal = () => { 
     setActiveModal(null); 
     setSelectedRecord(null); 
-    console.log("❌ Modal closed");
+    setNewOutletName('');
   };
 
   const handleSubmit = async (e, type) => {
@@ -174,12 +217,9 @@ const ManagementList = () => {
 
   const handleImageError = (e) => { 
     e.target.src = blogimg4; 
-    console.log("🖼️  Image load error, using fallback image");
   };
 
-  // Refresh data function
   const refreshData = async () => {
-    console.log("🔄 Refreshing approved restaurants data...");
     await fetchApprovedRestaurants(pagination.current, pagination.pageSize);
   };
 
@@ -379,6 +419,142 @@ const ManagementList = () => {
     </div>
   );
 
+  // Render Outlet Management Section
+  const renderOutletManagement = () => (
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        marginBottom: '16px' 
+      }}>
+        <h5 style={{ 
+          color: '#403222', 
+          margin: 0, 
+          fontSize: '16px', 
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <ShopOutlined /> Outlet Management
+        </h5>
+      </div>
+
+      {/* Add New Outlet */}
+      <div style={{ 
+        background: '#f9f9f9', 
+        border: '1px solid #e8e8e8', 
+        borderRadius: '8px', 
+        padding: '16px', 
+        marginBottom: '16px' 
+      }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ 
+              fontSize: '13px', 
+              fontWeight: 500, 
+              color: '#403222', 
+              marginBottom: '6px', 
+              display: 'block' 
+            }}>
+              Add New Outlet
+            </label>
+            <Input
+              placeholder="Enter outlet name"
+              value={newOutletName}
+              onChange={(e) => setNewOutletName(e.target.value)}
+              onPressEnter={addOutlet}
+              style={{ borderRadius: '6px' }}
+            />
+          </div>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={addOutlet}
+            loading={addingOutlet}
+            style={{ 
+              backgroundColor: '#c1a078', 
+              borderColor: '#c1a078',
+              borderRadius: '6px'
+            }}
+          >
+            Add
+          </Button>
+        </div>
+      </div>
+
+      {/* Outlets List */}
+      <Spin spinning={outletLoading} tip="Loading outlets...">
+        <div style={{ 
+          maxHeight: '200px', 
+          overflowY: 'auto', 
+          border: '1px solid #e8e8e8', 
+          borderRadius: '8px',
+          background: '#fff'
+        }}>
+          {outlets.length === 0 ? (
+            <div style={{ 
+              padding: '24px', 
+              textAlign: 'center', 
+              color: '#8c8c8c',
+              fontSize: '14px'
+            }}>
+              No outlets found
+            </div>
+          ) : (
+            outlets.map((outlet) => (
+              <div 
+                key={outlet.id} 
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  borderBottom: '1px solid #f0f0f0'
+                }}
+              >
+                <div>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: 500, 
+                    color: '#403222',
+                    marginBottom: '2px'
+                  }}>
+                    {outlet.name}
+                  </div>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#8c8c8c'
+                  }}>
+                    ID: {outlet.id}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: outlet.is_active ? '#52c41a' : '#ff4d4f',
+                    fontWeight: 500
+                  }}>
+                    {outlet.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  <Switch 
+                    size="small"
+                    checked={outlet.is_active}
+                    onChange={(checked) => updateOutletStatus(outlet.id, checked)}
+                    style={{
+                      backgroundColor: outlet.is_active ? '#52c41a' : '#d9d9d9'
+                    }}
+                  />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Spin>
+    </div>
+  );
+
   const formFields = [
     ["Business Name", "BusinessName"], 
     ["Legal Entity Name", "legal_entity_name"], 
@@ -423,7 +599,7 @@ const ManagementList = () => {
 
     return (
       <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role="dialog">
-        <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal-dialog modal-xl modal-dialog-centered">
           <div className="modal-content" style={{ borderRadius: '12px', border: 'none' }}>
             <div className="modal-header" style={{ borderBottom: '1px solid #f0f0f0', padding: '20px 24px' }}>
               <h4 className="modal-title" style={{ color: "#403222", fontSize: '18px', fontWeight: 600, margin: 0 }}>
@@ -431,7 +607,7 @@ const ManagementList = () => {
               </h4>
               <button type="button" className="btn-close" onClick={closeModal} style={{ fontSize: '16px' }}></button>
             </div>
-            <div className="modal-body" style={{ padding: '24px' }}>
+            <div className="modal-body" style={{ padding: '24px', maxHeight: '60vh', overflowY: 'auto' }}>
               {isView ? (
                 <div>
                   <div className="row mb-4">
@@ -482,44 +658,50 @@ const ManagementList = () => {
                   </div>
                 </div>
               ) : (
-                <form onSubmit={(e) => handleSubmit(e, 'edit')}>
-                  <div className="row">
-                    {formFields.map(([label, field, type]) => renderFormField(label, field, type))}
-                    <div className="col-12 col-md-6">
-                      <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ 
-                          fontSize: '14px', 
-                          fontWeight: 500, 
-                          color: '#403222', 
-                          marginBottom: '12px', 
-                          display: 'block' 
-                        }}>
-                          Status <span style={{ color: '#ff4d4f' }}>*</span>
-                        </label>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                          {["Approved", "Rejected", "Pending", "Query"].map(status => (
-                            <label key={status} style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px', 
-                              cursor: 'pointer', 
-                              fontSize: '14px' 
-                            }}>
-                              <input 
-                                type="radio" 
-                                name="editStatus" 
-                                value={status} 
-                                defaultChecked={selectedRecord.Status === status} 
-                                style={{ marginRight: '4px' }} 
-                              />
-                              {status}
-                            </label>
-                          ))}
+                <div>
+                  {/* Outlet Management Section */}
+                  {renderOutletManagement()}
+                  
+                  {/* Restaurant Form */}
+                  <form onSubmit={(e) => handleSubmit(e, 'edit')}>
+                    <div className="row">
+                      {formFields.map(([label, field, type]) => renderFormField(label, field, type))}
+                      <div className="col-12 col-md-6">
+                        <div className="form-group" style={{ marginBottom: '20px' }}>
+                          <label style={{ 
+                            fontSize: '14px', 
+                            fontWeight: 500, 
+                            color: '#403222', 
+                            marginBottom: '12px', 
+                            display: 'block' 
+                          }}>
+                            Status <span style={{ color: '#ff4d4f' }}>*</span>
+                          </label>
+                          <div style={{ display: 'flex', gap: '16px' }}>
+                            {["Approved", "Rejected", "Pending", "Query"].map(status => (
+                              <label key={status} style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px' 
+                              }}>
+                                <input 
+                                  type="radio" 
+                                  name="editStatus" 
+                                  value={status} 
+                                  defaultChecked={selectedRecord.Status === status} 
+                                  style={{ marginRight: '4px' }} 
+                                />
+                                {status}
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </form>
+                  </form>
+                </div>
               )}
             </div>
             <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '20px 24px' }}>
@@ -628,7 +810,6 @@ const ManagementList = () => {
           </Card>
         </div>
       </div>
-
       {renderModal()}
 
       <div id="delete_patient" className="modal fade delete-modal" role="dialog">
