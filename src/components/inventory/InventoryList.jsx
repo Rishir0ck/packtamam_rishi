@@ -1,406 +1,423 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
   Table, Input, Select, Button, message, Modal, Row, Col, Card, Avatar, Tag, 
-  Space,
-  // Divider,
-   Form, InputNumber 
+  Space, Form,
+  //  InputNumber,
+   Upload, Image, Spin
 } from "antd";
 import { 
   SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, 
-  AppstoreOutlined, UnorderedListOutlined, UploadOutlined 
+  AppstoreOutlined, UnorderedListOutlined, InboxOutlined, ReloadOutlined
 } from "@ant-design/icons";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
-import { blogimg2 } from "../imagepath";
 import { onShowSizeChange, itemRender } from "../Pagination";
+// import AdminService from "../services/adminService";
+import AdminService from "../../Firebase/services/adminApiService";
+
+const { Dragger } = Upload;
 
 const InventoryList = () => {
-  // Consolidated state
   const [state, setState] = useState({
     viewMode: "grid",
     searchText: "",
     filterCategory: "",
-    filterStatus: "",
+    loading: false,
     showAddModal: false,
     showEditModal: false,
     showViewModal: false,
     selectedRecord: null,
-    imagePreview: null
+    uploadedImages: [],
+    products: [],
+    categories: [],
+    materials: []
   });
 
   const [form] = Form.useForm();
-  const fileInputRef = useRef(null);
 
-  // Sample data
-  const datasource = [
-    { 
-      id: 1, Img: blogimg2, InventoryCode: "INV001", Category: "Electronics", 
-      Material: "Aluminum", HSNCode: "8517", Product: "Smartphone", Shape: "Rectangle", 
-      Colour: "Black", Specs: "6.1 inch, 128GB", Quality: "Premium", PackOff: "Retail Box", 
-      CostPriceBase: "25000.00", Markup: "20%", SellPrice: "30000.00", GrossProfit: "5000.00", 
-      GST: "18.00", PriceWithGST: "35400.00", GSTAmount: "5400.00", GSTInward: "0.00", 
-      GSTPayable: "5400.00", NetProfit: "4600.00", Status: "In Stock" 
-    },
-    { 
-      id: 2, Img: blogimg2, InventoryCode: "INV002", Category: "Electronics", 
-      Material: "Plastic", HSNCode: "8517", Product: "Tablet", Shape: "Rectangle", 
-      Colour: "White", Specs: "10 inch, 64GB", Quality: "Standard", PackOff: "Retail Box", 
-      CostPriceBase: "15000.00", Markup: "25%", SellPrice: "18750.00", GrossProfit: "3750.00", 
-      GST: "18.00", PriceWithGST: "22125.00", GSTAmount: "3375.00", GSTInward: "0.00", 
-      GSTPayable: "3375.00", NetProfit: "375.00", Status: "In Stock" 
-    },
-    { 
-      id: 3, Img: blogimg2, InventoryCode: "INV003", Category: "Accessories", 
-      Material: "Leather", HSNCode: "4202", Product: "Phone Case", Shape: "Custom", 
-      Colour: "Brown", Specs: "Universal Fit", Quality: "Premium", PackOff: "Blister Pack", 
-      CostPriceBase: "500.00", Markup: "100%", SellPrice: "1000.00", GrossProfit: "500.00", 
-      GST: "18.00", PriceWithGST: "1180.00", GSTAmount: "180.00", GSTInward: "0.00", 
-      GSTPayable: "180.00", NetProfit: "320.00", Status: "Out of Stock" 
-    }
-  ];
-
-  // Filtered data
-  const filteredData = datasource.filter(item => {
-    const matchesSearch = Object.values(item).some(value => 
-      value.toString().toLowerCase().includes(state.searchText.toLowerCase())
-    );
-    return matchesSearch && 
-           (!state.filterCategory || item.Category === state.filterCategory) && 
-           (!state.filterStatus || item.Status === state.filterStatus);
-  });
-
-  // Helper functions
+  // Utility function to update state
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
 
-  const handleModal = (type, record = null) => {
+  // Load initial data
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    updateState({ loading: true });
+    try {
+      const [productsRes, categoriesRes, materialsRes] = await Promise.all([
+        AdminService.getProducts(),
+        AdminService.getCategories(),
+        AdminService.getMaterials()
+      ]);
+
+      updateState({
+        products: productsRes.success ? productsRes.data : [],
+        categories: categoriesRes.success ? categoriesRes.data : [],
+        materials: materialsRes.success ? materialsRes.data : [],
+        loading: false
+      });
+
+      if (!productsRes.success) message.error(productsRes.error);
+      if (!categoriesRes.success) message.error(categoriesRes.error);
+      if (!materialsRes.success) message.error(materialsRes.error);
+    } catch (error) {
+      message.error('Failed to load data');
+      updateState({ loading: false });
+    }
+  };
+
+  // Filter products based on search and category
+  const filteredData = state.products.filter(item => {
+    const matchesSearch = Object.values(item).some(value => 
+      value?.toString().toLowerCase().includes(state.searchText.toLowerCase())
+    );
+    return matchesSearch && (!state.filterCategory || item.category_id === state.filterCategory);
+  });
+
+  // Modal handlers
+  const openModal = (type, record = null) => {
     if (type === 'add') {
       form.resetFields();
-      updateState({ showAddModal: true, imagePreview: null });
+      updateState({ showAddModal: true, uploadedImages: [] });
     } else if (type === 'edit') {
-      const editData = {
-        inventoryCode: record.InventoryCode,
-        category: record.Category,
-        material: record.Material,
-        hsnCode: record.HSNCode,
-        product: record.Product,
-        shape: record.Shape,
-        colour: record.Colour,
-        specs: record.Specs,
-        quality: record.Quality,
-        packOff: record.PackOff,
-        costPriceBase: parseFloat(record.CostPriceBase),
-        markup: record.Markup,
-        sellPrice: parseFloat(record.SellPrice),
-        grossProfit: parseFloat(record.GrossProfit),
-        gst: parseFloat(record.GST),
-        priceWithGST: parseFloat(record.PriceWithGST),
-        gstAmount: parseFloat(record.GSTAmount),
-        gstInward: parseFloat(record.GSTInward),
-        gstPayable: parseFloat(record.GSTPayable),
-        netProfit: parseFloat(record.NetProfit),
-        status: record.Status
-      };
+      form.setFieldsValue({
+        name: record.name,
+        category_id: record.category_id,
+        material_id: record.material_id,
+        hsn_code: record.hsn_code,
+        shape: record.shape,
+        colour: record.colour,
+        specs: record.specs,
+        quality: record.quality
+      });
       
-      form.setFieldsValue(editData);
+      // Convert existing images to upload format
+      const existingImages = record.images?.map((img, index) => ({
+        uid: index,
+        name: `image-${index}`,
+        status: 'done',
+        url: img
+      })) || [];
+      
       updateState({ 
         showEditModal: true, 
         selectedRecord: record, 
-        imagePreview: record.Img 
+        uploadedImages: existingImages
       });
     } else if (type === 'view') {
       updateState({ selectedRecord: record, showViewModal: true });
     }
   };
 
+  const closeModals = () => {
+    updateState({ 
+      showAddModal: false, 
+      showEditModal: false, 
+      showViewModal: false,
+      uploadedImages: [],
+      selectedRecord: null
+    });
+    form.resetFields();
+  };
+
+  // Handle form submission
   const handleSubmit = async (values) => {
+    const submitData = {
+      ...values,
+      images: state.uploadedImages.filter(img => img.originFileObj)
+    };
+
+    updateState({ loading: true });
+    
     try {
-      console.log('Form values:', values);
-      message.success('Item saved successfully!');
-      updateState({ showEditModal: false, showAddModal: false, imagePreview: null });
-      form.resetFields();
+      let result;
+      if (state.showEditModal && state.selectedRecord) {
+        result = await AdminService.updateProduct(state.selectedRecord.id, submitData);
+      } else {
+        result = await AdminService.addProduct(submitData);
+      }
+
+      if (result.success) {
+        message.success(state.showEditModal ? 'Product updated successfully!' : 'Product added successfully!');
+        closeModals();
+        loadData(); // Reload data
+      } else {
+        message.error(result.error || 'Failed to save product');
+      }
     } catch (error) {
-      message.error('Failed to save item. Please try again.');
+      message.error('Failed to save product. Please try again.');
+    } finally {
+      updateState({ loading: false });
     }
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
+  // Handle product deletion
+  const handleDelete = async (productId) => {
+    Modal.confirm({
+      title: 'Delete Product',
+      content: 'Are you sure you want to delete this product?',
+      okText: 'Yes, Delete',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        updateState({ loading: true });
+        const result = await AdminService.deleteProduct(productId);
+        
+        if (result.success) {
+          message.success('Product deleted successfully!');
+          loadData(); // Reload data
+        } else {
+          message.error(result.error || 'Failed to delete product');
+        }
+        updateState({ loading: false });
+      }
+    });
+  };
+
+  // Image upload configuration
+  const uploadProps = {
+    name: 'file',
+    multiple: true,
+    fileList: state.uploadedImages,
+    beforeUpload: (file) => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('You can only upload image files!');
+        return false;
+      }
+      
       const reader = new FileReader();
-      reader.onload = (e) => updateState({ imagePreview: e.target.result });
+      reader.onload = (e) => {
+        const newImage = {
+          uid: Date.now() + Math.random(),
+          name: file.name,
+          status: 'done',
+          url: e.target.result,
+          originFileObj: file
+        };
+        updateState({ uploadedImages: [...state.uploadedImages, newImage] });
+      };
       reader.readAsDataURL(file);
-    }
+      return false;
+    },
+    onRemove: (file) => {
+      updateState({
+        uploadedImages: state.uploadedImages.filter(img => img.uid !== file.uid)
+      });
+    },
+    listType: "picture-card"
+  };
+
+  // Get category/material name by ID
+  const getCategoryName = (categoryId) => {
+    const category = state.categories.find(cat => cat.id === categoryId);
+    return category?.name || 'Unknown';
+  };
+
+  const getMaterialName = (materialId) => {
+    const material = state.materials.find(mat => mat.id === materialId);
+    return material?.name || 'Unknown';
   };
 
   // Table columns
   const columns = [
     { 
       title: "Product", 
-      dataIndex: "InventoryCode", 
+      dataIndex: "name", 
       render: (text, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Avatar src={record.Img} size={48} style={{ borderRadius: "8px" }} />
+          <Avatar 
+            src={record.images?.[0]} 
+            size={48} 
+            style={{ borderRadius: "8px" }}
+          >
+            {text?.[0]?.toUpperCase()}
+          </Avatar>
           <div>
             <div style={{ fontWeight: "600", fontSize: "14px" }}>{text}</div>
-            <div style={{ color: "#8c8c8c", fontSize: "12px" }}>{record.Product}</div>
+            <div style={{ color: "#8c8c8c", fontSize: "12px" }}>{record.specs}</div>
           </div>
         </div>
       )
     },
     { 
       title: "Category", 
-      dataIndex: "Category", 
-      render: (text) => <Tag color="blue">{text}</Tag> 
+      dataIndex: "category_id", 
+      render: (categoryId) => <Tag color="blue">{getCategoryName(categoryId)}</Tag> 
     },
     { 
       title: "Material", 
-      dataIndex: "Material" 
+      dataIndex: "material_id", 
+      render: (materialId) => getMaterialName(materialId) 
     },
     { 
       title: "HSN Code", 
-      dataIndex: "HSNCode", 
-      render: (text) => <code style={{ fontSize: "12px" }}>{text}</code> 
+      dataIndex: "hsn_code", 
+      render: (text) => <code>{text}</code> 
     },
     { 
       title: "Quality", 
-      dataIndex: "Quality", 
+      dataIndex: "quality", 
       render: (text) => <Tag color={text === "Premium" ? "gold" : "default"}>{text}</Tag> 
     },
     { 
-      title: "Cost Price", 
-      dataIndex: "CostPriceBase", 
-      align: "right", 
-      render: (text) => `₹${parseFloat(text).toLocaleString()}` 
+      title: "Shape", 
+      dataIndex: "shape" 
     },
     { 
-      title: "Sell Price", 
-      dataIndex: "SellPrice", 
-      align: "right", 
-      render: (text) => <span style={{ color: "#52c41a", fontWeight: "600" }}>₹{parseFloat(text).toLocaleString()}</span> 
-    },
-    { 
-      title: "Net Profit", 
-      dataIndex: "NetProfit", 
-      align: "right", 
-      render: (text) => <span style={{ color: "#1890ff" }}>₹{parseFloat(text).toLocaleString()}</span> 
-    },
-    { 
-      title: "Status", 
-      dataIndex: "Status", 
-      render: (text) => <Tag color={text === "In Stock" ? "success" : "error"}>{text}</Tag> 
+      title: "Colour", 
+      dataIndex: "colour",
+      render: (text) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div 
+            style={{ 
+              width: '16px', 
+              height: '16px', 
+              borderRadius: '50%', 
+              backgroundColor: text?.toLowerCase() || '#ccc',
+              border: '1px solid #d9d9d9'
+            }} 
+          />
+          {text}
+        </div>
+      )
     },
     { 
       title: "Actions", 
       render: (_, record) => (
         <Space>
-          <Button type="text" icon={<EyeOutlined />} onClick={() => handleModal('view', record)} />
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleModal('edit', record)} />
-          <Button type="text" icon={<DeleteOutlined />} danger />
+          <Button type="text" icon={<EyeOutlined />} onClick={() => openModal('view', record)} />
+          <Button type="text" icon={<EditOutlined />} onClick={() => openModal('edit', record)} />
+          <Button 
+            type="text" 
+            icon={<DeleteOutlined />} 
+            danger 
+            onClick={() => handleDelete(record.id)}
+          />
         </Space>
       )
     }
   ];
 
-  // Form fields configuration
-  const basicFields = [
-    { name: "inventoryCode", label: "Inventory Code", required: true, span: 8 },
-    { name: "category", label: "Category", required: true, span: 8, type: "select", 
-      options: ["Electronics", "Accessories", "Furniture", "Clothing"] },
-    { name: "product", label: "Product", required: true, span: 8 },
-    { name: "material", label: "Material", required: true, span: 8 },
-    { name: "hsnCode", label: "HSN Code", required: true, span: 8 },
-    { name: "shape", label: "Shape", required: true, span: 8 },
-    { name: "colour", label: "Colour", required: true, span: 8 },
-    { name: "quality", label: "Quality", required: true, span: 8, type: "select",
-      options: ["Premium", "Standard", "Basic"] },
-    { name: "packOff", label: "Pack Off", required: true, span: 8 },
-    { name: "specs", label: "Specifications", required: true, span: 24, type: "textarea" }
-  ];
-
-  const pricingFields = [
-    { name: "costPriceBase", label: "Cost Price", required: true, span: 8, type: "number" },
-    { name: "markup", label: "Markup (%)", required: true, span: 8, suffix: "%" },
-    { name: "sellPrice", label: "Sell Price", required: true, span: 8, type: "number" },
-    { name: "grossProfit", label: "Gross Profit", required: true, span: 8, type: "number" },
-    { name: "gst", label: "GST (%)", required: true, span: 8, type: "number", max: 100 },
-    { name: "priceWithGST", label: "Price with GST", required: true, span: 8, type: "number" },
-    { name: "gstAmount", label: "GST Amount", required: true, span: 8, type: "number" },
-    { name: "gstInward", label: "GST Inward", required: true, span: 8, type: "number" },
-    { name: "gstPayable", label: "GST Payable", required: true, span: 8, type: "number" },
-    { name: "netProfit", label: "Net Profit", required: true, span: 8, type: "number" }
-  ];
-
-  // Render form field
-  const renderField = (field) => {
-    const { name, label, required, span, type, options, suffix, max } = field;
-    const rules = required ? [{ required: true, message: `Please enter ${label.toLowerCase()}` }] : [];
-
-    let input;
-    if (type === "select") {
-      input = (
-        <Select placeholder={`Select ${label.toLowerCase()}`}>
-          {options.map(option => (
-            <Select.Option key={option} value={option}>{option}</Select.Option>
-          ))}
-        </Select>
-      );
-    } else if (type === "textarea") {
-      input = <Input.TextArea rows={2} placeholder={`Enter ${label.toLowerCase()}`} />;
-    } else if (type === "number") {
-      input = (
-        <InputNumber
-          style={{ width: '100%' }}
-          min={0}
-          max={max}
-          precision={2}
-          placeholder={`Enter ${label.toLowerCase()}`}
-          formatter={value => suffix ? `${value}${suffix}` : `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={value => value.replace(/₹\s?|(,*)|%/g, '')}
-        />
-      );
-    } else {
-      input = <Input placeholder={`Enter ${label.toLowerCase()}`} suffix={suffix} />;
-    }
-
-    return (
-      <Col key={name} span={span}>
-        <Form.Item name={name} label={label} rules={rules}>
-          {input}
-        </Form.Item>
-      </Col>
-    );
-  };
-
   // Form Modal Component
   const FormModal = ({ show, onClose, isEdit, title }) => (
     <Modal 
       title={
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "12px",
-          padding: "8px 0"
-        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "8px",
-            background: "#1890ff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white"
+            width: "36px", height: "36px", borderRadius: "8px", background: "#1890ff",
+            display: "flex", alignItems: "center", justifyContent: "center", color: "white"
           }}>
             {isEdit ? <EditOutlined /> : <PlusOutlined />}
           </div>
-          <div>
-            <div style={{ fontSize: "16px", fontWeight: "600" }}>{title}</div>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
-              {isEdit ? "Update inventory details" : "Add new inventory item"}
-            </div>
-          </div>
+          <span>{title}</span>
         </div>
       }
       open={show} 
       onCancel={onClose} 
       footer={null} 
-      width={1000}
+      width="90vw"
+      style={{ maxWidth: "900px" }}
       destroyOnClose
-      centered
-      styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        size="middle"
-      >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
         {/* Image Upload */}
-        <div style={{ 
-          textAlign: "center", 
-          marginBottom: "24px", 
-          padding: "16px",
-          background: "#fafafa",
-          borderRadius: "8px",
-          border: "1px dashed #d9d9d9"
-        }}>
-          <div style={{ 
-            width: "80px", 
-            height: "80px", 
-            border: "2px dashed #d9d9d9", 
-            borderRadius: "8px", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            margin: "0 auto 12px", 
-            overflow: "hidden",
-            background: "white"
-          }}>
-            {state.imagePreview ? (
-              <img 
-                src={state.imagePreview} 
-                alt="Preview" 
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-              />
-            ) : (
-              <UploadOutlined style={{ fontSize: "20px", color: "#8c8c8c" }} />
-            )}
-          </div>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImageUpload} 
-            accept="image/*" 
-            style={{ display: "none" }} 
-          />
-          <Button 
-            size="small"
-            icon={<UploadOutlined />}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {state.imagePreview ? "Change" : "Upload"}
-          </Button>
-        </div>
+        <Card title="Product Images" size="small" style={{ marginBottom: "16px" }}>
+          <Dragger {...uploadProps}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined style={{ fontSize: "36px", color: "#1890ff" }} />
+            </p>
+            <p className="ant-upload-text">Click or drag files to upload images</p>
+          </Dragger>
+        </Card>
 
         {/* Basic Information */}
-        <Card title="Basic Information" size="small" style={{ marginBottom: "16px" }}>
+        <Card title="Product Details" size="small" style={{ marginBottom: "16px" }}>
           <Row gutter={16}>
-            {basicFields.map(renderField)}
+            <Col span={12}>
+              <Form.Item 
+                name="name" 
+                label="Product Name" 
+                rules={[{ required: true, message: 'Please enter product name' }]}
+              >
+                <Input placeholder="Enter product name" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="category_id" 
+                label="Category" 
+                rules={[{ required: true, message: 'Please select category' }]}
+              >
+                <Select placeholder="Select category">
+                  {state.categories.map(category => (
+                    <Select.Option key={category.id} value={category.id}>
+                      {category.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="material_id" 
+                label="Material" 
+                rules={[{ required: true, message: 'Please select material' }]}
+              >
+                <Select placeholder="Select material">
+                  {state.materials.map(material => (
+                    <Select.Option key={material.id} value={material.id}>
+                      {material.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="hsn_code" 
+                label="HSN Code" 
+                rules={[{ required: true, message: 'Please enter HSN code' }]}
+              >
+                <Input placeholder="Enter HSN code" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="shape" label="Shape">
+                <Input placeholder="Enter shape" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="colour" label="Colour">
+                <Input placeholder="Enter colour" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="quality" label="Quality">
+                <Select placeholder="Select quality">
+                  <Select.Option value="Premium">Premium</Select.Option>
+                  <Select.Option value="Standard">Standard</Select.Option>
+                  <Select.Option value="Basic">Basic</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item name="specs" label="Specifications">
+                <Input.TextArea rows={3} placeholder="Enter product specifications" />
+              </Form.Item>
+            </Col>
           </Row>
-        </Card>
-
-        {/* Pricing Information */}
-        <Card title="Pricing Information" size="small" style={{ marginBottom: "16px" }}>
-          <Row gutter={16}>
-            {pricingFields.map(renderField)}
-          </Row>
-        </Card>
-
-        {/* Status */}
-        <Card title="Status" size="small" style={{ marginBottom: "24px" }}>
-          <Form.Item
-            name="status"
-            label="Inventory Status"
-            rules={[{ required: true, message: 'Please select status' }]}
-          >
-            <Select placeholder="Select status">
-              <Select.Option value="In Stock">In Stock</Select.Option>
-              <Select.Option value="Out of Stock">Out of Stock</Select.Option>
-            </Select>
-          </Form.Item>
         </Card>
 
         {/* Form Actions */}
-        <div style={{ 
-          textAlign: "right", 
-          borderTop: "1px solid #f0f0f0", 
-          paddingTop: "16px" 
-        }}>
+        <div style={{ textAlign: "right" }}>
           <Space>
             <Button onClick={onClose}>Cancel</Button>
-            <Button type="primary" htmlType="submit">
-              {isEdit ? "Update Item" : "Add Item"}
+            <Button type="primary" htmlType="submit" loading={state.loading}>
+              {isEdit ? "Update Product" : "Add Product"}
             </Button>
           </Space>
         </div>
@@ -424,25 +441,25 @@ const InventoryList = () => {
             hoverable 
             cover={
               <div style={{ textAlign: "center", padding: "20px", backgroundColor: "#fafafa" }}>
-                <Avatar src={item.Img} size={64} />
+                <Avatar src={item.images?.[0]} size={64}>
+                  {item.name?.[0]?.toUpperCase()}
+                </Avatar>
               </div>
             } 
             actions={[
-              <EyeOutlined key="view" onClick={() => handleModal('view', item)} />, 
-              <EditOutlined key="edit" onClick={() => handleModal('edit', item)} />, 
-              <DeleteOutlined key="delete" />
+              <EyeOutlined key="view" onClick={() => openModal('view', item)} />, 
+              <EditOutlined key="edit" onClick={() => openModal('edit', item)} />, 
+              <DeleteOutlined key="delete" onClick={() => handleDelete(item.id)} />
             ]}
           >
             <Card.Meta 
-              title={item.InventoryCode}
+              title={item.name}
               description={
                 <div>
-                  <Tag color="blue" style={{ marginBottom: "8px" }}>{item.Category}</Tag>
-                  <div><strong>Product:</strong> {item.Product}</div>
-                  <div><strong>Price:</strong> ₹{parseFloat(item.SellPrice).toLocaleString()}</div>
-                  <div style={{ marginTop: "8px" }}>
-                    <Tag color={item.Status === "In Stock" ? "success" : "error"}>{item.Status}</Tag>
-                  </div>
+                  <Tag color="blue">{getCategoryName(item.category_id)}</Tag>
+                  <div><strong>Material:</strong> {getMaterialName(item.material_id)}</div>
+                  <div><strong>HSN:</strong> {item.hsn_code}</div>
+                  <div><strong>Quality:</strong> {item.quality}</div>
                 </div>
               } 
             />
@@ -468,12 +485,8 @@ const InventoryList = () => {
             color: "white",
             marginBottom: "24px"
           }}>
-            <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 600 }}>
-              Inventory Management
-            </h2>
-            <p style={{ margin: 0, opacity: 0.9, fontSize: "14px" }}>
-              Manage your inventory items and their details
-            </p>
+            <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 600 }}>Product Management</h2>
+            <p style={{ margin: 0, opacity: 0.9, fontSize: "14px" }}>Manage your product inventory</p>
           </div>
 
           <div className="row">
@@ -484,16 +497,22 @@ const InventoryList = () => {
                   <Row justify="space-between" align="middle">
                     <Col>
                       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                        Inventory List
+                        Product List ({filteredData.length})
                       </h3>
                     </Col>
                     <Col>
                       <Space>
                         <Button 
+                          icon={<ReloadOutlined />} 
+                          onClick={loadData} 
+                          loading={state.loading}
+                        >
+                          Refresh
+                        </Button>
+                        <Button 
                           type={state.viewMode === "grid" ? "primary" : "default"} 
                           icon={<UnorderedListOutlined />} 
                           onClick={() => updateState({ viewMode: "grid" })}
-                          // style={{ color: "#403222",backgroundColor: "#c1a078" }}
                         >
                           Grid
                         </Button>
@@ -501,17 +520,15 @@ const InventoryList = () => {
                           type={state.viewMode === "card" ? "primary" : "default"} 
                           icon={<AppstoreOutlined />} 
                           onClick={() => updateState({ viewMode: "card" })}
-                          // style={{ color: "#403222",backgroundColor: "#c1a078" }}
                         >
                           Card
                         </Button>
                         <Button 
                           type="primary" 
                           icon={<PlusOutlined />} 
-                          onClick={() => handleModal('add')}
-                          // style={{ backgroundColor: "#c1a078",color: "#403222"}}
+                          onClick={() => openModal('add')}
                         >
-                          Add SKU
+                          Add Product
                         </Button>
                       </Space>
                     </Col>
@@ -520,15 +537,15 @@ const InventoryList = () => {
 
                 {/* Filters */}
                 <Row gutter={16} style={{ marginBottom: "24px" }}>
-                  <Col xs={24} sm={8}>
+                  <Col xs={24} sm={12}>
                     <Input 
-                      placeholder="Search inventory..." 
+                      placeholder="Search products..." 
                       prefix={<SearchOutlined />} 
                       value={state.searchText} 
                       onChange={(e) => updateState({ searchText: e.target.value })} 
                     />
                   </Col>
-                  <Col xs={24} sm={8}>
+                  <Col xs={24} sm={12}>
                     <Select 
                       placeholder="Filter by Category..." 
                       value={state.filterCategory} 
@@ -536,41 +553,33 @@ const InventoryList = () => {
                       allowClear 
                       style={{ width: "100%" }}
                     >
-                      {[...new Set(datasource.map(item => item.Category))].map(category => 
-                        <Select.Option key={category} value={category}>{category}</Select.Option>
+                      {state.categories.map(category => 
+                        <Select.Option key={category.id} value={category.id}>
+                          {category.name}
+                        </Select.Option>
                       )}
-                    </Select>
-                  </Col>
-                  <Col xs={24} sm={8}>
-                    <Select 
-                      placeholder="Filter by Status..." 
-                      value={state.filterStatus} 
-                      onChange={(value) => updateState({ filterStatus: value })} 
-                      allowClear 
-                      style={{ width: "100%" }}
-                    >
-                      <Select.Option value="In Stock">In Stock</Select.Option>
-                      <Select.Option value="Out of Stock">Out of Stock</Select.Option>
                     </Select>
                   </Col>
                 </Row>
 
                 {/* Data Display */}
-                {state.viewMode === "grid" ? (
-                  <Table 
-                    columns={columns} 
-                    dataSource={filteredData} 
-                    rowKey="id" 
-                    pagination={{ 
-                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`, 
-                      showSizeChanger: true, 
-                      onShowSizeChange, 
-                      itemRender 
-                    }} 
-                  />
-                ) : (
-                  <CardView data={filteredData} />
-                )}
+                <Spin spinning={state.loading}>
+                  {state.viewMode === "grid" ? (
+                    <Table 
+                      columns={columns} 
+                      dataSource={filteredData} 
+                      rowKey="id" 
+                      pagination={{ 
+                        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`, 
+                        showSizeChanger: true, 
+                        onShowSizeChange, 
+                        itemRender 
+                      }} 
+                    />
+                  ) : (
+                    <CardView data={filteredData} />
+                  )}
+                </Spin>
               </Card>
             </div>
           </div>
@@ -580,59 +589,67 @@ const InventoryList = () => {
       {/* Modals */}
       <FormModal 
         show={state.showAddModal} 
-        onClose={() => updateState({ showAddModal: false })} 
+        onClose={closeModals} 
         isEdit={false} 
-        title="Add New SKU"
+        title="Add New Product"
       />
       
       <FormModal 
         show={state.showEditModal} 
-        onClose={() => updateState({ showEditModal: false })} 
+        onClose={closeModals} 
         isEdit={true} 
-        title="Edit SKU"
+        title="Edit Product"
       />
       
       {/* View Modal */}
       <Modal 
-        title={state.selectedRecord && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Avatar src={state.selectedRecord?.Img} size={40} />
-            <div>
-              <div style={{ fontSize: "16px", fontWeight: "600" }}>
-                {state.selectedRecord?.InventoryCode}
-              </div>
-              <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
-                {state.selectedRecord?.Product}
-              </div>
-            </div>
-          </div>
-        )} 
+        title="Product Details"
         open={state.showViewModal} 
-        onCancel={() => updateState({ showViewModal: false })} 
-        footer={<Button onClick={() => updateState({ showViewModal: false })}>Close</Button>} 
+        onCancel={closeModals} 
+        footer={<Button onClick={closeModals}>Close</Button>} 
         width={700}
       >
         {state.selectedRecord && (
-          <Row gutter={16} style={{ marginTop: "16px" }}>
-            <Col span={12}>
-              <Card size="small" title="Basic Information">
-                <p><strong>Category:</strong> <Tag color="blue">{state.selectedRecord.Category}</Tag></p>
-                <p><strong>Material:</strong> {state.selectedRecord.Material}</p>
-                <p><strong>HSN Code:</strong> {state.selectedRecord.HSNCode}</p>
-                <p><strong>Quality:</strong> {state.selectedRecord.Quality}</p>
-                <p><strong>Specs:</strong> {state.selectedRecord.Specs}</p>
-              </Card>
-            </Col>
-            <Col span={12}>
-              <Card size="small" title="Pricing">
-                <p><strong>Cost Price:</strong> ₹{state.selectedRecord.CostPriceBase}</p>
-                <p><strong>Sell Price:</strong> ₹{state.selectedRecord.SellPrice}</p>
-                <p><strong>GST:</strong> {state.selectedRecord.GST}%</p>
-                <p><strong>Net Profit:</strong> ₹{state.selectedRecord.NetProfit}</p>
-                <p><strong>Status:</strong> <Tag color={state.selectedRecord.Status === "In Stock" ? "success" : "error"}>{state.selectedRecord.Status}</Tag></p>
-              </Card>
-            </Col>
-          </Row>
+          <div>
+            {/* Product Images */}
+            {state.selectedRecord.images?.length > 0 && (
+              <div style={{ marginBottom: "16px" }}>
+                <Image.PreviewGroup>
+                  <Row gutter={[8, 8]}>
+                    {state.selectedRecord.images.map((img, index) => (
+                      <Col key={index} span={6}>
+                        <Image
+                          width="100%"
+                          height={80}
+                          src={img}
+                          style={{ objectFit: "cover", borderRadius: "6px" }}
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                </Image.PreviewGroup>
+              </div>
+            )}
+            
+            <Row gutter={16}>
+              <Col span={12}>
+                <Card size="small" title="Basic Information">
+                  <p><strong>Name:</strong> {state.selectedRecord.name}</p>
+                  <p><strong>Category:</strong> <Tag color="blue">{getCategoryName(state.selectedRecord.category_id)}</Tag></p>
+                  <p><strong>Material:</strong> {getMaterialName(state.selectedRecord.material_id)}</p>
+                  <p><strong>HSN Code:</strong> {state.selectedRecord.hsn_code}</p>
+                  <p><strong>Quality:</strong> {state.selectedRecord.quality}</p>
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card size="small" title="Details">
+                  <p><strong>Shape:</strong> {state.selectedRecord.shape}</p>
+                  <p><strong>Colour:</strong> {state.selectedRecord.colour}</p>
+                  <p><strong>Specs:</strong> {state.selectedRecord.specs}</p>
+                </Card>
+              </Col>
+            </Row>
+          </div>
         )}
       </Modal>
     </>

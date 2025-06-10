@@ -229,6 +229,7 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business-status', payload);
   }
 
+  
   // ========== OUTLET MANAGEMENT API METHODS ==========
 
   async getOutlets() {
@@ -284,6 +285,91 @@ class AdminService {
       max_qty: maxQty,
       price_per_unit: pricePerUnit
     });
+  }
+
+  // ========== INVENTORY/PRODUCT MANAGEMENT API METHODS ==========
+
+  async getProducts(categoryId = null, name = '') {
+    let queryParams = [];
+    
+    if (categoryId) {
+      queryParams.push(`category_id=${categoryId}`);
+    }
+    
+    if (name) {
+      queryParams.push(`name=${encodeURIComponent(name)}`);
+    }
+    
+    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    
+    return this.makeAuthenticatedRequest('GET', `/api/admin/products${queryString}`);
+  }
+
+  async getCategories(categoryId = null) {
+    const queryString = categoryId ? `?category_id=${categoryId}` : '';
+    return this.makeAuthenticatedRequest('GET', `/api/admin/categories${queryString}`);
+  }
+
+  async getMaterials() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/materials');
+  }
+
+  async addProduct(productData) {
+    // Use FormData for file uploads and form data
+    const formData = new FormData();
+    
+    // Add all the product fields to FormData
+    formData.append('name', productData.name || '');
+    formData.append('category_id', productData.category_id || '');
+    formData.append('material_id', productData.material_id || '');
+    formData.append('hsn_code', productData.hsn_code || '');
+    formData.append('shape', productData.shape || '');
+    formData.append('colour', productData.colour || '');
+    formData.append('specs', productData.specs || '');
+    formData.append('quality', productData.quality || '');
+
+    // Add images if provided
+    if (productData.images && productData.images.length > 0) {
+      productData.images.forEach((image) => {
+        if (image.originFileObj) {
+          formData.append(`images`, image.originFileObj);
+        }
+      });
+    }
+
+    return this.makeFormDataRequest('POST', '/api/admin/add-products', formData);
+  }
+
+  async updateProduct(productId, productData) {
+    const formData = new FormData();
+    
+    // Add product ID
+    formData.append('id', productId);
+    
+    // Add all the product fields to FormData
+    formData.append('name', productData.name || '');
+    formData.append('category_id', productData.category_id || '');
+    formData.append('material_id', productData.material_id || '');
+    formData.append('hsn_code', productData.hsn_code || '');
+    formData.append('shape', productData.shape || '');
+    formData.append('colour', productData.colour || '');
+    formData.append('specs', productData.specs || '');
+    formData.append('quality', productData.quality || '');
+
+    // Add images if provided
+    if (productData.images && productData.images.length > 0) {
+      productData.images.forEach((image) => {
+        if (image.originFileObj) {
+          formData.append(`images`, image.originFileObj);
+        }
+      });
+    }
+
+    return this.makeFormDataRequest('POST', '/api/admin/update-products', formData);
+  }
+
+  async deleteProduct(productId) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delete-products', { id: productId });
   }
 
   // ========== USER DATA API METHODS ==========
@@ -366,6 +452,85 @@ class AdminService {
       console.error(`❌ ${method} request to ${endpoint} failed:`, error);
       
       // Provide more helpful error messages
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        return {
+          success: false,
+          error: `Cannot connect to server at ${this.baseURL}. Please check if your API server is running.`
+        };
+      }
+      
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async makeFormDataRequest(method, endpoint, formData) {
+    try {
+      const token = this.getServerAuth();
+      
+      if (!token) {
+        console.error('❌ No authentication token found');
+        throw new Error('No authentication token found. Please login again.');
+      }
+
+      const fullURL = `${this.baseURL}${endpoint}`;
+      console.log(`📡 Making ${method} FormData request to ${fullURL}`);
+
+      const config = {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: formData
+      };
+
+      const response = await fetch(fullURL, config);
+      
+      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+
+      // Check if response is HTML (404/error page)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('❌ Server returned non-JSON response:', textResponse.substring(0, 500));
+        
+        if (response.status === 404) {
+          throw new Error(`API endpoint not found: ${endpoint}. Please check if your server is running and the endpoint exists.`);
+        } else if (response.status >= 500) {
+          throw new Error(`Server error (${response.status}). Please check your server logs.`);
+        } else {
+          throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}. Server may be returning an error page.`);
+        }
+      }
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        // Handle token expiration
+        if (response.status === 401) {
+          console.log("🔑 Token expired, clearing auth...");
+          this.clearAllAuth();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        console.error('❌ API Error Response:', responseData);
+        throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
+      }
+
+      console.log(`✅ ${method} FormData request to ${endpoint} successful`);
+      console.log(`📦 Response data:`, responseData);
+      
+      return {
+        success: true,
+        data: responseData
+      };
+
+    } catch (error) {
+      console.error(`❌ ${method} FormData request to ${endpoint} failed:`, error);
+      
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return {
           success: false,
