@@ -4,7 +4,8 @@ import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 import { imagesend, blogimg4 } from "../imagepath";
-import { onShowSizeChange, itemRender } from "../Pagination";
+// import { onShowSizeChange, itemRender } from "../Pagination";
+import AdminService from "../../Firebase/services/adminApiService"; // Import your AdminService
 
 const ManagementList = () => {
   const [activeModal, setActiveModal] = useState(null);
@@ -13,25 +14,35 @@ const ManagementList = () => {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  const API_CONFIG = {
-    baseUrl: "http://167.71.228.10:3000/api/admin",
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJ1c2VyX2lkIjoiUUZMcUpWOVdTamF5TVhEZnFEUXFUdFVMa0g5MyIsImVtYWlsIjoicmRwYXRlbDc4MjRAZ21haWwuY29tIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwLyIsImlhdCI6MTc0ODc0ODIwOCwiZXhwIjoxNzQ5MzUzMDA4fQ.aIuhF_2BD_c4EkJ2kiLV5-BWEg4OxaNu6LPR-E5VaDo"
-  };
-
   const getImageUrl = (profilePicture) => profilePicture?.startsWith('http') ? profilePicture : blogimg4;
 
   const fetchApprovedRestaurants = async (page = 1, perPage = 10) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_CONFIG.baseUrl}/approved-business-list?page=${page}&per_page=${perPage}`, {
-        headers: { Authorization: `Bearer ${API_CONFIG.token}`, "Content-Type": "application/json" }
-      });
+      // Check if user is authenticated
+      if (!AdminService.isAuthenticated()) {
+        message.error("Please login to access this page");
+        setDatasource([]);
+        setPagination({ current: 1, pageSize: 10, total: 0 });
+        return;
+      }
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      console.log(`🔍 Fetching approved restaurants - Page: ${page}, Per Page: ${perPage}`);
+      
+      // Use AdminService to fetch approved business list
+      const result = await AdminService.getApprovedBusinessList(page, perPage);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch approved restaurants');
+      }
 
-      const data = await response.json();
-      const transformedData = data.data?.map((item, index) => ({
+      const responseData = result.data;
+      console.log("✅ Approved restaurants data received:", responseData);
+
+      // Transform the data to match your component structure
+      const transformedData = responseData.data?.map((item, index) => ({
         id: item.id || `approved-${page}-${index}`,
+        key: item.id || `approved-${page}-${index}`, // Add key for React Table
         Img: getImageUrl(item.profile_picture),
         owner_name: item.owner_name || "N/A",
         mobile_number: item.mobile_number || "N/A",
@@ -51,41 +62,126 @@ const ManagementList = () => {
         gst_no: item.gst_no || "N/A",
         fssai_no: item.fssai_no || "N/A",
         pan: item.pan || "N/A",
-        Status: item.status || "N/A",
+        Status: item.status || "Approved", // Set status as Approved since we're fetching approved list
+        created_at: item.created_at,
+        updated_at: item.updated_at,
         ...item
       })) || [];
 
       setDatasource(transformedData);
+      
+      // Set pagination info
       setPagination({
         current: page,
         pageSize: perPage,
-        total: data.total || data.pagination?.total || transformedData.length
+        total: responseData.total || responseData.pagination?.total || transformedData.length,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} entries`
       });
+
+      console.log(`✅ Successfully loaded ${transformedData.length} approved restaurants`);
+
     } catch (error) {
-      console.error("Error fetching approved restaurants:", error);
-      message.error("Failed to fetch approved restaurants. Please try again.");
+      console.error("❌ Error fetching approved restaurants:", error);
+      
+      // Handle specific error cases
+      if (error.message.includes('Session expired') || error.message.includes('authentication')) {
+        message.error("Session expired. Please login again.");
+        // You might want to redirect to login page here
+      } else if (error.message.includes('Cannot connect to server')) {
+        message.error("Cannot connect to server. Please check your internet connection.");
+      } else {
+        message.error(`Failed to fetch approved restaurants: ${error.message}`);
+      }
+      
       setDatasource([]);
+      setPagination({ current: 1, pageSize: 10, total: 0 });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchApprovedRestaurants(1, 10); }, []);
+  // Update business status (for edit functionality)
+  const updateRestaurantStatus = async (id, newStatus) => {
+    try {
+      setLoading(true);
+      console.log(`🔄 Updating restaurant status - ID: ${id}, Status: ${newStatus}`);
+      
+      const result = await AdminService.updateBusinessStatus(id, newStatus);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update restaurant status');
+      }
+
+      message.success('Restaurant status updated successfully');
+      
+      // Refresh the data
+      await fetchApprovedRestaurants(pagination.current, pagination.pageSize);
+      
+      closeModal();
+      console.log("✅ Restaurant status updated successfully");
+      
+    } catch (error) {
+      console.error("❌ Error updating restaurant status:", error);
+      message.error(`Failed to update restaurant status: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check authentication on component mount
+    if (AdminService.isAuthenticated()) {
+      fetchApprovedRestaurants(1, 10);
+    } else {
+      message.warning("Please login to view approved restaurants");
+    }
+  }, []);
 
   const handleTableChange = (paginationInfo) => {
+    console.log("📄 Table pagination changed:", paginationInfo);
     fetchApprovedRestaurants(paginationInfo.current, paginationInfo.pageSize);
   };
 
-  const openModal = (type, record = null) => { setActiveModal(type); setSelectedRecord(record); };
-  const closeModal = () => { setActiveModal(null); setSelectedRecord(null); };
-
-  const handleSubmit = (e, type) => {
-    e.preventDefault();
-    console.log(`${type} form submitted`, selectedRecord);
-    closeModal();
+  const openModal = (type, record = null) => { 
+    setActiveModal(type); 
+    setSelectedRecord(record); 
+    console.log(`📝 Opening ${type} modal for:`, record?.Name || 'new record');
+  };
+  
+  const closeModal = () => { 
+    setActiveModal(null); 
+    setSelectedRecord(null); 
+    console.log("❌ Modal closed");
   };
 
-  const handleImageError = (e) => { e.target.src = blogimg4; };
+  const handleSubmit = async (e, type) => {
+    e.preventDefault();
+    
+    if (type === 'edit' && selectedRecord) {
+      const formData = new FormData(e.target);
+      const newStatus = formData.get('editStatus');
+      
+      if (newStatus && newStatus !== selectedRecord.Status) {
+        await updateRestaurantStatus(selectedRecord.id, newStatus);
+      } else {
+        message.info('No changes detected');
+        closeModal();
+      }
+    }
+  };
+
+  const handleImageError = (e) => { 
+    e.target.src = blogimg4; 
+    console.log("🖼️  Image load error, using fallback image");
+  };
+
+  // Refresh data function
+  const refreshData = async () => {
+    console.log("🔄 Refreshing approved restaurants data...");
+    await fetchApprovedRestaurants(pagination.current, pagination.pageSize);
+  };
 
   const columns = [
     {
@@ -94,12 +190,31 @@ const ManagementList = () => {
       width: 280,
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Avatar size={48} src={record.Img} style={{ border: '2px solid #f0f0f0', flexShrink: 0 }} onError={handleImageError} />
+          <Avatar 
+            size={48} 
+            src={record.Img} 
+            style={{ border: '2px solid #f0f0f0', flexShrink: 0 }} 
+            onError={handleImageError} 
+          />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontWeight: 600, color: '#403222', fontSize: '14px', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ 
+              fontWeight: 600, 
+              color: '#403222', 
+              fontSize: '14px', 
+              marginBottom: '2px', 
+              whiteSpace: 'nowrap', 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis' 
+            }}>
               {record.Name}
             </div>
-            <div style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#666', 
+              whiteSpace: 'nowrap', 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis' 
+            }}>
               {record.owner_name}
             </div>
           </div>
@@ -112,8 +227,12 @@ const ManagementList = () => {
       width: 200,
       render: (_, record) => (
         <div>
-          <div style={{ fontSize: '13px', marginBottom: '4px', color: '#403222' }}>{record.Email}</div>
-          <div style={{ fontSize: '13px', color: '#666' }}>{record.mobile_number}</div>
+          <div style={{ fontSize: '13px', marginBottom: '4px', color: '#403222' }}>
+            {record.Email}
+          </div>
+          <div style={{ fontSize: '13px', color: '#666' }}>
+            {record.mobile_number}
+          </div>
         </div>
       )
     },
@@ -121,19 +240,49 @@ const ManagementList = () => {
       title: "Location",
       dataIndex: "location",
       width: 150,
-      render: (text) => <div style={{ fontSize: '13px', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</div>
+      render: (text) => (
+        <div style={{ 
+          fontSize: '13px', 
+          color: '#666', 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis' 
+        }}>
+          {text}
+        </div>
+      )
     },
     {
       title: "Outlet Type",
       dataIndex: "OutletType",
       width: 120,
-      render: (text) => <Tag color="blue" style={{ borderRadius: '16px', fontSize: '12px', padding: '2px 12px' }}>{text}</Tag>
+      render: (text) => (
+        <Tag color="blue" style={{ 
+          borderRadius: '16px', 
+          fontSize: '12px', 
+          padding: '2px 12px' 
+        }}>
+          {text}
+        </Tag>
+      )
     },
     {
       title: 'Status',
       dataIndex: 'Status',
       width: 100,
-      render: (text) => <Tag color={text === "Legal" ? "success" : "error"} style={{ borderRadius: '16px', fontSize: '12px', padding: '2px 12px', fontWeight: 500 }}>{text}</Tag>
+      render: (text) => (
+        <Tag 
+          color={text === "Approved" ? "success" : text === "Legal" ? "success" : "error"} 
+          style={{ 
+            borderRadius: '16px', 
+            fontSize: '12px', 
+            padding: '2px 12px', 
+            fontWeight: 500 
+          }}
+        >
+          {text}
+        </Tag>
+      )
     },
     {
       title: "Actions",
@@ -141,9 +290,31 @@ const ManagementList = () => {
       width: 120,
       render: (_, record) => (
         <Space size="small">
-          <Button type="text" icon={<EyeOutlined />} onClick={() => openModal('view', record)} style={{ color: '#c1a078' }} size="small" />
-          <Button type="text" icon={<EditOutlined />} onClick={() => openModal('edit', record)} style={{ color: '#c1a078' }} size="small" />
-          <Button type="text" icon={<DeleteOutlined />} style={{ color: '#ff4d4f' }} size="small" data-bs-toggle="modal" data-bs-target="#delete_patient" />
+          <Button 
+            type="text" 
+            icon={<EyeOutlined />} 
+            onClick={() => openModal('view', record)} 
+            style={{ color: '#c1a078' }} 
+            size="small"
+            title="View Details"
+          />
+          <Button 
+            type="text" 
+            icon={<EditOutlined />} 
+            onClick={() => openModal('edit', record)} 
+            style={{ color: '#c1a078' }} 
+            size="small"
+            title="Edit Restaurant"
+          />
+          <Button 
+            type="text" 
+            icon={<DeleteOutlined />} 
+            style={{ color: '#ff4d4f' }} 
+            size="small" 
+            data-bs-toggle="modal" 
+            data-bs-target="#delete_patient"
+            title="Delete Restaurant"
+          />
         </Space>
       )
     }
@@ -152,7 +323,13 @@ const ManagementList = () => {
   const renderFormField = (label, name, type = "text", required = true, colSpan = 6) => (
     <div className={`col-12 col-md-${colSpan}`}>
       <div className="form-group" style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '14px', fontWeight: 500, color: '#403222', marginBottom: '8px', display: 'block' }}>
+        <label style={{ 
+          fontSize: '14px', 
+          fontWeight: 500, 
+          color: '#403222', 
+          marginBottom: '8px', 
+          display: 'block' 
+        }}>
           {label} {required && <span style={{ color: '#ff4d4f' }}>*</span>}
         </label>
         <input
@@ -161,7 +338,12 @@ const ManagementList = () => {
           name={name}
           defaultValue={selectedRecord?.[name] || ""}
           required={required}
-          style={{ borderRadius: '6px', border: '1px solid #d9d9d9', padding: '10px 12px', fontSize: '14px' }}
+          style={{ 
+            borderRadius: '6px', 
+            border: '1px solid #d9d9d9', 
+            padding: '10px 12px', 
+            fontSize: '14px' 
+          }}
           {...(type === "number" && { step: "1", placeholder: "Enter count" })}
         />
       </div>
@@ -170,27 +352,69 @@ const ManagementList = () => {
 
   const renderInfoCard = (title, value, colSpan = 6) => (
     <div className={`col-md-${colSpan} mb-3`}>
-      <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '8px', padding: '16px' }}>
-        <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</div>
-        <div style={{ fontSize: '14px', fontWeight: 500, color: '#403222', wordBreak: 'break-word' }}>{value || 'N/A'}</div>
+      <div style={{ 
+        background: '#fafafa', 
+        border: '1px solid #f0f0f0', 
+        borderRadius: '8px', 
+        padding: '16px' 
+      }}>
+        <div style={{ 
+          fontSize: '12px', 
+          color: '#8c8c8c', 
+          marginBottom: '4px', 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.5px' 
+        }}>
+          {title}
+        </div>
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: 500, 
+          color: '#403222', 
+          wordBreak: 'break-word' 
+        }}>
+          {value || 'N/A'}
+        </div>
       </div>
     </div>
   );
 
   const formFields = [
-    ["Business Name", "BusinessName"], ["Legal Entity Name", "legal_entity_name"], ["Franchise Code", "franchise_code"],
-    ["Owner Name", "owner_name"], ["Email Address", "Email", "email"], ["Mobile Number", "mobile_number", "tel"],
-    ["Location", "location"], ["Business Type", "Business_type"], ["Outlet Type", "OutletType"],
-    ["GST Number", "gst_no"], ["FSSAI Number", "fssai_no"], ["PAN Number", "pan"],
-    ["Address", "Address"], ["Location", "Location"], ["Pincode", "Pincode"], ["Landmark", "Landmark"], ["City", "City"]
+    ["Business Name", "BusinessName"], 
+    ["Legal Entity Name", "legal_entity_name"], 
+    ["Franchise Code", "franchise_code"],
+    ["Owner Name", "owner_name"], 
+    ["Email Address", "Email", "email"], 
+    ["Mobile Number", "mobile_number", "tel"],
+    ["Location", "location"], 
+    ["Business Type", "Business_type"], 
+    ["Outlet Type", "OutletType"],
+    ["GST Number", "gst_no"], 
+    ["FSSAI Number", "fssai_no"], 
+    ["PAN Number", "pan"],
+    ["Address", "Address"], 
+    ["Pincode", "Pincode"], 
+    ["Landmark", "Landmark"], 
+    ["City", "City"]
   ];
 
   const infoFields = [
-    ["Business Name", "BusinessName"], ["Legal Entity Name", "legal_entity_name"], ["Franchise Code", "franchise_code"],
-    ["Owner Name", "owner_name"], ["Email Address", "Email"], ["Mobile Number", "mobile_number"],
-    ["Location", "location"], ["Business Type", "Business_type"], ["Outlet Type", "OutletType"],
-    ["GST Number", "gst_no"], ["FSSAI Number", "fssai_no"], ["PAN Number", "pan"],
-    ["Address", "Address"], ["Location", "Location"], ["Pincode", "Pincode"], ["Landmark", "Landmark"], ["City", "City"]
+    ["Business Name", "BusinessName"], 
+    ["Legal Entity Name", "legal_entity_name"], 
+    ["Franchise Code", "franchise_code"],
+    ["Owner Name", "owner_name"], 
+    ["Email Address", "Email"], 
+    ["Mobile Number", "mobile_number"],
+    ["Location", "location"], 
+    ["Business Type", "Business_type"], 
+    ["Outlet Type", "OutletType"],
+    ["GST Number", "gst_no"], 
+    ["FSSAI Number", "fssai_no"], 
+    ["PAN Number", "pan"],
+    ["Address", "Address"], 
+    ["Pincode", "Pincode"], 
+    ["Landmark", "Landmark"], 
+    ["City", "City"]
   ];
 
   const renderModal = () => {
@@ -212,16 +436,45 @@ const ManagementList = () => {
                 <div>
                   <div className="row mb-4">
                     <div className="col-12 text-center">
-                      <Avatar size={80} src={selectedRecord.Img} style={{ border: '3px solid #f0f0f0', marginBottom: '16px' }} onError={handleImageError} />
-                      <h4 style={{ color: "#403222", fontSize: '20px', fontWeight: 600, margin: 0 }}>{selectedRecord.Name}</h4>
+                      <Avatar 
+                        size={80} 
+                        src={selectedRecord.Img} 
+                        style={{ border: '3px solid #f0f0f0', marginBottom: '16px' }} 
+                        onError={handleImageError} 
+                      />
+                      <h4 style={{ color: "#403222", fontSize: '20px', fontWeight: 600, margin: 0 }}>
+                        {selectedRecord.Name}
+                      </h4>
                     </div>
                   </div>
                   <div className="row">
                     {infoFields.map(([label, field]) => renderInfoCard(label, selectedRecord[field]))}
                     <div className="col-12">
-                      <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '8px', padding: '16px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</div>
-                        <Tag color={selectedRecord.Status === "Legal" ? "success" : "error"} style={{ fontSize: '14px', padding: '6px 16px', borderRadius: '20px', fontWeight: 500 }}>
+                      <div style={{ 
+                        background: '#fafafa', 
+                        border: '1px solid #f0f0f0', 
+                        borderRadius: '8px', 
+                        padding: '16px', 
+                        textAlign: 'center' 
+                      }}>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#8c8c8c', 
+                          marginBottom: '8px', 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '0.5px' 
+                        }}>
+                          Status
+                        </div>
+                        <Tag 
+                          color={selectedRecord.Status === "Approved" || selectedRecord.Status === "Legal" ? "success" : "error"} 
+                          style={{ 
+                            fontSize: '14px', 
+                            padding: '6px 16px', 
+                            borderRadius: '20px', 
+                            fontWeight: 500 
+                          }}
+                        >
                           {selectedRecord.Status}
                         </Tag>
                       </div>
@@ -234,13 +487,31 @@ const ManagementList = () => {
                     {formFields.map(([label, field, type]) => renderFormField(label, field, type))}
                     <div className="col-12 col-md-6">
                       <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ fontSize: '14px', fontWeight: 500, color: '#403222', marginBottom: '12px', display: 'block' }}>
+                        <label style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 500, 
+                          color: '#403222', 
+                          marginBottom: '12px', 
+                          display: 'block' 
+                        }}>
                           Status <span style={{ color: '#ff4d4f' }}>*</span>
                         </label>
                         <div style={{ display: 'flex', gap: '16px' }}>
-                          {["Legal", "Fraud"].map(status => (
-                            <label key={status} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
-                              <input type="radio" name="editStatus" value={status} defaultChecked={selectedRecord.Status === status} style={{ marginRight: '4px' }} />
+                          {["Approved", "Rejected", "Pending", "Query"].map(status => (
+                            <label key={status} style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '8px', 
+                              cursor: 'pointer', 
+                              fontSize: '14px' 
+                            }}>
+                              <input 
+                                type="radio" 
+                                name="editStatus" 
+                                value={status} 
+                                defaultChecked={selectedRecord.Status === status} 
+                                style={{ marginRight: '4px' }} 
+                              />
                               {status}
                             </label>
                           ))}
@@ -257,7 +528,17 @@ const ManagementList = () => {
                   {isView ? 'Close' : 'Cancel'}
                 </Button>
                 {!isView && (
-                  <Button type="primary" onClick={(e) => handleSubmit(e, 'edit')} style={{ backgroundColor: "#c1a078", borderColor: "#c1a078", borderRadius: '6px', padding: '8px 20px' }}>
+                  <Button 
+                    type="primary" 
+                    onClick={(e) => handleSubmit(e, 'edit')} 
+                    style={{ 
+                      backgroundColor: "#c1a078", 
+                      borderColor: "#c1a078", 
+                      borderRadius: '6px', 
+                      padding: '8px 20px' 
+                    }}
+                    loading={loading}
+                  >
                     Update
                   </Button>
                 )}
@@ -276,38 +557,72 @@ const ManagementList = () => {
       <div className="page-wrapper">
         <div className="content" style={{ padding: '24px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ background: 'linear-gradient(135deg, #c1a078 0%, #d4b896 100%)', borderRadius: '12px', padding: '24px', color: 'white' }}>
-              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600, marginBottom: '4px' }}>Restaurant Management</h2>
-              <p style={{ margin: 0, opacity: 0.9, fontSize: '14px', color: '#403222' }}>Manage approved restaurants and their details</p>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #c1a078 0%, #d4b896 100%)', 
+              borderRadius: '12px', 
+              padding: '24px', 
+              color: 'white' 
+            }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600, marginBottom: '4px' }}>
+                Restaurant Management
+              </h2>
+              <p style={{ margin: 0, opacity: 0.9, fontSize: '14px', color: '#403222' }}>
+                Manage approved restaurants and their details
+              </p>
             </div>
           </div>
 
-          <Card style={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }} bodyStyle={{ padding: '24px' }}>
+          <Card style={{ 
+            borderRadius: '12px', 
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+            border: '1px solid #f0f0f0' 
+          }} bodyStyle={{ padding: '24px' }}>
             <div style={{ marginBottom: '20px' }}>
               <Row justify="space-between" align="middle">
                 <Col>
-                  <h3 style={{ color: "#403222", margin: 0, fontSize: '18px', fontWeight: 600 }}>Restaurant List</h3>
-                  <p style={{ color: "#8c8c8c", margin: 0, fontSize: '14px', marginTop: '4px' }}>{pagination.total} restaurants found</p>
+                  <h3 style={{ color: "#403222", margin: 0, fontSize: '18px', fontWeight: 600 }}>
+                    Approved Restaurant List
+                  </h3>
+                  <p style={{ color: "#8c8c8c", margin: 0, fontSize: '14px', marginTop: '4px' }}>
+                    {pagination.total} approved restaurants found
+                  </p>
+                </Col>
+                <Col>
+                  <Button 
+                    onClick={refreshData} 
+                    loading={loading}
+                    style={{ 
+                      backgroundColor: "#c1a078", 
+                      borderColor: "#c1a078", 
+                      color: "white",
+                      borderRadius: '6px' 
+                    }}
+                  >
+                    Refresh Data
+                  </Button>
                 </Col>
               </Row>
             </div>
 
-            <Spin spinning={loading}>
+            <Spin spinning={loading} tip="Loading approved restaurants...">
               <Table
                 columns={columns}
                 dataSource={datasource}
-                rowKey="id"
+                rowKey="key"
                 pagination={{
                   ...pagination,
-                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} entries`,
-                  onShowSizeChange,
-                  itemRender,
                   onChange: handleTableChange,
-                  showSizeChanger: true,
-                  showQuickJumper: true,
+                  onShowSizeChange: (current, size) => {
+                    fetchApprovedRestaurants(current, size);
+                  },
                   style: { marginTop: '16px' }
                 }}
                 scroll={{ x: 1000 }}
+                locale={{
+                  emptyText: AdminService.isAuthenticated() 
+                    ? "No approved restaurants found" 
+                    : "Please login to view restaurants"
+                }}
               />
             </Spin>
           </Card>
@@ -321,11 +636,19 @@ const ManagementList = () => {
           <div className="modal-content" style={{ borderRadius: '12px', border: 'none' }}>
             <div className="modal-body text-center" style={{ padding: '32px' }}>
               <img src={imagesend} alt="Delete" width={50} height={46} style={{ marginBottom: '16px' }} />
-              <h3 style={{ color: '#403222', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>Confirm Deletion</h3>
-              <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>Are you sure you want to delete this restaurant?</p>
+              <h3 style={{ color: '#403222', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
+                Confirm Deletion
+              </h3>
+              <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
+                Are you sure you want to delete this restaurant?
+              </p>
               <Space>
-                <Button data-bs-dismiss="modal" style={{ borderRadius: '6px' }}>Cancel</Button>
-                <Button type="primary" danger style={{ borderRadius: '6px' }}>Delete</Button>
+                <Button data-bs-dismiss="modal" style={{ borderRadius: '6px' }}>
+                  Cancel
+                </Button>
+                <Button type="primary" danger style={{ borderRadius: '6px' }}>
+                  Delete
+                </Button>
               </Space>
             </div>
           </div>
