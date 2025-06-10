@@ -303,7 +303,7 @@ const RestaurantList = () => {
         <div className="content" style={{ padding: "24px" }}>
           <div style={{ marginBottom: "24px" }}>
             <div style={{ background: "linear-gradient(135deg, #c1a078 0%, #d4b896 100%)", borderRadius: "16px", padding: "24px", color: "white" }}>
-              <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 600, marginBottom: "4px" }}>Restaurant Management</h2>
+              <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 600, marginBottom: "4px" }}>Restaurants </h2>
               <p style={{ margin: 0, opacity: 0.9, fontSize: "14px" }}>Manage restaurant applications and onboarding process</p>
             </div>
           </div>
