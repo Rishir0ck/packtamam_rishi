@@ -42,10 +42,10 @@ const RestaurantList = () => {
   ];
 
   const documentTypes = {
-    fssai_certificate: { label: "FSSAI Certificate", icon: <FileTextOutlined />, color: "#52c41a" },
-    gst_certificate: { label: "GST Certificate", icon: <FileTextOutlined />, color: "#1890ff" },
-    restaurant_pictures: { label: "Restaurant Pictures", icon: <FileImageOutlined />, color: "#722ed1" },
-    pan_card: { label: "PAN Card", icon: <FileTextOutlined />, color: "#fa8c16" }
+    fssai_certificate: { label: "FSSAI Certificate", icon: <FileTextOutlined />, color: "#52c41a", ext: ".pdf" },
+    gst_certificate: { label: "GST Certificate", icon: <FileTextOutlined />, color: "#1890ff", ext: ".pdf" },
+    restaurant_pictures: { label: "Restaurant Pictures", icon: <FileImageOutlined />, color: "#722ed1", ext: ".jpg" },
+    pan_card: { label: "PAN Card", icon: <FileTextOutlined />, color: "#fa8c16", ext: ".pdf" }
   };
 
   const statusMethods = {
@@ -55,7 +55,78 @@ const RestaurantList = () => {
     Query: (page, limit) => adminService.getQueryBusinessList(page, limit)
   };
 
+  const businessFields = [
+    { icon: <ShopOutlined />, label: "Business Name", key: "business_name" },
+    { icon: <BankOutlined />, label: "Legal Entity", key: "legal_entity_name" },
+    { icon: <UserOutlined />, label: "Owner Name", key: "owner_name" },
+    { icon: <ShopOutlined />, label: "Business Type", key: "business_type" },
+    { icon: <ShopOutlined />, label: "Outlet Type", key: "outlet_type" },
+    { icon: <ShopOutlined />, label: "Franchise Code", key: "franchise_code" },
+    { icon: <MailOutlined />, label: "Email", key: "email" },
+    { icon: <PhoneOutlined />, label: "Mobile", key: "mobile_number" },
+    { icon: <EnvironmentOutlined />, label: "City", key: "city" },
+    { icon: <EnvironmentOutlined />, label: "Pincode", key: "pincode" },
+    { icon: <EnvironmentOutlined />, label: "Address", key: "address", span: 24 },
+    { icon: <EnvironmentOutlined />, label: "Landmark", key: "landmark", span: 24 },
+    { icon: <FileTextOutlined />, label: "GST Number", key: "gst_no" },
+    { icon: <FileTextOutlined />, label: "FSSAI Number", key: "fssai_no" },
+    { icon: <FileTextOutlined />, label: "PAN Number", key: "pan" },
+    { icon: <CalendarOutlined />, label: "Created", key: "created_at" },
+    { icon: <CalendarOutlined />, label: "Updated", key: "updated_at" }
+  ];
+
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
+
+  // Enhanced download function with proper file format detection
+  const handleDownload = async (url, filename, docType = '') => {
+    try {
+      // Detect file extension from URL or use document type default
+      let extension = '';
+      
+      // First try to get extension from URL
+      const urlMatch = url.match(/\.([a-zA-Z0-9]+)(\?|$)/);
+      if (urlMatch) {
+        extension = '.' + urlMatch[1].toLowerCase();
+      } else if (docType && documentTypes[docType]) {
+        // Use default extension based on document type
+        extension = documentTypes[docType].ext;
+      } else {
+        // Detect by content type or URL patterns
+        if (url.includes('image') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)/i.test(url)) {
+          extension = '.jpg';
+        } else if (url.includes('pdf') || url.includes('document')) {
+          extension = '.pdf';
+        } else {
+          extension = '.pdf'; // Default fallback
+        }
+      }
+
+      // Clean filename and add proper extension
+      const cleanFilename = filename.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const finalFilename = cleanFilename + extension;
+
+      // Create download link
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = finalFilename;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      message.success(`Downloaded ${finalFilename} successfully!`);
+    } catch (error) {
+      console.error('Download failed:', error);
+      message.error('Failed to download file. Please try again.');
+    }
+  };
 
   const loadBusinesses = async (status = "Pending", page = 1, limit = 12) => {
     updateState({ loading: true });
@@ -95,15 +166,6 @@ const RestaurantList = () => {
     }
     updateState({ tabCounts: counts });
   };
-
-  useEffect(() => {
-    const filtered = state.searchText ? state.datasource.filter(item =>
-      ['business_name', 'owner_name', 'email'].some(field =>
-        (item[field] || '').toLowerCase().includes(state.searchText.toLowerCase())
-      ) || (item.mobile_number || '').includes(state.searchText)
-    ) : state.datasource;
-    updateState({ filteredData: filtered });
-  }, [state.searchText, state.datasource]);
 
   const handleStatusUpdate = async (businessId, newStatus, queryMessage = null) => {
     updateState({ updateLoading: true });
@@ -153,19 +215,20 @@ const RestaurantList = () => {
     updateState({ previewModal: { visible: true, url, title, type } });
   };
 
-  const handleDownload = (url, filename) => {
-    const link = document.createElement('a');
-    Object.assign(link, { href: url, download: filename, target: '_blank' });
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const isImage = (url) => /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(url);
 
   useEffect(() => { loadBusinesses("Pending", 1, 12); }, []);
 
-  // Component definitions
+  useEffect(() => {
+    const filtered = state.searchText ? state.datasource.filter(item =>
+      ['business_name', 'owner_name', 'email'].some(field =>
+        (item[field] || '').toLowerCase().includes(state.searchText.toLowerCase())
+      ) || (item.mobile_number || '').includes(state.searchText)
+    ) : state.datasource;
+    updateState({ filteredData: filtered });
+  }, [state.searchText, state.datasource]);
+
+  // Compact Component Definitions
   const ActionButtons = ({ record }) => (
     <Space size="small">
       <Button type="text" size="small" icon={<EyeOutlined />}
@@ -251,7 +314,7 @@ const RestaurantList = () => {
                 onClick={() => handlePreview(doc.url || doc.document_url || doc, `${docInfo.label} ${index + 1}`, docType)}
                 style={{ color: docInfo.color }} />
               <Button type="text" size="small" icon={<DownloadOutlined />}
-                onClick={() => handleDownload(doc.url || doc.document_url || doc, `${docType}_${index + 1}`)}
+                onClick={() => handleDownload(doc.url || doc.document_url || doc, `${docType}_${index + 1}`, docType)}
                 style={{ color: "#8c8c8c" }} />
             </div>
           ))}
@@ -301,26 +364,6 @@ const RestaurantList = () => {
       color: PropTypes.string.isRequired
     }).isRequired
   };
-
-  const businessFields = [
-    { icon: <ShopOutlined />, label: "Business Name", key: "business_name" },
-    { icon: <BankOutlined />, label: "Legal Entity", key: "legal_entity_name" },
-    { icon: <UserOutlined />, label: "Owner Name", key: "owner_name" },
-    { icon: <ShopOutlined />, label: "Business Type", key: "business_type" },
-    { icon: <ShopOutlined />, label: "Outlet Type", key: "outlet_type" },
-    { icon: <ShopOutlined />, label: "Franchise Code", key: "franchise_code" },
-    { icon: <MailOutlined />, label: "Email", key: "email" },
-    { icon: <PhoneOutlined />, label: "Mobile", key: "mobile_number" },
-    { icon: <EnvironmentOutlined />, label: "City", key: "city" },
-    { icon: <EnvironmentOutlined />, label: "Pincode", key: "pincode" },
-    { icon: <EnvironmentOutlined />, label: "Address", key: "address", span: 24 },
-    { icon: <EnvironmentOutlined />, label: "Landmark", key: "landmark", span: 24 },
-    { icon: <FileTextOutlined />, label: "GST Number", key: "gst_no" },
-    { icon: <FileTextOutlined />, label: "FSSAI Number", key: "fssai_no" },
-    { icon: <FileTextOutlined />, label: "PAN Number", key: "pan" },
-    { icon: <CalendarOutlined />, label: "Created", key: "created_at" },
-    { icon: <CalendarOutlined />, label: "Updated", key: "updated_at" }
-  ];
 
   return (
     <>
@@ -435,150 +478,147 @@ const RestaurantList = () => {
         </div>
       </div>
 
-      {/* View Modal - FIXED */}
+      {/* View Modal */}
       <Modal
-          title={
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Avatar size={48} src={state.viewModal.record?.profile_picture || blogimg4} />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "18px", color: "#262626" }}>
-                  {state.viewModal.record?.business_name || "Restaurant Details"}
-                </div>
-                <div style={{ fontSize: "13px", color: "#8c8c8c" }}>Complete Information</div>
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Avatar size={48} src={state.viewModal.record?.profile_picture || blogimg4} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: "18px", color: "#262626" }}>
+                {state.viewModal.record?.business_name || "Restaurant Details"}
               </div>
+              <div style={{ fontSize: "13px", color: "#8c8c8c" }}>Complete Information</div>
             </div>
-          }
-          style={{top: "47%",transform: "translateY(-50%) translateX(10%)",}}
-          open={state.viewModal.visible}
-          onCancel={() => updateState({ viewModal: { visible: false, record: null } })}
-          footer={null}
-          width={900}
-          centered
-          bodyStyle={{ padding: 0 }} // Prevent default inner padding
-        >
-          {state.viewModal.record && (
-            <div
-              style={{
-                maxHeight: "70vh",
-                overflowY: "auto",
-                padding: 24,
-                boxSizing: "border-box",
-              }}
-            >
-              {/* Status & Query */}
-              <div style={{ textAlign: "center", marginBottom: 32 }}>
-                <Tag
-                  color={
-                    statusOptions.find((s) => s.value === state.viewModal.record.status)?.color || "default"
-                  }
-                  style={{
-                    fontSize: 14,
-                    padding: "8px 20px",
-                    borderRadius: 20,
-                    fontWeight: 500,
-                  }}
-                >
-                  {state.viewModal.record.status}
-                </Tag>
-                {state.viewModal.record.query_message && (
-                  <div
-                    style={{
-                      marginTop: 16,
-                      padding: 16,
-                      background: "#f0f0f0",
-                      borderRadius: 8,
-                      fontSize: 13,
-                      color: "#595959",
-                      maxWidth: 700,
-                      margin: "16px auto 0 auto",
-                    }}
-                  >
-                    <strong>Query:</strong> {state.viewModal.record.query_message}
-                  </div>
-                )}
-              </div>
-
-              {/* Business Info */}
-              <Row gutter={[24, 16]}>
-                {businessFields.map((field, i) => (
-                  <InfoRow
-                    key={i}
-                    icon={field.icon}
-                    label={field.label}
-                    value={state.viewModal.record[field.key]}
-                    span={field.span}
-                  />
-                ))}
-              </Row>
-
-              {/* Documents Section */}
-              <Divider
-                orientation="left"
-                style={{
-                  color: "#c1a078",
-                  fontWeight: 600,
-                  marginTop: 40,
-                  marginBottom: 16,
-                }}
+          </div>
+        }
+        style={{ top: "47%", transform: "translateY(-50%) translateX(10%)" }}
+        open={state.viewModal.visible}
+        onCancel={() => updateState({ viewModal: { visible: false, record: null } })}
+        footer={null}
+        width={900}
+        centered
+        bodyStyle={{ padding: 0 }}
+      >
+        {state.viewModal.record && (
+          <div style={{ maxHeight: "70vh", overflowY: "auto", padding: 24, boxSizing: "border-box" }}>
+            {/* Status & Query */}
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <Tag
+                color={statusOptions.find((s) => s.value === state.viewModal.record.status)?.color || "default"}
+                style={{ fontSize: 14, padding: "8px 20px", borderRadius: 20, fontWeight: 500 }}
               >
-                Documents Verification
-              </Divider>
-
-              <div style={{ maxHeight: 300, overflowY: "auto", paddingRight: 8 }}>
-                {Object.entries(documentTypes).map(([docType, docInfo]) => {
-                  const docs = state.viewModal.record.documents?.[docType];
-                  if (!docs || (Array.isArray(docs) && docs.length === 0)) return null;
-                  const docArray = Array.isArray(docs) ? docs : [docs];
-                  return (
-                    <DocumentCard
-                      key={docType}
-                      docType={docType}
-                      docs={docArray}
-                      docInfo={docInfo}
-                    />
-                  );
-                })}
-              </div>
+                {state.viewModal.record.status}
+              </Tag>
+              {state.viewModal.record.query_message && (
+                <div style={{ marginTop: 16, padding: 16, background: "#f0f0f0", borderRadius: 8, fontSize: 13, color: "#595959", maxWidth: 700, margin: "16px auto 0 auto" }}>
+                  <strong>Query:</strong> {state.viewModal.record.query_message}
+                </div>
+              )}
             </div>
-          )}
-        </Modal>
 
+            {/* Business Info */}
+            <Row gutter={[24, 16]}>
+              {businessFields.map((field, i) => (
+                <InfoRow
+                  key={i}
+                  icon={field.icon}
+                  label={field.label}
+                  value={state.viewModal.record[field.key]}
+                  span={field.span}
+                />
+              ))}
+            </Row>
 
+            {/* Documents Section */}
+            <Divider orientation="left" style={{ color: "#c1a078", fontWeight: 600, marginTop: 40, marginBottom: 16 }}>
+              Documents Verification
+            </Divider>
+
+            <div style={{ maxHeight: 300, overflowY: "auto", paddingRight: 8 }}>
+              {Object.entries(documentTypes).map(([docType, docInfo]) => {
+                const docs = state.viewModal.record.documents?.[docType];
+                if (!docs || (Array.isArray(docs) && docs.length === 0)) return null;
+                const docArray = Array.isArray(docs) ? docs : [docs];
+                return (
+                  <DocumentCard key={docType} docType={docType} docs={docArray} docInfo={docInfo} />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Document Preview Modal */}
-      <Modal 
-        title={state.previewModal.title} 
+      <Modal
+        title={state.previewModal.title}
         open={state.previewModal.visible}
         onCancel={() => updateState({ previewModal: { visible: false, url: "", title: "", type: "" } })}
         footer={[
-          <Button key="download" icon={<DownloadOutlined />}
-            onClick={() => handleDownload(state.previewModal.url, state.previewModal.title)}
-            style={{ backgroundColor: "#c1a078", borderColor: "#c1a078", color: "white" }}>
+          <Button
+            key="download"
+            icon={<DownloadOutlined />}
+            onClick={() => handleDownload(state.previewModal.url, state.previewModal.title, state.previewModal.type)}
+            style={{
+              backgroundColor: "#c1a078",
+              borderColor: "#c1a078",
+              color: "white",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+            }}
+          >
             Download
-          </Button>
-        ]} 
-        width={900} 
-        centered 
-        bodyStyle={{ padding: "24px", textAlign: "center" }}
+          </Button>,
+        ]}
+        centered
+        width={800}
+        bodyStyle={{
+          padding: 0,
+          margin: 0,
+          maxHeight: "calc(100vh - 120px)",
+          overflowY: "auto",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+        }}
+        style={{ top: "50%", transform: "translateY(-50%)", padding: 0 }}
       >
         {state.previewModal.url && (
           isImage(state.previewModal.url) ? (
-            <Image src={state.previewModal.url} alt={state.previewModal.title}
-              style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }}
-              preview={false} />
+            <div style={{ padding: "24px", width: "100%", textAlign: "center" }}>
+              <Image
+                src={state.previewModal.url}
+                alt={state.previewModal.title}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "70vh",
+                  objectFit: "contain",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
+                }}
+                preview
+              />
+            </div>
           ) : (
-            <div style={{ width: "100%", height: "70vh" }}>
+            <div style={{ width: "100%", height: "70vh", padding: "24px", boxSizing: "border-box" }}>
+              
               <iframe
                 src={state.previewModal.url}
                 width="100%"
                 height="100%"
-                style={{ border: "none", borderRadius: "8px" }}
+                style={{
+                  border: "none",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
+                }}
                 title={state.previewModal.title}
               />
             </div>
           )
         )}
       </Modal>
+
 
       {/* Edit Modal */}
       <Modal 
