@@ -6,7 +6,8 @@ import {
 } from "antd";
 import { 
   SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, 
-  AppstoreOutlined, UnorderedListOutlined, InboxOutlined, ReloadOutlined
+  // AppstoreOutlined, UnorderedListOutlined, 
+  InboxOutlined, ReloadOutlined
 } from "@ant-design/icons";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
@@ -264,7 +265,8 @@ const InventoryList = () => {
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
-            width: "36px", height: "36px", borderRadius: "8px", background: "#1890ff",
+
+            width: "36px", height: "36px", borderRadius: "8px", background: "#c1a078",
             display: "flex", alignItems: "center", justifyContent: "center", color: "white"
           }}>
             {isEdit ? <EditOutlined /> : <PlusOutlined />}
@@ -283,7 +285,7 @@ const InventoryList = () => {
         <Card title="Product Images" size="small" style={{ marginBottom: "16px" }}>
           <Dragger {...uploadProps}>
             <p className="ant-upload-drag-icon">
-              <InboxOutlined style={{ fontSize: "36px", color: "#1890ff" }} />
+              <InboxOutlined style={{ fontSize: "36px", color: "#c1a078" }} />
             </p>
             <p className="ant-upload-text">Click or drag files to upload images</p>
           </Dragger>
@@ -352,8 +354,8 @@ const InventoryList = () => {
 
         <div style={{ textAlign: "right" }}>
           <Space>
-            <Button onClick={onClose}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={state.loading}>
+            <Button  onClick={onClose}>Cancel</Button>
+            <Button style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }} type="primary" htmlType="submit" loading={state.loading}>
               {isEdit ? "Update Product" : "Add Product"}
             </Button>
           </Space>
@@ -435,24 +437,24 @@ const InventoryList = () => {
                     </Col>
                     <Col>
                       <Space>
-                        <Button icon={<ReloadOutlined />} onClick={loadData} loading={state.loading}>
+                        <Button icon={<ReloadOutlined />} onClick={loadData} loading={state.loading} style={{ color: '#401222' }}>
                           Refresh
                         </Button>
-                        <Button 
-                          type={state.viewMode === "grid" ? "primary" : "default"} 
-                          icon={<UnorderedListOutlined />} 
-                          onClick={() => updateState({ viewMode: "grid" })}
-                        >
-                          Grid
-                        </Button>
-                        <Button 
-                          type={state.viewMode === "card" ? "primary" : "default"} 
-                          icon={<AppstoreOutlined />} 
-                          onClick={() => updateState({ viewMode: "card" })}
-                        >
-                          Card
-                        </Button>
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('add')}>
+                        {/* <Button.Group>
+                          {["grid", "list"].map(mode => (
+                            <Button key={mode} type={state.viewMode === mode ? "primary" : "default"}
+                              icon={mode === "grid" ? <AppstoreOutlined /> : <UnorderedListOutlined />}
+                              onClick={() => updateState({ viewMode: mode })}
+                              style={{
+                                backgroundColor: state.viewMode === mode ? "#c1a078" : "transparent",
+                                borderColor: "#c1a078",
+                                color: state.viewMode === mode ? "white" : "#c1a078"
+                              }}>
+                              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                            </Button>
+                          ))}
+                        </Button.Group> */}
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('add')} style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }}>
                           Add Product
                         </Button>
                       </Space>
