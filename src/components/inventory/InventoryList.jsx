@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
-  Table, Input, Select, Button, message, Modal, Row, Col, Card, Avatar, Tag, 
-  Space, Form, Upload, Image, Spin
+  Input, Select, Button, message, Modal, Row, Col, Card, Avatar, Tag, 
+  Space, Form, Upload, Image, Spin, Empty
 } from "antd";
 import { 
   SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, 
-  // AppstoreOutlined, UnorderedListOutlined, 
   InboxOutlined, ReloadOutlined
 } from "@ant-design/icons";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
-import { onShowSizeChange, itemRender } from "../Pagination";
-import AdminService from "../../Firebase/services/adminApiService";
+import AdminService from "../../services/adminService"; // Fixed import path
 
 const { Dragger } = Upload;
 
 const InventoryList = () => {
   const [state, setState] = useState({
-    viewMode: "grid",
     searchText: "",
     filterCategory: "",
     loading: false,
@@ -27,74 +24,110 @@ const InventoryList = () => {
     showViewModal: false,
     selectedRecord: null,
     uploadedImages: [],
-    products: [], // Fixed: Initialize as empty array
-    categories: [], // Fixed: Initialize as empty array
-    materials: [] // Fixed: Initialize as empty array
+    products: [],
+    categories: [],
+    materials: []
   });
 
   const [form] = Form.useForm();
-
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
 
-  useEffect(() => {
-    loadData();
+  useEffect(() => { 
+    loadData(); 
   }, []);
 
   const loadData = async () => {
     updateState({ loading: true });
     try {
+      console.log("🔄 Loading inventory data...");
+      
+      // Load products, categories, and materials
       const [productsRes, categoriesRes, materialsRes] = await Promise.all([
         AdminService.getProducts(),
         AdminService.getCategories(),
         AdminService.getMaterials()
       ]);
 
+      console.log("📦 Products response:", productsRes);
+      console.log("📂 Categories response:", categoriesRes);
+      console.log("🔧 Materials response:", materialsRes);
+
+      // Handle different response structures
+      const products = productsRes.success 
+        ? (Array.isArray(productsRes.data) ? productsRes.data : [])
+        : [];
+      
+      const categories = categoriesRes.success 
+        ? (Array.isArray(categoriesRes.data) ? categoriesRes.data : [])
+        : [];
+      
+      const materials = materialsRes.success 
+        ? (Array.isArray(materialsRes.data) ? materialsRes.data : [])
+        : [];
+
+      console.log("✅ Processed data:", { 
+        productsCount: products.length, 
+        categoriesCount: categories.length, 
+        materialsCount: materials.length 
+      });
+
       updateState({
-        products: Array.isArray(productsRes.data) ? productsRes.data : [], // Fixed: Ensure array
-        categories: Array.isArray(categoriesRes.data) ? categoriesRes.data : [], // Fixed: Ensure array
-        materials: Array.isArray(materialsRes.data) ? materialsRes.data : [], // Fixed: Ensure array
+        products,
+        categories,
+        materials,
         loading: false
       });
 
-      if (!productsRes.success) message.error(productsRes.error);
-      if (!categoriesRes.success) message.error(categoriesRes.error);
-      if (!materialsRes.success) message.error(materialsRes.error);
+      // Show error messages for failed requests
+      if (!productsRes.success) message.error(`Products: ${productsRes.error}`);
+      if (!categoriesRes.success) message.error(`Categories: ${categoriesRes.error}`);
+      if (!materialsRes.success) message.error(`Materials: ${materialsRes.error}`);
+
     } catch (error) {
-      message.error('Failed to load data');
+      console.error('❌ Failed to load data:', error);
+      message.error('Failed to load inventory data');
       updateState({ loading: false });
     }
   };
 
-  // Fixed: Added safety check for array before filtering
   const filteredData = (state.products || []).filter(item => {
-    const matchesSearch = Object.values(item || {}).some(value => 
-      value?.toString().toLowerCase().includes(state.searchText.toLowerCase())
-    );
-    return matchesSearch && (!state.filterCategory || item.category_id === state.filterCategory);
+    if (!item) return false;
+    
+    const matchesSearch = !state.searchText || 
+      Object.values(item).some(value => 
+        value?.toString().toLowerCase().includes(state.searchText.toLowerCase())
+      );
+    
+    const matchesCategory = !state.filterCategory || 
+      item.category_id === state.filterCategory;
+    
+    return matchesSearch && matchesCategory;
   });
 
   const openModal = (type, record = null) => {
+    form.resetFields();
+    updateState({ uploadedImages: [] });
+
     if (type === 'add') {
-      form.resetFields();
-      updateState({ showAddModal: true, uploadedImages: [] });
+      updateState({ showAddModal: true });
     } else if (type === 'edit') {
-      form.setFieldsValue({
-        name: record.name,
-        category_id: record.category_id,
-        material_id: record.material_id,
-        hsn_code: record.hsn_code,
-        shape: record.shape,
-        colour: record.colour,
-        specs: record.specs,
-        quality: record.quality
-      });
-      
-      const existingImages = record.images?.map((img, index) => ({
-        uid: index,
+      const existingImages = (record.images || []).map((img, index) => ({
+        uid: `existing-${index}`,
         name: `image-${index}`,
         status: 'done',
         url: img
-      })) || [];
+      }));
+      
+      form.setFieldsValue({
+        name: record.name || '',
+        category_id: record.category_id || '',
+        material_id: record.material_id || '',
+        hsn_code: record.hsn_code || '',
+        shape: record.shape || '',
+        colour: record.colour || '',
+        specs: record.specs || '',
+        quality: record.quality || ''
+      });
       
       updateState({ 
         showEditModal: true, 
@@ -126,6 +159,8 @@ const InventoryList = () => {
     updateState({ loading: true });
     
     try {
+      console.log("💾 Submitting product data:", submitData);
+      
       const result = state.showEditModal && state.selectedRecord
         ? await AdminService.updateProduct(state.selectedRecord.id, submitData)
         : await AdminService.addProduct(submitData);
@@ -133,11 +168,12 @@ const InventoryList = () => {
       if (result.success) {
         message.success(state.showEditModal ? 'Product updated successfully!' : 'Product added successfully!');
         closeModals();
-        loadData();
+        await loadData(); // Reload data
       } else {
         message.error(result.error || 'Failed to save product');
       }
     } catch (error) {
+      console.error('❌ Submit error:', error);
       message.error('Failed to save product. Please try again.');
     } finally {
       updateState({ loading: false });
@@ -179,93 +215,84 @@ const InventoryList = () => {
 
   const getCategoryName = (categoryId) => {
     const category = state.categories.find(cat => cat.id === categoryId);
-    return category?.name || 'Unknown';
+    return category?.name || 'Unknown Category';
   };
 
   const getMaterialName = (materialId) => {
     const material = state.materials.find(mat => mat.id === materialId);
-    return material?.name || 'Unknown';
+    return material?.name || 'Unknown Material';
   };
 
-  const columns = [
-    { 
-      title: "Product", 
-      dataIndex: "name", 
-      render: (text, record) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+  const ProductCard = ({ item }) => (
+    <Card 
+      hoverable 
+      cover={
+        <div style={{ 
+          textAlign: "center", 
+          padding: "20px", 
+          backgroundColor: "#fafafa", 
+          height: "120px", 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center" 
+        }}>
           <Avatar 
-            src={record.images?.[0]} 
-            size={48} 
-            style={{ borderRadius: "8px" }}
+            src={item.images?.[0]} 
+            size={64}
+            style={{ backgroundColor: "#c1a078" }}
           >
-            {text?.[0]?.toUpperCase()}
+            {item.name?.[0]?.toUpperCase() || 'P'}
           </Avatar>
-          <div>
-            <div style={{ fontWeight: "600", fontSize: "14px" }}>{text}</div>
-            <div style={{ color: "#8c8c8c", fontSize: "12px" }}>{record.specs}</div>
+        </div>
+      } 
+      actions={[
+        <EyeOutlined key="view" onClick={() => openModal('view', item)} />, 
+        <EditOutlined key="edit" onClick={() => openModal('edit', item)} />
+      ]}
+      style={{ height: "100%" }}
+    >
+      <Card.Meta 
+        title={<div style={{ fontSize: "14px", fontWeight: "600" }}>{item.name || 'Unnamed Product'}</div>}
+        description={
+          <div style={{ fontSize: "12px" }}>
+            <Tag color="blue" size="small">{getCategoryName(item.category_id)}</Tag>
+            <div style={{ marginTop: "4px" }}>
+              <strong>Material:</strong> {getMaterialName(item.material_id)}
+            </div>
+            <div>
+              <strong>HSN:</strong> <code style={{ fontSize: "11px" }}>{item.hsn_code || 'N/A'}</code>
+            </div>
+            {item.quality && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: "4px" }}>
+                <strong>Quality:</strong> 
+                <Tag size="small" color={item.quality === "Premium" ? "gold" : "default"}>
+                  {item.quality}
+                </Tag>
+              </div>
+            )}
+            {item.colour && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: "4px" }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  borderRadius: '50%', 
+                  backgroundColor: item.colour?.toLowerCase() || '#ccc',
+                  border: '1px solid #d9d9d9'
+                }} />
+                <span>{item.colour}</span>
+              </div>
+            )}
           </div>
-        </div>
-      )
-    },
-    { 
-      title: "Category", 
-      dataIndex: "category_id", 
-      render: (categoryId) => <Tag color="blue">{getCategoryName(categoryId)}</Tag> 
-    },
-    { 
-      title: "Material", 
-      dataIndex: "material_id", 
-      render: (materialId) => getMaterialName(materialId) 
-    },
-    { 
-      title: "HSN Code", 
-      dataIndex: "hsn_code", 
-      render: (text) => <code>{text}</code> 
-    },
-    { 
-      title: "Quality", 
-      dataIndex: "quality", 
-      render: (text) => <Tag color={text === "Premium" ? "gold" : "default"}>{text}</Tag> 
-    },
-    { 
-      title: "Shape", 
-      dataIndex: "shape" 
-    },
-    { 
-      title: "Colour", 
-      dataIndex: "colour",
-      render: (text) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div 
-            style={{ 
-              width: '16px', 
-              height: '16px', 
-              borderRadius: '50%', 
-              backgroundColor: text?.toLowerCase() || '#ccc',
-              border: '1px solid #d9d9d9'
-            }} 
-          />
-          {text}
-        </div>
-      )
-    },
-    { 
-      title: "Actions", 
-      render: (_, record) => (
-        <Space>
-          <Button type="text" icon={<EyeOutlined />} onClick={() => openModal('view', record)} />
-          <Button type="text" icon={<EditOutlined />} onClick={() => openModal('edit', record)} />
-        </Space>
-      )
-    }
-  ];
+        } 
+      />
+    </Card>
+  );
 
   const FormModal = ({ show, onClose, isEdit, title }) => (
     <Modal 
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
-
             width: "36px", height: "36px", borderRadius: "8px", background: "#c1a078",
             display: "flex", alignItems: "center", justifyContent: "center", color: "white"
           }}>
@@ -294,34 +321,46 @@ const InventoryList = () => {
         <Card title="Product Details" size="small" style={{ marginBottom: "16px" }}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="name" label="Product Name" rules={[{ required: true, message: 'Please enter product name' }]}>
+              <Form.Item 
+                name="name" 
+                label="Product Name" 
+                rules={[{ required: true, message: 'Please enter product name' }]}
+              >
                 <Input placeholder="Enter product name" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="category_id" label="Category" rules={[{ required: true, message: 'Please select category' }]}>
+              <Form.Item 
+                name="category_id" 
+                label="Category" 
+                rules={[{ required: true, message: 'Please select category' }]}
+              >
                 <Select placeholder="Select category">
-                  {state.categories.map(category => (
-                    <Select.Option key={category.id} value={category.id}>
-                      {category.name}
-                    </Select.Option>
+                  {state.categories.map(cat => (
+                    <Select.Option key={cat.id} value={cat.id}>{cat.name}</Select.Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="material_id" label="Material" rules={[{ required: true, message: 'Please select material' }]}>
+              <Form.Item 
+                name="material_id" 
+                label="Material" 
+                rules={[{ required: true, message: 'Please select material' }]}
+              >
                 <Select placeholder="Select material">
-                  {state.materials.map(material => (
-                    <Select.Option key={material.id} value={material.id}>
-                      {material.name}
-                    </Select.Option>
+                  {state.materials.map(mat => (
+                    <Select.Option key={mat.id} value={mat.id}>{mat.name}</Select.Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="hsn_code" label="HSN Code" rules={[{ required: true, message: 'Please enter HSN code' }]}>
+              <Form.Item 
+                name="hsn_code" 
+                label="HSN Code" 
+                rules={[{ required: true, message: 'Please enter HSN code' }]}
+              >
                 <Input placeholder="Enter HSN code" />
               </Form.Item>
             </Col>
@@ -354,8 +393,13 @@ const InventoryList = () => {
 
         <div style={{ textAlign: "right" }}>
           <Space>
-            <Button  onClick={onClose}>Cancel</Button>
-            <Button style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }} type="primary" htmlType="submit" loading={state.loading}>
+            <Button onClick={onClose}>Cancel</Button>
+            <Button 
+              style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }} 
+              type="primary" 
+              htmlType="submit" 
+              loading={state.loading}
+            >
               {isEdit ? "Update Product" : "Add Product"}
             </Button>
           </Space>
@@ -371,49 +415,13 @@ const InventoryList = () => {
     title: PropTypes.string.isRequired 
   };
 
-  const CardView = ({ data }) => (
-    <Row gutter={[16, 16]}>
-      {data.map(item => (
-        <Col key={item.id} xs={24} sm={12} lg={8} xl={6}>
-          <Card 
-            hoverable 
-            cover={
-              <div style={{ textAlign: "center", padding: "20px", backgroundColor: "#fafafa" }}>
-                <Avatar src={item.images?.[0]} size={64}>
-                  {item.name?.[0]?.toUpperCase()}
-                </Avatar>
-              </div>
-            } 
-            actions={[
-              <EyeOutlined key="view" onClick={() => openModal('view', item)} />, 
-              <EditOutlined key="edit" onClick={() => openModal('edit', item)} />
-            ]}
-          >
-            <Card.Meta 
-              title={item.name}
-              description={
-                <div>
-                  <Tag color="blue">{getCategoryName(item.category_id)}</Tag>
-                  <div><strong>Material:</strong> {getMaterialName(item.material_id)}</div>
-                  <div><strong>HSN:</strong> {item.hsn_code}</div>
-                  <div><strong>Quality:</strong> {item.quality}</div>
-                </div>
-              } 
-            />
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  );
-
-  CardView.propTypes = { data: PropTypes.array.isRequired };
-
   return (
     <>
       <Header />
       <Sidebar id="menu-item3" id1="menu-items3" activeClassName="staff-list" />
       <div className="page-wrapper">
         <div className="content">
+          {/* Header Section */}
           <div style={{ 
             background: "linear-gradient(135deg, #c1a078 0%, #d4b896 100%)", 
             borderRadius: "12px", 
@@ -428,33 +436,29 @@ const InventoryList = () => {
           <div className="row">
             <div className="col-sm-12">
               <Card style={{ borderRadius: "12px" }}>
+                {/* Controls Section */}
                 <div style={{ marginBottom: "24px" }}>
                   <Row justify="space-between" align="middle">
                     <Col>
                       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                        Product List ({filteredData.length})
+                        Product Grid ({filteredData.length})
                       </h3>
                     </Col>
                     <Col>
                       <Space>
-                        <Button icon={<ReloadOutlined />} onClick={loadData} loading={state.loading} style={{ color: '#401222' }}>
+                        <Button 
+                          icon={<ReloadOutlined />} 
+                          onClick={loadData} 
+                          loading={state.loading}
+                        >
                           Refresh
                         </Button>
-                        {/* <Button.Group>
-                          {["grid", "list"].map(mode => (
-                            <Button key={mode} type={state.viewMode === mode ? "primary" : "default"}
-                              icon={mode === "grid" ? <AppstoreOutlined /> : <UnorderedListOutlined />}
-                              onClick={() => updateState({ viewMode: mode })}
-                              style={{
-                                backgroundColor: state.viewMode === mode ? "#c1a078" : "transparent",
-                                borderColor: "#c1a078",
-                                color: state.viewMode === mode ? "white" : "#c1a078"
-                              }}>
-                              {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                            </Button>
-                          ))}
-                        </Button.Group> */}
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal('add')} style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }}>
+                        <Button 
+                          type="primary" 
+                          icon={<PlusOutlined />} 
+                          onClick={() => openModal('add')} 
+                          style={{ backgroundColor: "#c1a078", borderColor: "#c1a078" }}
+                        >
                           Add Product
                         </Button>
                       </Space>
@@ -462,6 +466,7 @@ const InventoryList = () => {
                   </Row>
                 </div>
 
+                {/* Search Section */}
                 <Row gutter={16} style={{ marginBottom: "24px" }}>
                   <Col xs={24} sm={12}>
                     <Input 
@@ -472,37 +477,37 @@ const InventoryList = () => {
                     />
                   </Col>
                   <Col xs={24} sm={12}>
-                    <Select 
-                      placeholder="Filter by Category..." 
-                      value={state.filterCategory} 
-                      onChange={(value) => updateState({ filterCategory: value })} 
-                      allowClear 
-                      style={{ width: "100%" }}
+                    <Select
+                      placeholder="Filter by category"
+                      value={state.filterCategory}
+                      onChange={(value) => updateState({ filterCategory: value })}
+                      allowClear
+                      style={{ width: '100%' }}
                     >
-                      {state.categories.map(category => 
-                        <Select.Option key={category.id} value={category.id}>
-                          {category.name}
-                        </Select.Option>
-                      )}
+                      {state.categories.map(cat => (
+                        <Select.Option key={cat.id} value={cat.id}>{cat.name}</Select.Option>
+                      ))}
                     </Select>
                   </Col>
                 </Row>
 
+                {/* Products Grid */}
                 <Spin spinning={state.loading}>
-                  {state.viewMode === "grid" ? (
-                    <Table 
-                      columns={columns} 
-                      dataSource={filteredData} 
-                      rowKey="id" 
-                      pagination={{ 
-                        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`, 
-                        showSizeChanger: true, 
-                        onShowSizeChange, 
-                        itemRender 
-                      }} 
+                  {filteredData.length === 0 ? (
+                    <Empty 
+                      description={
+                        state.loading ? "Loading products..." : "No products found"
+                      }
+                      style={{ padding: "40px 0" }}
                     />
                   ) : (
-                    <CardView data={filteredData} />
+                    <Row gutter={[16, 16]}>
+                      {filteredData.map(item => (
+                        <Col key={item.id || Math.random()} xs={24} sm={12} lg={8} xl={6}>
+                          <ProductCard item={item} />
+                        </Col>
+                      ))}
+                    </Row>
                   )}
                 </Spin>
               </Card>
@@ -511,6 +516,7 @@ const InventoryList = () => {
         </div>
       </div>
       
+      {/* Modals */}
       <FormModal 
         show={state.showAddModal} 
         onClose={closeModals} 
@@ -565,9 +571,9 @@ const InventoryList = () => {
               </Col>
               <Col span={12}>
                 <Card size="small" title="Details">
-                  <p><strong>Shape:</strong> {state.selectedRecord.shape}</p>
-                  <p><strong>Colour:</strong> {state.selectedRecord.colour}</p>
-                  <p><strong>Specs:</strong> {state.selectedRecord.specs}</p>
+                  <p><strong>Shape:</strong> {state.selectedRecord.shape || 'N/A'}</p>
+                  <p><strong>Colour:</strong> {state.selectedRecord.colour || 'N/A'}</p>
+                  <p><strong>Specs:</strong> {state.selectedRecord.specs || 'N/A'}</p>
                 </Card>
               </Col>
             </Row>
