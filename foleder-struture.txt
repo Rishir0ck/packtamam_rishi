@@ -3,6 +3,9 @@ pack-tamam-dashboard/
 │   ├── logo.png                    # Your company logo (to be added)
 │   └── favicon.ico
 ├── src/
+│   ├── assets/
+│   │      ├── Header.jsx
+│   │      └── Layout.jsx
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── Sidebar.jsx

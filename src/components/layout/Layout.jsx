@@ -8,12 +8,17 @@ export default function Layout() {
   const { isDark } = useTheme()
 
   return (
-    <div className={`min-h-screen ${isDark ? 'dark bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
+    <div className={`h-screen ${isDark ? 'dark bg-gray-900' : 'bg-gray-50'} transition-colors duration-300 overflow-hidden`}>
+      <div className="flex h-full">
+        {/* Fixed Sidebar */}
+        <div className="flex-shrink-0">
+          <Sidebar />
+        </div>
+        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Header />
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-6 overflow-y-auto">
             <Outlet />
           </main>
         </div>
