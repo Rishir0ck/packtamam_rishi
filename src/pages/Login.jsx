@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import useAuth from '../hooks/useAuth'
+import AdminService from '../Firebase/services/adminApiService'
 // Import the logo from assets folder
 import logoImage from '../assets/pack tamam.png'
 
@@ -12,7 +12,6 @@ export default function Login() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -21,20 +20,26 @@ export default function Login() {
     setError('')
 
     try {
-      const success = login(email, password)
+      console.log('🔐 Starting login process...')
       
-      if (success) {
-        // Small delay to show loading state
-        setTimeout(() => {
-          navigate('/dashboard')
-          setIsLoading(false)
-        }, 500)
+      // Call the complete authentication flow
+      const result = await AdminService.login(email, password)
+      
+      if (result.success) {
+        console.log('✅ Login successful, navigating to dashboard')
+        
+        // Navigate to the root path, which will redirect to dashboard due to your App.js routing
+        // The Layout component will handle the nested routing
+        navigate('/', { replace: true })
+        setIsLoading(false)
       } else {
-        setError('Invalid credentials. Use admin@packtamam.com / admin123')
+        console.log('❌ Login failed:', result.error)
+        setError(result.error || 'Login failed. Please try again.')
         setIsLoading(false)
       }
     } catch (err) {
-      setError('Login failed. Please try again.')
+      console.error('❌ Login error:', err)
+      setError('An unexpected error occurred. Please try again.')
       setIsLoading(false)
     }
   }
@@ -195,31 +200,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-8">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-xs font-medium text-gray-600 mb-3">Demo Credentials:</p>
-              <div className="space-y-1">
-                <p className="text-sm font-mono text-gray-700 bg-white px-2 py-1 rounded border">
-                  admin@packtamam.com
-                </p>
-                <p className="text-sm font-mono text-gray-700 bg-white px-2 py-1 rounded border">
-                  admin123
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setEmail('admin@packtamam.com')
-                  setPassword('admin123')
-                }}
-                disabled={isLoading}
-                className="mt-2 text-xs text-gray-500 hover:text-gray-700 underline disabled:opacity-50"
-              >
-                Click to fill credentials
-              </button>
-            </div>
-          </div>
 
           {/* Footer */}
           <div className="mt-8 text-center">

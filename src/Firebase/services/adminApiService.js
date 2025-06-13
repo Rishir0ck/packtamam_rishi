@@ -12,11 +12,47 @@ class AdminService {
   constructor() {
     this.currentUser = null;
     this.serverToken = null;
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://167.71.228.10:3000';
+    // Use window.location for browser compatibility
+    this.baseURL = this.getBaseURL();
     this.initAuthListener();
     
     // Log the base URL for debugging
     console.log(`🌐 Admin Service initialized with base URL: ${this.baseURL}`);
+  }
+
+  // Get base URL with browser compatibility
+  getBaseURL() {
+    // Try to get from environment variable (if available)
+    if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
+      return process.env.REACT_APP_API_URL;
+    }
+    
+    // Try to get from window object (if set by build process)
+    if (typeof window !== 'undefined' && window.ENV && window.ENV.REACT_APP_API_URL) {
+      return window.ENV.REACT_APP_API_URL;
+    }
+    
+    // Fallback to default
+    return 'http://167.71.228.10:3000';
+  }
+
+  // Check if we're in production environment
+  isProduction() {
+    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV) {
+      return process.env.NODE_ENV === 'production';
+    }
+    
+    if (typeof window !== 'undefined' && window.ENV && window.ENV.NODE_ENV) {
+      return window.ENV.NODE_ENV === 'production';
+    }
+    
+    // Check by hostname as fallback
+    if (typeof window !== 'undefined' && window.location) {
+      return !window.location.hostname.includes('localhost') && 
+             !window.location.hostname.includes('127.0.0.1');
+    }
+    
+    return false;
   }
 
   // ========== FIREBASE AUTH METHODS ==========
@@ -609,7 +645,7 @@ class AdminService {
       console.log("💾 Storing server auth token...");
       Cookies.set('admin_token', token, { 
         expires: 7, // 7 days
-        secure: process.env.NODE_ENV === 'production',
+        secure: this.isProduction(),
         sameSite: 'strict'
       });
       console.log("✅ Server auth token stored successfully");
