@@ -1,0 +1,51 @@
+pack-tamam-dashboard/
+├── public/
+│   ├── logo.png                    # Your company logo (to be added)
+│   └── favicon.ico
+├── src/
+│   ├── assets/
+│   │      ├── Header.jsx
+│   │      └── Layout.jsx
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── Header.jsx
+│   │   │   └── Layout.jsx
+│   │   ├── ui/
+│   │   │   ├── Card.jsx
+│   │   │   ├── Button.jsx
+│   │   │   └── ThemeToggle.jsx
+│   │   ├── dashboard/
+│   │   │   ├── KPICard.jsx
+│   │   │   ├── ChartCard.jsx
+│   │   │   └── RecentActivity.jsx
+│   │   ├── auth/
+│   │   │   └── LoginForm.jsx
+│   │   └── common/
+│   │       ├── LoadingScreen.jsx
+│   │       └── ResponsiveWarning.jsx
+│   ├── pages/
+│   │   ├── Dashboard.jsx
+│   │   ├── RestaurantOnboarding.jsx
+│   │   ├── RestaurantManagement.jsx
+│   │   ├── InventoryManagement.jsx
+│   │   ├── Profile.jsx
+│   │   └── Login.jsx
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useTheme.js
+│   │   └── useResponsive.js
+│   ├── context/
+│   │   ├── AuthContext.jsx
+│   │   └── ThemeContext.jsx
+│   ├── utils/
+│   │   ├── constants.js
+│   │   └── helpers.js
+│   ├── styles/
+│   │   └── globals.css
+│   ├── App.jsx
+│   └── main.jsx
+├── tailwind.config.js
+├── postcss.config.js
+├── vite.config.js
+└── package.json
