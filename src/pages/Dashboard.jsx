@@ -60,7 +60,7 @@ export default function Dashboard() {
         {/* Header - Responsive */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="space-y-2">
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDark ? 'text-amber-300' : 'text-stone-800'}`}>
+            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDark ? 'text-stone-500' : 'text-stone-800'}`}>
               Dashboard
             </h1>
             <p className={`${isDark ? 'text-gray-300' : 'text-stone-600'} text-base lg:text-lg opacity-80`}>
