@@ -16,12 +16,15 @@ export default function Login() {
   const { login, isAuthenticated } = useAuthGuard() // Use the auth hook
 
   // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log('✅ User already authenticated, redirecting to dashboard')
-      navigate('/dashboard', { replace: true })
-    }
-  }, [isAuthenticated, navigate])
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     console.log('✅ User already authenticated, redirecting to dashboard')
+  //     navigate('/dashboard');
+  // } else {
+  //   navigate('/login');
+  //   console.log('🔒 User not authenticated, staying on login page')
+  //   }
+  // }, [isAuthenticated, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -38,7 +41,8 @@ export default function Login() {
         console.log('✅ Login successful, navigating to dashboard')
         // Navigation will be handled by the useEffect when isAuthenticated changes
         // But we can also navigate here as a fallback
-        navigate('/dashboard', { replace: true })
+        // navigate('/dashboard', { replace: true })
+        window.location.href = '/dashboard' // Use window.location.href to ensure full reload
       } else {
         console.log('❌ Login failed:', result.error)
         setError(result.error || 'Login failed. Please try again.')

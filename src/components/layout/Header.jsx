@@ -37,7 +37,7 @@ export default function Header() {
         
         // The useAuthGuard hook should handle the redirect/state change
         // If you need to manually redirect, you can do it here:
-        // window.location.href = '/login' or use your router
+        window.location.href = '/login' // or use your router
         
       } else {
         console.error('❌ Header - Logout failed:', result.error)
