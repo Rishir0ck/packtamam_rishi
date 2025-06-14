@@ -24,6 +24,17 @@ pack-tamam-dashboard/
 │   │   └── common/
 │   │       ├── LoadingScreen.jsx
 │   │       └── ResponsiveWarning.jsx
+|   ├──Firebase
+│   │   ├── config/
+│   │   │   └── firebase.js
+│   │   ├── hooks/
+│   │   │   └── useAuthGuard.js
+|   │   ├── services/
+│   │   │   ├── adminApiService.js
+│   │   │   ├── apiClient.js
+│   │   │   └── firebaseAuthService.js
+│   │   └── utils/
+│   │       ├── Storage.js
 │   ├── pages/
 │   │   ├── Dashboard.jsx
 │   │   ├── RestaurantOnboarding.jsx
