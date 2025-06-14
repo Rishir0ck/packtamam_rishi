@@ -6,10 +6,11 @@ import { useAuthGuard } from '../../Firebase/hooks/useAuthGuard'
 import useTheme from '../../hooks/useTheme'
 
 export default function Header() {
-  const { logout } = useAuthGuard()
+  const { logout, loading, user } = useAuthGuard()
   const { isDark } = useTheme()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const toggleProfileMenu = () => {
     setShowProfileMenu(!showProfileMenu)
@@ -23,17 +24,52 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
+      console.log('🚪 Header - Starting logout process...')
+      setIsLoggingOut(true)
+      setShowProfileMenu(false) // Close menu immediately
+      
       const result = await logout()
+      
       if (result.success) {
-        console.log('Logout successful')
-        // Redirect or handle successful logout
+        console.log('✅ Header - Logout successful')
+        // Optional: Show success message
+        // You can add a toast notification here if you have one
+        
+        // The useAuthGuard hook should handle the redirect/state change
+        // If you need to manually redirect, you can do it here:
+        // window.location.href = '/login' or use your router
+        
       } else {
-        console.error('Logout failed:', result.error)
+        console.error('❌ Header - Logout failed:', result.error)
+        // Optional: Show error message to user
+        alert('Logout failed: ' + result.error)
       }
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('❌ Header - Logout error:', error)
+      // Optional: Show error message to user
+      alert('An error occurred during logout: ' + error.message)
+    } finally {
+      setIsLoggingOut(false)
     }
   }
+
+  // Get user display info
+  const getUserDisplayInfo = () => {
+    if (user) {
+      return {
+        name: user.displayName || 'Admin User',
+        email: user.email || 'admin@packtamam.com',
+        initials: (user.displayName || user.email || 'A').charAt(0).toUpperCase()
+      }
+    }
+    return {
+      name: 'Admin User',
+      email: 'admin@packtamam.com', 
+      initials: 'A'
+    }
+  }
+
+  const userInfo = getUserDisplayInfo()
 
   return (
     <header 
@@ -75,11 +111,12 @@ export default function Header() {
         <div className="relative">
           <button 
             onClick={toggleNotifications}
+            disabled={loading || isLoggingOut}
             className={`p-2 rounded-lg transition-all duration-200 relative ${
               isDark 
                 ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
                 : 'text-[#43311e] hover:text-[#c79e73] hover:bg-[#c79e73]/10'
-            }`}
+            } ${(loading || isLoggingOut) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Bell className="w-5 h-5" />
             {/* Notification badge */}
@@ -97,11 +134,12 @@ export default function Header() {
         <div className="relative">
           <button
             onClick={toggleProfileMenu}
+            disabled={loading || isLoggingOut}
             className={`flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 ${
               isDark 
                 ? 'text-gray-300 hover:bg-gray-700' 
                 : 'text-[#43311e] hover:bg-[#c79e73]/10'
-            }`}
+            } ${(loading || isLoggingOut) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div 
               className="w-8 h-8 rounded-full flex items-center justify-center shadow-md"
@@ -111,7 +149,7 @@ export default function Header() {
                   : `linear-gradient(135deg, #c79e73 0%, #43311e 100%)`
               }}
             >
-              <span className="text-white text-sm font-semibold">A</span>
+              <span className="text-white text-sm font-semibold">{userInfo.initials}</span>
             </div>
             <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
           </button>
@@ -131,25 +169,35 @@ export default function Header() {
               }}
             >
               <div className={`p-3 border-b ${isDark ? 'border-gray-700' : 'border-[#c79e73]/20'}`}>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-[#43311e]'}`}>Admin User</p>
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-[#43311e]/70'}`}>admin@packtamam.com</p>
+                <p className={`font-medium ${isDark ? 'text-white' : 'text-[#43311e]'}`}>
+                  {userInfo.name}
+                </p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-[#43311e]/70'}`}>
+                  {userInfo.email}
+                </p>
               </div>
               
               <div className="py-2">
-                <button className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
-                  isDark 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-[#43311e] hover:bg-[#c79e73]/10'
-                }`}>
+                <button 
+                  disabled={isLoggingOut}
+                  className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
+                    isDark 
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
+                      : 'text-[#43311e] hover:bg-[#c79e73]/10'
+                  } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <User className="w-4 h-4" />
                   <span>Profile</span>
                 </button>
                 
-                <button className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
-                  isDark 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-[#43311e] hover:bg-[#c79e73]/10'
-                }`}>
+                <button 
+                  disabled={isLoggingOut}
+                  className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
+                    isDark 
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
+                      : 'text-[#43311e] hover:bg-[#c79e73]/10'
+                  } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
                 </button>
@@ -158,14 +206,15 @@ export default function Header() {
                 
                 <button 
                   onClick={handleLogout}
+                  disabled={isLoggingOut}
                   className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
                     isDark 
                       ? 'text-red-400 hover:bg-red-500/20' 
                       : 'text-red-600 hover:bg-red-50'
-                  }`}
+                  } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
+                  <LogOut className={`w-4 h-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
+                  <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
                 </button>
               </div>
             </div>
@@ -174,7 +223,7 @@ export default function Header() {
       </div>
 
       {/* Click outside to close menus */}
-      {(showProfileMenu || showNotifications) && (
+      {(showProfileMenu || showNotifications) && !isLoggingOut && (
         <div 
           className="fixed inset-0 z-40" 
           onClick={() => {
