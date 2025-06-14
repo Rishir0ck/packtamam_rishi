@@ -1,28 +1,52 @@
-import React, { createContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useMemo } from 'react';
+import { useAuthGuard } from '../Firebase/hooks/useAuthGuard';
 
-export const AuthContext = createContext()
+const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loading, setLoading] = useState(true)
+export const AuthProvider = ({ children }) => {
+  // Use the useAuthGuard hook here, not in the components
+  const authData = useAuthGuard();
 
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 2000)
-  }, [])
-
-  const login = (email, password) => {
-    if (email === 'admin@packtamam.com' && password === 'admin123') {
-      setIsAuthenticated(true)
-      return true
-    }
-    return false
-  }
-
-  const logout = () => setIsAuthenticated(false)
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    isAuthenticated: authData.isAuthenticated,
+    loading: authData.loading,
+    user: authData.user,
+    authInitialized: authData.authInitialized,
+    login: authData.login,
+    logout: authData.logout,
+    refreshAuth: authData.refreshAuth,
+    forceAuthCheck: authData.forceAuthCheck,
+    getAuthTokens: authData.getAuthTokens,
+    hasPermission: authData.hasPermission,
+    debugInfo: authData.debugInfo
+  }), [
+    authData.isAuthenticated,
+    authData.loading,
+    authData.user,
+    authData.authInitialized,
+    authData.login,
+    authData.logout,
+    authData.refreshAuth,
+    authData.forceAuthCheck,
+    authData.getAuthTokens,
+    authData.hasPermission,
+    authData.debugInfo
+  ]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+export { AuthContext };

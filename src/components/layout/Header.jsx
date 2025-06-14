@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import { Bell, ChevronDown, User, Settings, LogOut } from 'lucide-react'
 import ThemeToggle from '../ui/ThemeToggle'
 import Notifications from '../common/Notifications'
-import useAuth from '../../hooks/useAuth'
+import { useAuthGuard } from '../../Firebase/hooks/useAuthGuard'
 import useTheme from '../../hooks/useTheme'
 
 export default function Header() {
-  const { logout } = useAuth()
+  const { logout } = useAuthGuard()
   const { isDark } = useTheme()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -19,6 +19,20 @@ export default function Header() {
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications)
     setShowProfileMenu(false)
+  }
+
+  const handleLogout = async () => {
+    try {
+      const result = await logout()
+      if (result.success) {
+        console.log('Logout successful')
+        // Redirect or handle successful logout
+      } else {
+        console.error('Logout failed:', result.error)
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   return (
@@ -143,7 +157,7 @@ export default function Header() {
                 <hr className={`my-2 ${isDark ? 'border-gray-700' : 'border-[#c79e73]/20'}`} />
                 
                 <button 
-                  onClick={logout}
+                  onClick={handleLogout}
                   className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
                     isDark 
                       ? 'text-red-400 hover:bg-red-500/20' 

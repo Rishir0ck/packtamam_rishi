@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import AdminService from '../Firebase/services/adminApiService'
+import { useAuthGuard } from '../Firebase/hooks/useAuthGuard' // Import the auth hook
 // Import the logo from assets folder
 import logoImage from '../assets/pack tamam.png'
 
@@ -13,6 +13,15 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   
   const navigate = useNavigate()
+  const { login, isAuthenticated } = useAuthGuard() // Use the auth hook
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('✅ User already authenticated, redirecting to dashboard')
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -22,24 +31,22 @@ export default function Login() {
     try {
       console.log('🔐 Starting login process...')
       
-      // Call the complete authentication flow
-      const result = await AdminService.login(email, password)
+      // Call the login function from useAuthGuard
+      const result = await login(email, password)
       
       if (result.success) {
         console.log('✅ Login successful, navigating to dashboard')
-        
-        // Navigate to the root path, which will redirect to dashboard due to your App.js routing
-        // The Layout component will handle the nested routing
-        navigate('/', { replace: true })
-        setIsLoading(false)
+        // Navigation will be handled by the useEffect when isAuthenticated changes
+        // But we can also navigate here as a fallback
+        navigate('/dashboard', { replace: true })
       } else {
         console.log('❌ Login failed:', result.error)
         setError(result.error || 'Login failed. Please try again.')
-        setIsLoading(false)
       }
     } catch (err) {
       console.error('❌ Login error:', err)
       setError('An unexpected error occurred. Please try again.')
+    } finally {
       setIsLoading(false)
     }
   }
