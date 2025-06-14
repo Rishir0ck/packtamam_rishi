@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
+import AddToCart from './pages/AddToCart'
 import Dashboard from './pages/Dashboard'
 import RestaurantOnboarding from './pages/RestaurantOnboarding'
 import RestaurantManagement from './pages/RestaurantManagement'
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="restaurant-onboarding" element={<RestaurantOnboarding />} />
         <Route path="restaurant-management" element={<RestaurantManagement />} />
         <Route path="inventory-management" element={<InventoryManagement />} />
+        <Route path="addToCart" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       {/* Catch all route - redirect to dashboard if authenticated, login if not */}

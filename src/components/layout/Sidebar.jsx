@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Users, Building2, Package, User, ChevronDown, ChevronRight } from 'lucide-react'
+import { Home, Users, Building2, Package, User, ChevronDown, ChevronRight, ShoppingCart } from 'lucide-react'
 import useTheme from '../../hooks/useTheme'
 import logoImage from '../../assets/pack tamam.png'
 
@@ -17,6 +17,7 @@ const menuItems = [
     ]
   },
   { path: '/inventory-management', icon: Package, label: 'Inventory Management' },
+  { path: '/addtocart', icon: ShoppingCart, label: 'Add To Cart' },
   { path: '/profile', icon: User, label: 'Profile' },
 ]
 
