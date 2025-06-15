@@ -32,13 +32,18 @@ export default function RestaurantManagement() {
           id: r.id,
           name: r.business_name || r.name,
           owner: r.owner_name || r.owner,
+          legal_entity_name: r.legal_entity_name || 'N/A',
           email: r.email,
-          phone: r.phone,
-          address: r.address,
-          cuisine: r.cuisine_type || r.cuisine || 'Not specified',
+          phone: r.mobile_number,
+          address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
+          city: r.city,
+          franchise_code: r.franchise_code,
+          fssai_no: r.fssai_no || 'N/A',
+          gst_no: r.gst_no || 'N/A',
+          outlet_type: r.outlet_type || 'Not specified',
           joinedDate: r.created_at?.split('T')[0] || r.joinedDate,
           status: r.status === 'Approved' ? 'active' : 'inactive',
-          profileImg: r.owner_image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+          profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
           restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
           franchises: r.franchises || []
         })) || []
@@ -79,7 +84,7 @@ export default function RestaurantManagement() {
   }
 
   const filtered = state.restaurants.filter(r => {
-    const matchSearch = [r.name, r.owner, r.cuisine].some(field => 
+    const matchSearch = [r.name, r.owner, r.outlet_type].some(field => 
       field.toLowerCase().includes(state.search.toLowerCase())
     )
     const matchFilter = state.filter === 'all' || 
@@ -197,7 +202,7 @@ export default function RestaurantManagement() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text" 
-            placeholder="Search restaurants, owners, or cuisine..." 
+            placeholder="Search restaurants, owners, or outlet..." 
             value={state.search} 
             onChange={(e) => updateState({ search: e.target.value })}
             className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${themeClass('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
@@ -279,8 +284,9 @@ export default function RestaurantManagement() {
                     </div>
                     <div className={`text-sm flex items-center gap-4 mt-1 ${themeClass('text-gray-600', 'text-gray-400')}`}>
                       <span>👤 {r.owner}</span>
-                      <span>🍽️ {r.cuisine}</span>
+                      <span>🍽️ {r.outlet_type}</span>
                       <span>📍 {r.address?.split(',')[0] || 'No address'}</span>
+                      <span>🏙️ {r.city?.split(',')[0] || 'No city'}</span>
                     </div>
                   </div>
                 </div>
@@ -317,22 +323,26 @@ export default function RestaurantManagement() {
                 <div>👤 {state.selected.owner}</div>
                 <div>📧 {state.selected.email}</div>
                 <div>📞 {state.selected.phone}</div>
+                <div>🏢 {state.selected.legal_entity_name}</div>
+                <div>🧾FSSAI No. : {state.selected.fssai_no}</div>
+                <div className={themeClass('text-gray-700', 'text-gray-300')}>🏙️ {state.selected.city}</div>
               </div>
               <div className="space-y-2">
-                <div>🍽️ {state.selected.cuisine}</div>
+                <div>🍽️ {state.selected.outlet_type}</div>
+                <div>🏷️ {state.selected.franchise_code}</div>
                 <div>📅 {state.selected.joinedDate}</div>
                 <div className={`px-2 py-1 rounded text-xs inline-block ${
                   state.selected.status === 'active' 
-                    ? themeClass('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
-                    : themeClass('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
+                  ? themeClass('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
+                  : themeClass('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
                 }`}>
                   Status: {state.selected.status}
                 </div>
+                <div>🧾GST No. : {state.selected.gst_no}</div>
+            <div className={themeClass('text-gray-700', 'text-gray-300')}>📍 {state.selected.address}</div>
               </div>
             </div>
             
-            <div className={themeClass('text-gray-700', 'text-gray-300')}>📍 {state.selected.address}</div>
-
             {state.selected.franchises?.length > 0 && (
               <div>
                 <h3 className={`font-semibold mb-2 ${themeClass('text-gray-900', 'text-white')}`}>
@@ -344,9 +354,9 @@ export default function RestaurantManagement() {
                       <div className="flex justify-between items-start">
                         <div>
                           <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>{f.name}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.address}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.manager}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.phone}</div>
+                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.email}</div>
+                          <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name}</div>
+                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.mobile_number}</div>
                         </div>
                         <span className={`px-2 py-1 rounded text-xs ${
                           f.status === 'active' 
@@ -375,9 +385,11 @@ export default function RestaurantManagement() {
                 ['name', 'Restaurant Name'],
                 ['owner', 'Owner'],
                 ['email', 'Email'],
-                ['phone', 'Phone'],
-                ['address', 'Address', 'col-span-2'],
-                ['cuisine', 'Cuisine'],
+                ['mobile_number', 'Phone'],
+                ['address', 'Address', 'col-span-4'],
+                ['city', 'City'],
+                ['outlet_type', 'Outlet Type'],
+                ['leagal_entity_name', 'Leagal Entity Name'],
                 ['status', 'Status', '', 'select']
               ].map(([field, label, className = '', type = 'input']) => (
                 <div key={field} className={className}>
@@ -411,7 +423,7 @@ export default function RestaurantManagement() {
               {/* Add New Franchise */}
               <div className={`rounded-lg p-3 mb-3 ${themeClass('bg-gray-50', 'bg-gray-700')}`}>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  {['name', 'address', 'manager', 'phone'].map(field => (
+                  {['name', 'email', 'owner name', 'phone'].map(field => (
                     <input 
                       key={field}
                       placeholder={`Franchise ${field}`}
@@ -437,8 +449,8 @@ export default function RestaurantManagement() {
                     <div className="flex justify-between items-start">
                       <div className="text-sm space-y-1">
                         <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>{f.name}</div>
-                        <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.address}</div>
-                        <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.manager} • {f.phone}</div>
+                        <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.email}</div>
+                        <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name} • {f.mobile_number}</div>
                       </div>
                       <button 
                         onClick={() => removeFranchise(f.id)}
