@@ -1,88 +1,190 @@
-import React, { useState } from 'react'
-import { Eye, Check, X, MessageSquare, Search, Filter, Download, FileText, Store, Clock, AlertCircle, CheckCircle, XCircle, Users } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Eye, Check, X, MessageSquare, Search, Filter, Download, FileText, Store, Clock, AlertCircle, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
-
-const mockData = [
-  {
-    id: 1, name: "Spice Garden Restaurant", owner: "Raj Patel", email: "raj@spicegarden.com", 
-    phone: "+91 98765 43210", address: "123 Main Street, Vadodara", cuisine: "Indian, Chinese",
-    appliedDate: "2025-06-10", status: "pending", rating: 4.5,
-    profileImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    restaurantImg: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
-    documents: {
-      panCard: { type: "image", url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop" },
-      fssai: { type: "pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      gst: { type: "image", url: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=250&fit=crop" }
-    }, queryHistory: []
-  },
-  {
-    id: 2, name: "Pizza Corner", owner: "Maria Rodriguez", email: "maria@pizzacorner.com",
-    phone: "+91 87654 32109", address: "456 Park Avenue, Vadodara", cuisine: "Italian, Fast Food",
-    appliedDate: "2025-06-08", status: "approved", rating: 4.2,
-    profileImg: "https://images.unsplash.com/photo-1494790108755-2616b612b639?w=150&h=150&fit=crop&crop=face",
-    restaurantImg: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop",
-    documents: {
-      panCard: { type: "pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      fssai: { type: "image", url: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=250&fit=crop" },
-      gst: { type: "pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" }
-    }, queryHistory: []
-  },
-  {
-    id: 3, name: "Burger House", owner: "John Smith", email: "john@burgerhouse.com",
-    phone: "+91 76543 21098", address: "789 Food Street, Vadodara", cuisine: "American, Burgers",
-    appliedDate: "2025-06-05", status: "query", rating: 4.0,
-    profileImg: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    restaurantImg: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop",
-    documents: {
-      panCard: { type: "image", url: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=250&fit=crop" },
-      fssai: { type: "pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      gst: { type: "image", url: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=250&fit=crop" }
-    },
-    queryHistory: [{ date: "2025-06-11", message: "Please provide clearer images of GST certificate." }]
-  }
-]
+import AdminService from '../Firebase/services/adminApiService'
 
 export default function RestaurantOnboarding() {
   const { isDark } = useTheme()
   
-  const [restaurants, setRestaurants] = useState(mockData)
+  // State management
+  const [restaurants, setRestaurants] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [modal, setModal] = useState('')
   const [query, setQuery] = useState('')
   const [queryTarget, setQueryTarget] = useState(null)
+  const [pagination, setPagination] = useState({ page: 1, perPage: 10, total: 0 })
 
+  // Load data on component mount and filter changes
+  useEffect(() => {
+    loadRestaurants()
+  }, [filter, pagination.page])
+
+  // Load restaurants based on current filter
+  const loadRestaurants = async () => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      let result
+      const { page, perPage } = pagination
+      
+      switch (filter) {
+        case 'pending':
+          result = await AdminService.getPendingBusinessList(page, perPage)
+          break
+        case 'approved':
+          result = await AdminService.getApprovedBusinessList(page, perPage)
+          break
+        case 'rejected':
+          result = await AdminService.getRejectedBusinessList(page, perPage)
+          break
+        case 'query':
+          result = await AdminService.getQueryBusinessList(page, perPage)
+          break
+        default:
+          // Load all by combining results
+          const [pending, approved, rejected, queryList] = await Promise.all([
+            AdminService.getPendingBusinessList(1, 100),
+            AdminService.getApprovedBusinessList(1, 100),
+            AdminService.getRejectedBusinessList(1, 100),
+            AdminService.getQueryBusinessList(1, 100)
+          ])
+          
+          if (pending.success && approved.success && rejected.success && queryList.success) {
+            const allData = [
+              ...pending.data.data || [],
+              ...approved.data.data || [],
+              ...rejected.data.data || [],
+              ...queryList.data.data || []
+            ]
+            result = { success: true, data: { data: allData, total: allData.length } }
+          } else {
+            throw new Error('Failed to load restaurant data')
+          }
+      }
+
+      if (result.success) {
+        const transformedData = result.data.data?.map(item => ({
+          id: item.id,
+          name: item.business_name || item.name || 'N/A',
+          owner: item.owner_name || item.contact_person || 'N/A',
+          email: item.email || 'N/A',
+          phone: item.mobile_number || item.contact_number || 'N/A',
+          address: (item.address || item.location || item.pincode || item.landmark || item.city) ? `${item.address || ''}, ${item.location || ''}, ${item.landmark || ''}, ${item.city || ''}, ${item.pincode || ''}`.replace(/(,\s){2,}/g, ', ').replace(/^,\s|,\s$/g, '').trim() : 'N/A',
+          cuisine: item.cuisine_type || item.business_type || 'N/A',
+          outlet: item.outlet_type || 'N/A',
+          entity_name: item.legal_entity_name || 'N/A',
+          franchise_code: item.franchise_code || 'N/A',
+          appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          status: item.status?.toLowerCase() || 'pending',
+          liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
+          profileImg: item.profile_image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+          restaurantImg: item.business_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
+          // documents: {
+          //   panCard: { type: "image", url: item.pan_card_url || "#" },
+          //   fssai: { type: "pdf", url: item.fssai_url || "#" },
+          //   gst: { type: "image", url: item.gst_url || "#" }
+          // },
+          documents: (() => {
+                      const docs = {};
+                      Object.entries(item.documents || {}).forEach(([key, files]) => {
+                        if (Array.isArray(files) && files.length > 0) {
+                          docs[key] = files.map(file => {
+                            const url = file.path || "#";
+                            const ext = url.split('.').pop().toLowerCase();
+                            return {
+                              type: ext === 'pdf' ? 'pdf' : 'image',
+                              url
+                            };
+                          });
+                        }
+                      });
+                      return docs;
+                    })(),
+          queryHistory: item.query_history || []
+        })) || []
+
+        setRestaurants(transformedData)
+        setPagination(prev => ({ ...prev, total: result.data.total || transformedData.length }))
+      } else {
+        throw new Error(result.error || 'Failed to load restaurants')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load restaurants')
+      console.error('Restaurant loading error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filter restaurants based on search
   const filtered = restaurants.filter(r => {
-    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter === 'all' || r.status === filter
-    return matchSearch && matchFilter
+    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || 
+                       r.owner.toLowerCase().includes(search.toLowerCase())
+    return matchSearch
   })
 
-  const handleAction = (id, action) => {
+  // Handle restaurant status updates
+  const handleAction = async (id, action) => {
     if (action === 'query') {
       setQueryTarget(restaurants.find(r => r.id === id))
       setModal('query')
-    } else {
-      setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: action } : r))
+      return
+    }
+
+    setLoading(true)
+    try {
+      const result = await AdminService.updateBusinessStatus(id, action)
+      if (result.success) {
+        setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: action } : r))
+      } else {
+        throw new Error(result.error || 'Failed to update status')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update restaurant status')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const sendQuery = () => {
-    if (query.trim() && queryTarget) {
-      setRestaurants(prev => prev.map(r => 
-        r.id === queryTarget.id ? { 
-          ...r, status: 'query',
-          queryHistory: [...(r.queryHistory || []), { date: new Date().toISOString().split('T')[0], message: query.trim() }]
-        } : r
-      ))
-      setModal('')
-      setQuery('')
-      setQueryTarget(null)
+  // Send query to restaurant
+  const sendQuery = async () => {
+    if (!query.trim() || !queryTarget) return
+
+    setLoading(true)
+    try {
+      const result = await AdminService.updateBusinessStatus(queryTarget.id, 'Query', query.trim())
+      if (result.success) {
+        setRestaurants(prev => prev.map(r => 
+          r.id === queryTarget.id ? { 
+            ...r, 
+            status: 'query',
+            queryHistory: [...(r.queryHistory || []), { 
+              date: new Date().toISOString().split('T')[0], 
+              message: query.trim() 
+            }]
+          } : r
+        ))
+        setModal('')
+        setQuery('')
+        setQueryTarget(null)
+      } else {
+        throw new Error(result.error || 'Failed to send query')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to send query')
+    } finally {
+      setLoading(false)
     }
   }
 
+  // Download document helper
   const downloadDocument = async (url, fileName) => {
+    if (url === '#') return
     try {
       const response = await fetch(url)
       const blob = await response.blob()
@@ -99,6 +201,7 @@ export default function RestaurantOnboarding() {
     }
   }
 
+  // Status styling
   const statusColors = {
     pending: isDark ? 'bg-amber-900/30 text-amber-300 border-amber-600' : 'bg-amber-50 text-amber-700 border-amber-200',
     approved: isDark ? 'bg-emerald-900/30 text-emerald-300 border-emerald-600' : 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -106,6 +209,7 @@ export default function RestaurantOnboarding() {
     query: isDark ? 'bg-blue-900/30 text-blue-300 border-blue-600' : 'bg-blue-50 text-blue-700 border-blue-200'
   }
 
+  // Statistics
   const stats = [
     { label: 'Total', value: restaurants.length, icon: Store, color: '#c79e73', filter: 'all' },
     { label: 'Pending', value: restaurants.filter(r => r.status === 'pending').length, icon: Clock, color: '#f59e0b', filter: 'pending' },
@@ -114,32 +218,43 @@ export default function RestaurantOnboarding() {
     { label: 'Rejected', value: restaurants.filter(r => r.status === 'rejected').length, icon: XCircle, color: '#ef4444', filter: 'rejected' }
   ]
 
+  // Document card component
   const DocCard = ({ doc, name }) => (
     <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-3`}>
       <div className={`aspect-[4/3] ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded mb-2 flex items-center justify-center text-xs overflow-hidden`}>
-        {doc.type === 'image' ? (
-          <img src={doc.url} alt={name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="text-center">
+        {doc.url !== '#' && doc.type === 'image' ? (
+          <img src={doc.url} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
+        ) : null}
+        <div className="text-center" style={{ display: doc.url === '#' || doc.type === 'pdf' ? 'flex' : 'none' }} >
+          <div>
             <FileText className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-1`} />
-            <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>PDF</span>
+            <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{doc.type === 'pdf' ? 'PDF' : 'N/A'}</span>
           </div>
-        )}
+        </div>
       </div>
       <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{name}</h4>
       <div className="flex gap-1">
         <button 
-          onClick={() => window.open(doc.url, '_blank')} 
-          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs ${
-            isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          } rounded transition-colors`}
+          onClick={() => doc.url !== '#' ? window.open(doc.url, '_blank') : null} 
+          disabled={doc.url === '#'}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+            doc.url === '#' 
+              ? (isDark ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-400 cursor-not-allowed')
+              : (isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700')
+          }`}
         >
           <Eye className="w-3 h-3" /> View
         </button>
         <button 
-          onClick={() => downloadDocument(doc.url, `${name.replace(/\s+/g, '_')}.${doc.type === 'pdf' ? 'pdf' : 'jpg'}`)} 
-          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded transition-colors`}
-          style={{ backgroundColor: isDark ? 'rgba(199, 158, 115, 0.2)' : 'rgba(199, 158, 115, 0.1)', color: '#c79e73' }}
+          onClick={() => doc.url !== '#' ? downloadDocument(doc.url, `${name.replace(/\s+/g, '_')}.${doc.type === 'pdf' ? 'pdf' : 'jpg'}`) : null}
+          disabled={doc.url === '#'}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+            doc.url === '#' ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          style={{ 
+            backgroundColor: doc.url === '#' ? (isDark ? '#374151' : '#e5e7eb') : (isDark ? 'rgba(199, 158, 115, 0.2)' : 'rgba(199, 158, 115, 0.1)'), 
+            color: doc.url === '#' ? (isDark ? '#6b7280' : '#9ca3af') : '#c79e73' 
+          }}
         >
           <Download className="w-3 h-3" /> Get
         </button>
@@ -151,8 +266,29 @@ export default function RestaurantOnboarding() {
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} p-4 transition-colors`}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Restaurant Onboarding</h1>
-        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Review and manage restaurant applications</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Restaurant Onboarding</h1>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Review and manage restaurant applications</p>
+          </div>
+          <button
+            onClick={loadRestaurants}
+            disabled={loading}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-200' : 'bg-white hover:bg-gray-50 text-gray-700'
+            } border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+        
+        {/* Error Display */}
+        {error && (
+          <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-red-900/30 border-red-600 text-red-300' : 'bg-red-50 border-red-200 text-red-700'} border text-sm`}>
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Controls */}
@@ -169,7 +305,6 @@ export default function RestaurantOnboarding() {
                 ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400' 
                 : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500'
             } rounded-lg focus:outline-none transition-colors`}
-            style={{ focusBorderColor: '#c79e73', focusRing: '0 0 0 2px rgba(199, 158, 115, 0.2)' }}
           />
         </div>
         <div className="relative">
@@ -205,9 +340,7 @@ export default function RestaurantOnboarding() {
               } rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${
                 filter === stat.filter ? 'ring-2' : ''
               }`}
-              style={{ 
-                ringColor: filter === stat.filter ? '#c79e73' : 'transparent'
-              }}
+              style={{ ringColor: filter === stat.filter ? '#c79e73' : 'transparent' }}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -223,63 +356,83 @@ export default function RestaurantOnboarding() {
         })}
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-8 text-center`}>
+          <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading restaurants...</p>
+        </div>
+      )}
+
       {/* Restaurant Cards */}
-      <div className="space-y-3">
-        {filtered.map((r) => (
-          <div key={r.id} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border shadow-sm p-4 transition-colors`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src={r.profileImg} alt={r.owner} className="w-10 h-10 rounded-full object-cover" />
-                <div>
-                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</h3>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{r.owner} • {r.cuisine}</p>
+      {!loading && (
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-8 text-center`}>
+              <Store className={`w-12 h-12 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-3`} />
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-1`}>No restaurants found</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {search ? 'Try adjusting your search terms' : 'No applications match the current filter'}
+              </p>
+            </div>
+          ) : (
+            filtered.map((r) => (
+              <div key={r.id} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border shadow-sm p-4 transition-colors`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src={r.profileImg} alt={r.owner} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{r.owner} • {r.cuisine}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColors[r.status]}`}>
+                      {r.status === 'query' ? 'Query Sent' : r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                    </span>
+                    
+                    <button 
+                      onClick={() => { setSelected(r); setModal('details') }} 
+                      className={`p-2 ${
+                        isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      } rounded-lg transition-colors`}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    
+                    {(r.status === 'pending' || r.status === 'query') && (
+                      <>
+                        <button 
+                          onClick={() => handleAction(r.id, 'approved')} 
+                          className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleAction(r.id, 'rejected')} 
+                          className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleAction(r.id, 'query')} 
+                          className="p-2 text-white rounded-lg transition-colors"
+                          style={{ backgroundColor: '#c79e73' }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#b8926a'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = '#c79e73'}
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColors[r.status]}`}>
-                  {r.status === 'query' ? 'Query Sent' : r.status.charAt(0).toUpperCase() + r.status.slice(1)}
-                </span>
-                
-                <button 
-                  onClick={() => { setSelected(r); setModal('details') }} 
-                  className={`p-2 ${
-                    isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  } rounded-lg transition-colors`}
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                
-                {(r.status === 'pending' || r.status === 'query') && (
-                  <>
-                    <button 
-                      onClick={() => handleAction(r.id, 'approved')} 
-                      className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleAction(r.id, 'rejected')} 
-                      className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleAction(r.id, 'query')} 
-                      className="p-2 text-white rounded-lg transition-colors"
-                      style={{ backgroundColor: '#c79e73' }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#b8926a'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#c79e73'}
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Detail Modal */}
       {modal === 'details' && selected && (
@@ -315,7 +468,10 @@ export default function RestaurantOnboarding() {
                 <div className="space-y-2">
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Details</h3>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🍽️ {selected.cuisine}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>⭐ {selected.rating} Rating</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏬 {selected.outlet}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏢 {selected.entity_name}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏷️ {selected.franchise_code}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🛗 {selected.liftInfo}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>📅 {selected.appliedDate}</div>
                 </div>
               </div>

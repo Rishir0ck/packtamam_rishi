@@ -1,10 +1,5 @@
 // src/services/adminService.js
-import { 
-  signInWithEmailAndPassword, 
-  signOut,
-  onAuthStateChanged,
-  getIdToken
-} from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdToken } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import Cookies from 'js-cookie';
 
@@ -12,230 +7,116 @@ class AdminService {
   constructor() {
     this.currentUser = null;
     this.serverToken = null;
-    // Use window.location for browser compatibility
     this.baseURL = this.getBaseURL();
     this.initAuthListener();
-    
-    // Log the base URL for debugging
-    console.log(`🌐 Admin Service initialized with base URL: ${this.baseURL}`);
   }
 
-  // Get base URL with browser compatibility
   getBaseURL() {
-    // Try to get from environment variable (if available)
-    if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
-      return process.env.REACT_APP_API_URL;
-    }
-    
-    // Try to get from window object (if set by build process)
-    if (typeof window !== 'undefined' && window.ENV && window.ENV.REACT_APP_API_URL) {
-      return window.ENV.REACT_APP_API_URL;
-    }
-    
-    // Fallback to default
-    return 'http://167.71.228.10:3000';
+    return (typeof process !== 'undefined' && process.env?.REACT_APP_API_URL) ||
+           (typeof window !== 'undefined' && window.ENV?.REACT_APP_API_URL) ||
+           'http://167.71.228.10:3000';
   }
 
-  // Check if we're in production environment
   isProduction() {
-    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV) {
-      return process.env.NODE_ENV === 'production';
-    }
-    
-    if (typeof window !== 'undefined' && window.ENV && window.ENV.NODE_ENV) {
-      return window.ENV.NODE_ENV === 'production';
-    }
-    
-    // Check by hostname as fallback
-    if (typeof window !== 'undefined' && window.location) {
-      return !window.location.hostname.includes('localhost') && 
-             !window.location.hostname.includes('127.0.0.1');
-    }
-    
-    return false;
+    const env = (typeof process !== 'undefined' && process.env?.NODE_ENV) ||
+                (typeof window !== 'undefined' && window.ENV?.NODE_ENV);
+    if (env) return env === 'production';
+    return typeof window !== 'undefined' && window.location && 
+           !window.location.hostname.includes('localhost') && 
+           !window.location.hostname.includes('127.0.0.1');
   }
 
-  // ========== FIREBASE AUTH METHODS ==========
-  
   initAuthListener() {
-    console.log("👂 Initializing Firebase auth state listener...");
     onAuthStateChanged(auth, (user) => {
       this.currentUser = user;
-      if (user) {
-        console.log(`✅ Firebase user state changed - User logged in: ${user.uid}`);
-      } else {
-        console.log("❌ Firebase user state changed - User logged out");
-        this.clearAllAuth();
-      }
+      if (!user) this.clearAllAuth();
     });
   }
 
   async firebaseLogin(email, password) {
     try {
-      console.log("🔐 Starting Firebase admin login...");
-      console.log(`📧 Email: ${email}`);
+      if (!email || !password) throw new Error('Email and password are required');
       
-      if (!email || !password) {
-        throw new Error('Email and password are required');
-      }
-
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
-      console.log(`✅ Firebase sign in successful - UID: ${user.uid}`);
-
       const idToken = await getIdToken(user);
-      console.log(`✅ ID Token obtained - Length: ${idToken.length} characters`);
-
-      // Store Firebase auth data
+      
       this.setFirebaseAuth(user.uid, idToken);
-
+      
       return {
         success: true,
-        data: {
-          uid: user.uid,
-          email: user.email,
-          idToken: idToken
-        },
+        data: { uid: user.uid, email: user.email, idToken },
         message: 'Firebase authentication successful'
       };
-
     } catch (error) {
-      console.error("❌ Firebase login error:", error);
       return this.handleFirebaseError(error);
     }
   }
 
   async firebaseLogout() {
     try {
-      console.log("🚪 Starting Firebase logout...");
-      
       await signOut(auth);
-      console.log("✅ Firebase sign out successful");
-      
       this.clearAllAuth();
-      
-      return {
-        success: true,
-        message: 'Logged out successfully'
-      };
+      return { success: true, message: 'Logged out successfully' };
     } catch (error) {
-      console.error("❌ Firebase logout error:", error);
-      this.clearAllAuth(); // Force clear even if signOut fails
-      
-      return {
-        success: false,
-        error: error.message,
-        message: 'Logout completed with errors'
-      };
+      this.clearAllAuth();
+      return { success: false, error: error.message, message: 'Logout completed with errors' };
     }
   }
 
-  // ========== SERVER AUTH METHODS ==========
-
   async serverLogin(firebaseIdToken) {
     try {
-      console.log("🔐 Starting server authentication...");
-      console.log(`🌐 Server URL: ${this.baseURL}/api/admin/login/admin-email-password`);
-      
       const response = await fetch(`${this.baseURL}/api/admin/login/admin-email-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken: firebaseIdToken
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: firebaseIdToken })
       });
 
-      console.log(`📡 Server response status: ${response.status} ${response.statusText}`);
-      
-      // Check if response is HTML (404/error page)
       const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('❌ Server returned non-JSON response:', textResponse.substring(0, 200));
-        throw new Error(`Server endpoint not found. Expected JSON but got ${contentType}. Check if your API server is running and the endpoint exists.`);
+      if (!contentType?.includes('application/json')) {
+        throw new Error(`Server endpoint not found. Expected JSON but got ${contentType}. Check if your API server is running.`);
       }
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.message || `Server authentication failed with status ${response.status}`);
 
-      if (!response.ok) {
-        throw new Error(data.message || `Server authentication failed with status ${response.status}`);
-      }
-
-      console.log("✅ Server authentication successful");
-      
-      // Store server token
       if (data.token) {
         this.setServerAuth(data.token);
         this.serverToken = data.token;
       }
 
-      return {
-        success: true,
-        data: data,
-        message: 'Server authentication successful'
-      };
-
+      return { success: true, data, message: 'Server authentication successful' };
     } catch (error) {
-      console.error("❌ Server login error:", error);
-      return {
-        success: false,
-        error: error.message || 'Server authentication failed'
-      };
+      return { success: false, error: error.message || 'Server authentication failed' };
     }
   }
 
-  // ========== COMPLETE LOGIN FLOW ==========
-
   async login(email, password) {
     try {
-      console.log("🚀 Starting complete admin login flow...");
-
-      // Step 1: Firebase Authentication
       const firebaseResult = await this.firebaseLogin(email, password);
-      if (!firebaseResult.success) {
-        return firebaseResult;
-      }
+      if (!firebaseResult.success) return firebaseResult;
 
-      // Step 2: Server Authentication
       const serverResult = await this.serverLogin(firebaseResult.data.idToken);
       if (!serverResult.success) {
-        // If server auth fails, logout from Firebase
         await this.firebaseLogout();
         return serverResult;
       }
 
-      console.log("🎉 Complete admin login successful!");
-      
       return {
         success: true,
-        data: {
-          firebase: firebaseResult.data,
-          server: serverResult.data
-        },
+        data: { firebase: firebaseResult.data, server: serverResult.data },
         message: 'Login successful'
       };
-
     } catch (error) {
-      console.error("❌ Complete login error:", error);
-      return {
-        success: false,
-        error: error.message || 'Login failed'
-      };
+      return { success: false, error: error.message || 'Login failed' };
     }
   }
 
   async logout() {
-    console.log("🚪 Starting complete logout...");
-    const result = await this.firebaseLogout();
-    console.log("✅ Complete logout finished");
-    return result;
+    return await this.firebaseLogout();
   }
 
-  // ========== BUSINESS MANAGEMENT API METHODS ==========
-
+  // Business Management API
   async getPendingBusinessList(page = 1, perPage = 10) {
     return this.makeAuthenticatedRequest('GET', `/api/admin/pending-business-list?page=${page}&per_page=${perPage}`);
   }
@@ -253,21 +134,12 @@ class AdminService {
   }
 
   async updateBusinessStatus(id, status, queryMessage = null) {
-    const payload = {
-      id,
-      status, // 'Pending', 'Approved', 'Rejected', 'Query'
-    };
-
-    if (status === 'Query' && queryMessage) {
-      payload.query_message = queryMessage;
-    }
-
+    const payload = { id, status };
+    if (status === 'Query' && queryMessage) payload.query_message = queryMessage;
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business-status', payload);
   }
 
-  
-  // ========== OUTLET MANAGEMENT API METHODS ==========
-
+  // Outlet Management API
   async getOutlets() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/outlets');
   }
@@ -277,19 +149,12 @@ class AdminService {
   }
 
   async updateOutlet(id, isActive) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/update-outlet', {
-      id,
-      is_active: isActive
-    });
+    return this.makeAuthenticatedRequest('POST', '/api/admin/update-outlet', { id, is_active: isActive });
   }
 
-  // ========== SUB ADMIN MANAGEMENT API METHODS ==========
-
+  // Sub Admin Management API
   async addSubAdmin(email, name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', {
-      email,
-      name
-    });
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name });
   }
 
   async deleteSubAdmin(id) {
@@ -300,50 +165,35 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/list-sub-admin');
   }
 
-  // ========== PRICING MANAGEMENT API METHODS ==========
-
+  // Pricing Management API
   async listPriceSlabs() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/list-price-slabs');
   }
 
   async updatePriceSlab(id, minQty, maxQty, pricePerUnit) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-price-slabs', {
-      id,
-      min_qty: minQty,
-      max_qty: maxQty,
-      price_per_unit: pricePerUnit
+      id, min_qty: minQty, max_qty: maxQty, price_per_unit: pricePerUnit
     });
   }
 
   async addPriceSlab(minQty, maxQty, pricePerUnit) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/add-price-slabs', {
-      min_qty: minQty,
-      max_qty: maxQty,
-      price_per_unit: pricePerUnit
+      min_qty: minQty, max_qty: maxQty, price_per_unit: pricePerUnit
     });
   }
 
-  // ========== INVENTORY/PRODUCT MANAGEMENT API METHODS ==========
-
+  // Product Management API
   async getProducts(categoryId = null, name = '') {
-    let queryParams = [];
-    
-    if (categoryId) {
-      queryParams.push(`category_id=${categoryId}`);
-    }
-    
-    if (name) {
-      queryParams.push(`name=${encodeURIComponent(name)}`);
-    }
-    
-    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    
-    return this.makeAuthenticatedRequest('GET', `/api/admin/products${queryString}`);
+    const params = [];
+    if (categoryId) params.push(`category_id=${categoryId}`);
+    if (name) params.push(`name=${encodeURIComponent(name)}`);
+    const query = params.length > 0 ? `?${params.join('&')}` : '';
+    return this.makeAuthenticatedRequest('GET', `/api/admin/products${query}`);
   }
 
   async getCategories(categoryId = null) {
-    const queryString = categoryId ? `?category_id=${categoryId}` : '';
-    return this.makeAuthenticatedRequest('GET', `/api/admin/categories${queryString}`);
+    const query = categoryId ? `?category_id=${categoryId}` : '';
+    return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
   }
 
   async getMaterials() {
@@ -351,267 +201,130 @@ class AdminService {
   }
 
   async addProduct(productData) {
-    // Use FormData for file uploads and form data
-    const formData = new FormData();
-    
-    // Add all the product fields to FormData
-    formData.append('name', productData.name || '');
-    formData.append('category_id', productData.category_id || '');
-    formData.append('material_id', productData.material_id || '');
-    formData.append('hsn_code', productData.hsn_code || '');
-    formData.append('shape', productData.shape || '');
-    formData.append('colour', productData.colour || '');
-    formData.append('specs', productData.specs || '');
-    formData.append('quality', productData.quality || '');
-
-    // Add images if provided
-    if (productData.images && productData.images.length > 0) {
-      productData.images.forEach((image) => {
-        if (image.originFileObj) {
-          formData.append(`images`, image.originFileObj);
-        }
-      });
-    }
-
+    const formData = this.createProductFormData(productData);
     return this.makeFormDataRequest('POST', '/api/admin/add-products', formData);
   }
 
   async updateProduct(productId, productData) {
-    const formData = new FormData();
-    
-    // Add product ID
+    const formData = this.createProductFormData(productData);
     formData.append('id', productId);
-    
-    // Add all the product fields to FormData
-    formData.append('name', productData.name || '');
-    formData.append('category_id', productData.category_id || '');
-    formData.append('material_id', productData.material_id || '');
-    formData.append('hsn_code', productData.hsn_code || '');
-    formData.append('shape', productData.shape || '');
-    formData.append('colour', productData.colour || '');
-    formData.append('specs', productData.specs || '');
-    formData.append('quality', productData.quality || '');
-
-    // Add images if provided
-    if (productData.images && productData.images.length > 0) {
-      productData.images.forEach((image) => {
-        if (image.originFileObj) {
-          formData.append(`images`, image.originFileObj);
-        }
-      });
-    }
-
     return this.makeFormDataRequest('POST', '/api/admin/update-products', formData);
   }
-
-  // async deleteProduct(productId) {
-  //   return this.makeAuthenticatedRequest('POST', '/api/admin/delete-products', { id: productId });
-  // }
-
-  // ========== USER DATA API METHODS ==========
 
   async getUserData() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/get-data');
   }
 
-  // ========== UTILITY METHODS ==========
+  createProductFormData(productData) {
+    const formData = new FormData();
+    const fields = ['name', 'category_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'quality'];
+    fields.forEach(field => formData.append(field, productData[field] || ''));
+    
+    if (productData.images?.length > 0) {
+      productData.images.forEach(image => {
+        if (image.originFileObj) formData.append('images', image.originFileObj);
+      });
+    }
+    
+    return formData;
+  }
 
   async makeAuthenticatedRequest(method, endpoint, data = null) {
     try {
       const token = this.getServerAuth();
-      
-      if (!token) {
-        console.error('❌ No authentication token found');
-        throw new Error('No authentication token found. Please login again.');
-      }
-
-      const fullURL = `${this.baseURL}${endpoint}`;
-      console.log(`📡 Making ${method} request to ${fullURL}`);
+      if (!token) throw new Error('No authentication token found. Please login again.');
 
       const config = {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       };
 
-      if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
         config.body = JSON.stringify(data);
-        console.log(`📦 Request payload:`, data);
       }
 
-      const response = await fetch(fullURL, config);
+      const response = await fetch(`${this.baseURL}${endpoint}`, config);
       
-      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
-      console.log(`📡 Response headers:`, Object.fromEntries([...response.headers]));
-
-      // Check if response is HTML (404/error page)
       const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('❌ Server returned non-JSON response:', textResponse.substring(0, 500));
-        
-        // Provide more specific error messages
-        if (response.status === 404) {
-          throw new Error(`API endpoint not found: ${endpoint}. Please check if your server is running and the endpoint exists.`);
-        } else if (response.status >= 500) {
-          throw new Error(`Server error (${response.status}). Please check your server logs.`);
-        } else {
-          throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}. Server may be returning an error page.`);
-        }
+      if (!contentType?.includes('application/json')) {
+        if (response.status === 404) throw new Error(`API endpoint not found: ${endpoint}`);
+        if (response.status >= 500) throw new Error(`Server error (${response.status})`);
+        throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}`);
       }
 
       const responseData = await response.json();
 
       if (!response.ok) {
-        // Handle token expiration
         if (response.status === 401) {
-          console.log("🔑 Token expired, clearing auth...");
           this.clearAllAuth();
           throw new Error('Session expired. Please login again.');
         }
-        
-        console.error('❌ API Error Response:', responseData);
         throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
       }
 
-      console.log(`✅ ${method} request to ${endpoint} successful`);
-      console.log(`📦 Response data:`, responseData);
-      
-      return {
-        success: true,
-        data: responseData
-      };
-
+      return { success: true, data: responseData };
     } catch (error) {
-      console.error(`❌ ${method} request to ${endpoint} failed:`, error);
-      
-      // Provide more helpful error messages
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return {
-          success: false,
-          error: `Cannot connect to server at ${this.baseURL}. Please check if your API server is running.`
-        };
+        return { success: false, error: `Cannot connect to server at ${this.baseURL}` };
       }
-      
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     }
   }
 
   async makeFormDataRequest(method, endpoint, formData) {
     try {
       const token = this.getServerAuth();
-      
-      if (!token) {
-        console.error('❌ No authentication token found');
-        throw new Error('No authentication token found. Please login again.');
-      }
+      if (!token) throw new Error('No authentication token found. Please login again.');
 
-      const fullURL = `${this.baseURL}${endpoint}`;
-      console.log(`📡 Making ${method} FormData request to ${fullURL}`);
-
-      const config = {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
         method,
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Don't set Content-Type for FormData, let browser set it with boundary
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
-      };
+      });
 
-      const response = await fetch(fullURL, config);
-      
-      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
-
-      // Check if response is HTML (404/error page)
       const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('❌ Server returned non-JSON response:', textResponse.substring(0, 500));
-        
-        if (response.status === 404) {
-          throw new Error(`API endpoint not found: ${endpoint}. Please check if your server is running and the endpoint exists.`);
-        } else if (response.status >= 500) {
-          throw new Error(`Server error (${response.status}). Please check your server logs.`);
-        } else {
-          throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}. Server may be returning an error page.`);
-        }
+      if (!contentType?.includes('application/json')) {
+        if (response.status === 404) throw new Error(`API endpoint not found: ${endpoint}`);
+        if (response.status >= 500) throw new Error(`Server error (${response.status})`);
+        throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}`);
       }
 
       const responseData = await response.json();
 
       if (!response.ok) {
-        // Handle token expiration
         if (response.status === 401) {
-          console.log("🔑 Token expired, clearing auth...");
           this.clearAllAuth();
           throw new Error('Session expired. Please login again.');
         }
-        
-        console.error('❌ API Error Response:', responseData);
         throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
       }
 
-      console.log(`✅ ${method} FormData request to ${endpoint} successful`);
-      console.log(`📦 Response data:`, responseData);
-      
-      return {
-        success: true,
-        data: responseData
-      };
-
+      return { success: true, data: responseData };
     } catch (error) {
-      console.error(`❌ ${method} FormData request to ${endpoint} failed:`, error);
-      
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return {
-          success: false,
-          error: `Cannot connect to server at ${this.baseURL}. Please check if your API server is running.`
-        };
+        return { success: false, error: `Cannot connect to server at ${this.baseURL}` };
       }
-      
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     }
   }
 
   async getCurrentIdToken() {
     try {
-      if (!this.currentUser) {
-        throw new Error('No user currently signed in');
-      }
-
-      const idToken = await getIdToken(this.currentUser, true); // Force refresh
-      return {
-        success: true,
-        idToken: idToken
-      };
+      if (!this.currentUser) throw new Error('No user currently signed in');
+      const idToken = await getIdToken(this.currentUser, true);
+      return { success: true, idToken };
     } catch (error) {
-      console.error("❌ Error getting ID token:", error);
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     }
   }
 
-  // ========== STORAGE METHODS ==========
-
+  // Storage Methods
   setFirebaseAuth(uid, idToken) {
     try {
-      console.log("💾 Storing Firebase auth data...");
       localStorage.setItem('firebase_uid', uid);
       localStorage.setItem('firebase_id_token', idToken);
-      console.log("✅ Firebase auth data stored successfully");
       return true;
     } catch (error) {
-      console.error("❌ Error storing Firebase auth:", error);
       return false;
     }
   }
@@ -622,84 +335,60 @@ class AdminService {
       const idToken = localStorage.getItem('firebase_id_token');
       return { uid, idToken };
     } catch (error) {
-      console.error("❌ Error retrieving Firebase auth:", error);
       return { uid: null, idToken: null };
     }
   }
 
   clearFirebaseAuth() {
     try {
-      console.log("🧹 Clearing Firebase auth data...");
       localStorage.removeItem('firebase_uid');
       localStorage.removeItem('firebase_id_token');
-      console.log("✅ Firebase auth data cleared");
       return true;
     } catch (error) {
-      console.error("❌ Error clearing Firebase auth:", error);
       return false;
     }
   }
 
   setServerAuth(token) {
     try {
-      console.log("💾 Storing server auth token...");
       Cookies.set('admin_token', token, { 
-        expires: 7, // 7 days
+        expires: 7,
         secure: this.isProduction(),
         sameSite: 'strict'
       });
-      console.log("✅ Server auth token stored successfully");
       return true;
     } catch (error) {
-      console.error("❌ Error storing server auth token:", error);
       return false;
     }
   }
 
   getServerAuth() {
     try {
-      const token = Cookies.get('admin_token');
-      return token || null;
+      return Cookies.get('admin_token') || null;
     } catch (error) {
-      console.error("❌ Error retrieving server auth token:", error);
       return null;
     }
   }
 
   clearServerAuth() {
     try {
-      console.log("🧹 Clearing server auth token...");
       Cookies.remove('admin_token');
-      console.log("✅ Server auth token cleared");
       return true;
     } catch (error) {
-      console.error("❌ Error clearing server auth token:", error);
       return false;
     }
   }
 
   clearAllAuth() {
-    console.log("🧹 Starting complete auth data cleanup...");
     const firebaseCleared = this.clearFirebaseAuth();
     const serverCleared = this.clearServerAuth();
     this.serverToken = null;
-    console.log("✅ Complete auth cleanup finished");
     return firebaseCleared && serverCleared;
   }
 
-  // ========== STATUS METHODS ==========
-
+  // Status Methods
   isAuthenticated() {
-    const firebaseAuth = !!this.currentUser;
-    const serverAuth = !!this.getServerAuth();
-    const isAuth = firebaseAuth && serverAuth;
-    
-    console.log(`🔍 Authentication check:`);
-    console.log(`  Firebase: ${firebaseAuth ? 'Authenticated' : 'Not Authenticated'}`);
-    console.log(`  Server: ${serverAuth ? 'Authenticated' : 'Not Authenticated'}`);
-    console.log(`  Overall: ${isAuth ? 'Authenticated' : 'Not Authenticated'}`);
-    
-    return isAuth;
+    return !!(this.currentUser && this.getServerAuth());
   }
 
   getCurrentUser() {
@@ -709,28 +398,19 @@ class AdminService {
   getAuthTokens() {
     const firebase = this.getFirebaseAuth();
     const server = this.getServerAuth();
-    
     return {
-      firebase: firebase,
-      server: server,
+      firebase,
+      server,
       isComplete: !!(firebase.uid && firebase.idToken && server)
     };
   }
 
-  // ========== DEBUGGING METHODS ==========
-
   async testConnection() {
     try {
-      console.log("🔍 Testing API connection...");
-      console.log(`🌐 Base URL: ${this.baseURL}`);
-      
-      // Test simple connection first
       const response = await fetch(this.baseURL, { 
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
-      
-      console.log(`📡 Connection test status: ${response.status} ${response.statusText}`);
       
       return {
         success: response.ok,
@@ -739,12 +419,7 @@ class AdminService {
         baseURL: this.baseURL
       };
     } catch (error) {
-      console.error("❌ Connection test failed:", error);
-      return {
-        success: false,
-        error: error.message,
-        baseURL: this.baseURL
-      };
+      return { success: false, error: error.message, baseURL: this.baseURL };
     }
   }
 
@@ -752,10 +427,7 @@ class AdminService {
     const auth = this.getAuthTokens();
     return {
       baseURL: this.baseURL,
-      currentUser: this.currentUser ? {
-        uid: this.currentUser.uid,
-        email: this.currentUser.email
-      } : null,
+      currentUser: this.currentUser ? { uid: this.currentUser.uid, email: this.currentUser.email } : null,
       authentication: {
         firebase: !!auth.firebase.uid,
         server: !!auth.server,
@@ -768,35 +440,17 @@ class AdminService {
     };
   }
 
-  // ========== ERROR HANDLING ==========
-
   handleFirebaseError(error) {
-    let errorMessage = 'Authentication failed';
-    
-    switch (error.code) {
-      case 'auth/user-not-found':
-        errorMessage = 'Admin account not found';
-        break;
-      case 'auth/wrong-password':
-        errorMessage = 'Invalid password';
-        break;
-      case 'auth/invalid-email':
-        errorMessage = 'Invalid email address';
-        break;
-      case 'auth/user-disabled':
-        errorMessage = 'Admin account has been disabled';
-        break;
-      case 'auth/too-many-requests':
-        errorMessage = 'Too many failed attempts. Please try again later';
-        break;
-      case 'auth/network-request-failed':
-        errorMessage = 'Network error. Please check your connection';
-        break;
-      default:
-        errorMessage = error.message || 'Authentication failed';
-    }
+    const errorMessages = {
+      'auth/user-not-found': 'Admin account not found',
+      'auth/wrong-password': 'Invalid password',
+      'auth/invalid-email': 'Invalid email address',
+      'auth/user-disabled': 'Admin account has been disabled',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later',
+      'auth/network-request-failed': 'Network error. Please check your connection'
+    };
 
-    console.log(`🚫 Firebase Error: ${error.code || 'Unknown'} - ${errorMessage}`);
+    const errorMessage = errorMessages[error.code] || error.message || 'Authentication failed';
 
     return {
       success: false,
@@ -806,5 +460,4 @@ class AdminService {
   }
 }
 
-// Export singleton instance
 export default new AdminService();
