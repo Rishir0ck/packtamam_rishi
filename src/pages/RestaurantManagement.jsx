@@ -386,7 +386,7 @@ export default function RestaurantManagement() {
                 ['owner', 'Owner'],
                 ['email', 'Email'],
                 ['mobile_number', 'Phone'],
-                ['address', 'Address', 'col-span-4'],
+                ['address', 'Address', 'col-span-2'],
                 ['city', 'City'],
                 ['outlet_type', 'Outlet Type'],
                 ['leagal_entity_name', 'Leagal Entity Name'],
