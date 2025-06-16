@@ -211,6 +211,12 @@ class AdminService {
     return this.makeFormDataRequest('POST', '/api/admin/update-products', formData);
   }
 
+  async updateProductStatus(productId, status) {
+  return this.makeAuthenticatedRequest('POST', '/api/admin/update-products-status', {
+    id: productId,is_active: status
+  });
+  }
+
   async getUserData() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/get-data');
   }
