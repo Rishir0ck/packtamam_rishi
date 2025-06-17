@@ -13,7 +13,8 @@ const menuItems = [
     hasSubmenu: true,
     submenu: [
       { path: '/restaurant-onboarding', label: 'Restaurant Onboarding' },
-      { path: '/restaurant-management', label: 'Restaurant Management' }
+      { path: '/restaurant-management', label: 'Restaurant Management' },
+      { path: '/outlet-type', label: 'Outlet' }
     ]
   },
   { path: '/inventory-management', icon: Package, label: 'Inventory Management' },

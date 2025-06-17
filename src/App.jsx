@@ -8,6 +8,7 @@ import AddToCart from './pages/AddToCart'
 import Dashboard from './pages/Dashboard'
 import RestaurantOnboarding from './pages/RestaurantOnboarding'
 import RestaurantManagement from './pages/RestaurantManagement'
+import OutletManagement from './pages/OutletManagement'
 import InventoryManagement from './pages/InventoryManagement'
 import Profile from './pages/Profile'
 import LoadingScreen from './components/common/LoadingScreen'
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="restaurant-onboarding" element={<RestaurantOnboarding />} />
         <Route path="restaurant-management" element={<RestaurantManagement />} />
+        <Route path="outlet-type" element={<OutletManagement />} />
         <Route path="inventory-management" element={<InventoryManagement />} />
         <Route path="addToCart" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />
