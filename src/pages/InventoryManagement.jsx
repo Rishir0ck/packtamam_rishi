@@ -63,13 +63,57 @@ export default function InventoryManagement() {
   const getName = useCallback((id, type) => 
     data[type]?.find(item => item.id === id)?.name || 'Unknown', [data])
 
+  // Calculate pricing based on price slabs
+  const calculatePricing = useCallback((basePrice, quantity = 1) => {
+    if (!data.priceSlabs.length || !basePrice) return basePrice
+    
+    const applicableSlab = data.priceSlabs
+      .filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty)
+      .sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
+    
+    return applicableSlab ? applicableSlab.price_per_unit : basePrice
+  }, [data.priceSlabs])
+
+  // Auto-calculate pricing fields based on inventory structure
+  const updatePricing = useCallback((formData) => {
+    const inventory = formData.inventory || {}
+    const { cost_price, markup, gst = 18, in_stock = 1 } = inventory
+    const costPrice = parseFloat(cost_price) || 0
+    const markupPercent = parseFloat(markup) || 0
+    const gstPercent = parseFloat(gst) || 18
+    const quantity = parseFloat(in_stock) || 1
+
+    if (costPrice > 0) {
+      const sellPrice = costPrice + (costPrice * markupPercent / 100)
+      const finalPrice = calculatePricing(sellPrice, quantity)
+      const grossProfit = finalPrice - costPrice
+      const gstAmount = finalPrice * gstPercent / 100
+      const priceWithGst = finalPrice + gstAmount
+      const gstPayable = gstAmount
+      const netProfit = grossProfit - (gstAmount * 0.1)
+
+      return {
+        ...formData,
+        inventory: {
+          ...inventory,
+          sell_price: Math.round(finalPrice * 100) / 100,
+          gross_profit: Math.round(grossProfit * 100) / 100,
+          gst_amount: Math.round(gstAmount * 100) / 100,
+          price_with_gst: Math.round(priceWithGst * 100) / 100,
+          gst_payable: Math.round(gstPayable * 100) / 100,
+          net_profit: Math.round(netProfit * 100) / 100
+        }
+      }
+    }
+    return formData
+  }, [calculatePricing])
+
   const filteredData = useMemo(() => {
     if (activeTab !== 'products') return data[activeTab] || []
     return data.products.filter(p => {
       const searchMatch = !search || [
         p.name, p.hsn_code, p.shape, p.colour, 
-        getName(p.category_id, 'categories'), 
-        getName(p.material_id, 'materials')
+        p.category?.name, p.material?.name
       ].some(field => field?.toLowerCase().includes(search.toLowerCase()))
       
       const filterMatch = filter === 'all' || 
@@ -78,7 +122,7 @@ export default function InventoryManagement() {
         (filter === 'inactive' && !p.is_active)
       return searchMatch && filterMatch
     })
-  }, [data, activeTab, search, filter, getName])
+  }, [data, activeTab, search, filter])
 
   const handleImageUpload = useCallback((files) => {
     const images = Array.from(files).map(file => ({
@@ -126,19 +170,22 @@ export default function InventoryManagement() {
     const isProduct = modal === 'editProduct'
     const isEdit = data[isProduct ? 'products' : 'priceSlabs'].some(item => item.id === editData.id)
     
+    // Apply pricing calculations for products
+    const finalData = isProduct ? updatePricing(editData) : editData
+    
     const operation = isProduct 
       ? (isEdit 
-          ? () => adminService.updateProduct(editData.id, editData)
-          : () => adminService.addProduct(editData))
+          ? () => adminService.updateProduct(finalData.id, finalData)
+          : () => adminService.addProduct(finalData))
       : (isEdit 
-          ? () => adminService.updatePriceSlab(editData.id, editData.min_qty, editData.max_qty, editData.price_per_unit)
-          : () => adminService.addPriceSlab(editData.min_qty, editData.max_qty, editData.price_per_unit))
+          ? () => adminService.updatePriceSlab(finalData.id, finalData.min_qty, finalData.max_qty, finalData.price_per_unit)
+          : () => adminService.addPriceSlab(finalData.min_qty, finalData.max_qty, finalData.price_per_unit))
     
     apiCall(operation, () => { 
       setModal('')
       setEditData(null) 
     })
-  }, [data, editData, modal, apiCall])
+  }, [data, editData, modal, apiCall, updatePricing])
 
   const stats = useMemo(() => [
     { label: 'Total', value: data.products.length, icon: Package, color: '#c79e73', filter: 'all' },
@@ -162,19 +209,18 @@ export default function InventoryManagement() {
     { key: 'colour', label: 'Colour' },
     { key: 'specs', label: 'Specifications', span: 2 },
     { key: 'quality', label: 'Quality', type: 'select', options: [{ value: 'Standard', label: 'Standard' }, { value: 'Premium', label: 'Premium' }] },
-    { key: 'inventory_code', label: 'Inventory Code' },
-    { key: 'cost_price', label: 'Cost Price (₹)', type: 'number' },
-    { key: 'markup', label: 'Markup (%)', type: 'number' },
-    { key: 'sell_price', label: 'Sell Price (₹)', type: 'number' },
-    { key: 'gross_profit', label: 'Gross Profit (₹)', type: 'number' },
-    { key: 'gst', label: 'GST (%)', type: 'number' },
-    { key: 'price_with_gst', label: 'Price with GST (₹)', type: 'number' },
-    { key: 'gst_amount', label: 'GST Amount (₹)', type: 'number' },
-    { key: 'gst_payable', label: 'GST Payable (₹)', type: 'number' },
-    { key: 'net_profit', label: 'Net Profit (₹)', type: 'number' },
-    { key: 'in_stock', label: 'In Stock', type: 'number' },
-    { key: 'pack_off', label: 'Pack Off', type: 'number' },
-    // { key: 'document', label: 'Document', type: 'file' },
+    { key: 'inventory.inventory_code', label: 'Inventory Code' },
+    { key: 'inventory.cost_price', label: 'Cost Price (₹)', type: 'number', onChange: true },
+    { key: 'inventory.markup', label: 'Markup (%)', type: 'number', onChange: true },
+    { key: 'inventory.sell_price', label: 'Sell Price (₹)', type: 'number', readonly: true },
+    { key: 'inventory.gross_profit', label: 'Gross Profit (₹)', type: 'number', readonly: true },
+    { key: 'inventory.gst', label: 'GST (%)', type: 'number', onChange: true },
+    { key: 'inventory.price_with_gst', label: 'Price with GST (₹)', type: 'number', readonly: true },
+    { key: 'inventory.gst_amount', label: 'GST Amount (₹)', type: 'number', readonly: true },
+    { key: 'inventory.gst_payable', label: 'GST Payable (₹)', type: 'number', readonly: true },
+    { key: 'inventory.net_profit', label: 'Net Profit (₹)', type: 'number', readonly: true },
+    { key: 'inventory.in_stock', label: 'In Stock', type: 'number', onChange: true },
+    { key: 'inventory.pack_off', label: 'Pack Off', type: 'number' },
     { key: 'is_active', label: 'Active Status', type: 'checkbox', span: 2 }
   ]
 
@@ -191,6 +237,31 @@ export default function InventoryManagement() {
     </button>
   )
 
+  const getFieldValue = (obj, path) => {
+    return path.split('.').reduce((o, p) => o?.[p], obj) || ''
+  }
+
+  const setFieldValue = (obj, path, value) => {
+    const keys = path.split('.')
+    const lastKey = keys.pop()
+    const target = keys.reduce((o, k) => o[k] = o[k] || {}, obj)
+    target[lastKey] = value
+    return obj
+  }
+
+  const handleFieldChange = useCallback((field, value) => {
+    const newData = { ...editData }
+    setFieldValue(newData, field, value)
+    
+    // Auto-calculate pricing when relevant fields change
+    if (field.includes('cost_price') || field.includes('markup') || field.includes('gst') || field.includes('in_stock')) {
+      const updatedData = updatePricing(newData)
+      setEditData(updatedData)
+    } else {
+      setEditData(newData)
+    }
+  }, [editData, updatePricing])
+
   const renderTable = () => {
     if (activeTab === 'products') {
       return (
@@ -198,7 +269,7 @@ export default function InventoryManagement() {
           <table className="w-full">
             <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
-                {['Image','Product', 'Category', 'Material', 'HSN', 'Quality', 'Status', 'Actions'].map(header => (
+                {['Image','Product', 'Category', 'Material', 'HSN', 'Quality', 'Price', 'Status', 'Actions'].map(header => (
                   <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     {header}
                   </th>
@@ -208,11 +279,11 @@ export default function InventoryManagement() {
             <tbody className="divide-y divide-gray-200">
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
-                    <td className={`px-4 py-3 text-sm  ${theme.text}`}>{item.images?.length > 0 ? (item.images.map((img, idx) => (<img key={idx} src={img.image_url} alt={`Image ${idx + 1}`} className="w-18 h-12 object-cover mr-2 inline-block" />
-                          ))
-                        ) : (
-                          '-'
-                        )}</td>
+                  <td className={`px-4 py-3 text-sm ${theme.text}`}>
+                    {item.images?.length > 0 ? (
+                      <img src={item.images[0].image_url} alt="Product" className="w-12 h-12 object-cover rounded" />
+                    ) : '-'}
+                  </td>
                   <td className={`px-4 py-3 ${theme.text}`}>
                     <div className="font-medium">{item.name}</div>
                     {(item.shape || item.colour) && (
@@ -221,8 +292,8 @@ export default function InventoryManagement() {
                       </div>
                     )}
                   </td>
-                      <td className={`px-4 py-3 text-sm ${theme.text}`}>{getName(item.category_id, 'categories')}</td>
-                  <td className={`px-4 py-3 text-sm ${theme.text}`}>{getName(item.material_id, 'materials')}</td>
+                  <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.category?.name || '-'}</td>
+                  <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.material?.name || '-'}</td>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.hsn_code || '-'}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs rounded ${
@@ -231,23 +302,25 @@ export default function InventoryManagement() {
                       {item.quality}
                     </span>
                   </td>
+                  <td className={`px-4 py-3 text-sm font-semibold ${theme.text}`}>
+                    ₹{item.inventory?.price_with_gst || item.inventory?.sell_price || '-'}
+                  </td>
                   <td className="px-4 py-3">
-                    {/* <div className={`w-2 h-2 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <span>{item.is_active ? 'Active' : 'Inactive'}</span> */}
-                    <div className="flex items-center space-x-3">
-                      <span className={`inline-block w-3.5 h-3.5 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'} shadow-md`}aria-label={item.is_active ? 'Active status' : 'Inactive status'}></span>
-                      <span className={`text-sm font-semibold ${item.is_active ? 'text-green-600' : 'text-red-600'}`}>{item.is_active ? 'Active' : 'Inactive'}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`w-2 h-2 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className={`text-sm ${item.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <ActionButton onClick={() => { setSelected(item); setModal('view') }} 
                         color="#6b7280" icon={Eye} title="View" />
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editProduct') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
                       <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
-                        // color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title="Toggle Status" />
-                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'In Active' : 'Active'}  />
+                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
                       <ActionButton onClick={() => deleteItem(item.id, 'product')} 
                         color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
@@ -312,7 +385,7 @@ export default function InventoryManagement() {
               <tr key={item.id} className={theme.tableRow}>
                 <td className={`px-4 py-3 text-sm ${theme.text}`}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-10 h-15 rounded object-cover" />
+                    <img src={item.image_url} alt={item.name} className="w-10 h-10 rounded object-cover" />
                   ) : '-'}
                 </td>
                 <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
@@ -335,9 +408,9 @@ export default function InventoryManagement() {
     if (!modal) return null
 
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
         <div className={`rounded-lg w-full max-h-[90vh] overflow-y-auto ${
-          modal.includes('Product') ? 'max-w-3xl' : 'max-w-lg'
+          modal.includes('Product') ? 'max-w-4xl' : 'max-w-lg'
         } ${theme.card}`}>
           <div className={`p-4 border-b flex items-center justify-between ${theme.border}`}>
             <h2 className={`text-xl font-bold ${theme.text}`}>
@@ -352,28 +425,31 @@ export default function InventoryManagement() {
           
           {modal === 'view' && selected && (
             <div className="p-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {[
-                  ['Image', selected.images?.[0]?.image_url,'image_url'], 
+                  ['Image', selected.images?.[0]?.image_url, 'image'], 
                   ['Name', selected.name], 
-                  ['Category', getName(selected.category_id, 'categories')], 
-                  ['Material', getName(selected.material_id, 'materials')], 
+                  ['Category', selected.category?.name || 'N/A'], 
+                  ['Material', selected.material?.name || 'N/A'], 
                   ['HSN Code', selected.hsn_code || 'N/A'], 
                   ['Shape', selected.shape || 'N/A'], 
                   ['Colour', selected.colour || 'N/A'], 
                   ['Quality', selected.quality], 
+                  ['Cost Price', `₹${selected.inventory?.cost_price || 0}`],
+                  ['Sell Price', `₹${selected.inventory?.sell_price || 0}`],
+                  ['Price with GST', `₹${selected.inventory?.price_with_gst || 0}`],
+                  ['Stock', selected.inventory?.in_stock || 0],
                   ['Status', selected.is_active ? 'Active' : 'Inactive']
-                ].map(([label, value], i) => (
+                ].map(([label, value, type], i) => (
                   <div key={i}>
                     <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
-                   {/* <p className={`mt-1 ${theme.text}`}>{value}</p> */}
-                   <p className={`mt-1 ${theme.text}`}>
-                    {label === 'Image' && value ? (
-                      <img src={value} alt="Selected" className="w-28 h-24 object-cover rounded" />
-                    ) : (
-                      value || '-'
-                    )}
-                  </p>
+                    <p className={`mt-1 ${theme.text}`}>
+                      {type === 'image' && value ? (
+                        <img src={value} alt="Selected" className="w-20 h-20 object-cover rounded" />
+                      ) : (
+                        value || '-'
+                      )}
+                    </p>
                   </div>
                 ))}
                 {selected.specs && (
@@ -401,15 +477,15 @@ export default function InventoryManagement() {
                       </label>
                     </div>
                     {editData?.images?.length > 0 && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
+                      <div className="mt-2 grid grid-cols-6 gap-2">
                         {editData.images.map((img) => (
                           <div key={img.id} className="relative group">
-                            <img src={img.image_url} alt="" className="w-28 h-16 object-cover rounded" />
+                            <img src={img.image_url || img.url} alt="" className="w-16 h-16 object-cover rounded" />
                             <button onClick={() => setEditData(p => ({ 
                               ...p, images: p.images.filter(i => i.id !== img.id) 
                             }))}
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100">
-                              <X className="w-2 h-2" />
+                              <X className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
@@ -417,16 +493,16 @@ export default function InventoryManagement() {
                     )}
                   </div>
                 )}
-                <div className={`grid gap-3 ${modal === 'editProduct' ? 'grid-cols-2' : ''}`}>
+                <div className={`grid gap-3 ${modal === 'editProduct' ? 'grid-cols-3' : ''}`}>
                   {(modal === 'editProduct' ? productFields : priceSlabFields).map(field => (
-                    <div key={field.key} className={field.key === 'specs' ? 'col-span-2' : ''}>
+                    <div key={field.key} className={field.span === 2 ? 'col-span-2' : ''}>
                       <label className={`block text-sm mb-1 ${theme.muted}`}>
                         {field.label} {field.required && <span className="text-red-500">*</span>}
                       </label>
                       {field.type === 'select' ? (
-                        <select value={editData?.[field.key] || ''} 
-                          onChange={(e) => setEditData({...editData, [field.key]: e.target.value})}
-                          className={`w-full p-2 border rounded ${theme.input}`}>
+                        <select value={getFieldValue(editData, field.key)} 
+                          onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                          className={`w-full p-2 border rounded text-sm ${theme.input}`}>
                           <option value="">Select {field.label}</option>
                           {field.options?.map(opt => 
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -434,15 +510,19 @@ export default function InventoryManagement() {
                         </select>
                       ) : field.type === 'checkbox' ? (
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={editData?.[field.key] || false}
-                            onChange={(e) => setEditData({...editData, [field.key]: e.target.checked})} />
+                          <input type="checkbox" checked={getFieldValue(editData, field.key) || false}
+                            onChange={(e) => handleFieldChange(field.key, e.target.checked)} />
                           <span className={`text-sm ${theme.text}`}>Active</span>
                         </label>
                       ) : (
-                        <input type={field.type || 'text'} value={editData?.[field.key] || ''}
-                          onChange={(e) => setEditData({...editData, [field.key]: 
-                            field.type === 'number' ? +e.target.value || 0 : e.target.value})}
-                          className={`w-full p-2 border rounded ${theme.input}`} />
+                        <input 
+                          type={field.type || 'text'} 
+                          value={getFieldValue(editData, field.key)}
+                          onChange={(e) => handleFieldChange(field.key, 
+                            field.type === 'number' ? +e.target.value || 0 : e.target.value)}
+                          className={`w-full p-2 border rounded text-sm ${theme.input} ${field.readonly ? 'bg-gray-100' : ''}`}
+                          readOnly={field.readonly}
+                        />
                       )}
                     </div>
                   ))}
@@ -450,11 +530,11 @@ export default function InventoryManagement() {
               </div>
               <div className={`p-4 border-t flex gap-3 ${theme.border}`}>
                 <button onClick={saveItem} disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium disabled:opacity-50" 
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded font-medium disabled:opacity-50 text-sm" 
                   style={{ backgroundColor: '#c79e73' }}>
                   <Save className="w-4 h-4" />{loading ? 'Saving...' : 'Save'}
                 </button>
-                <button onClick={() => setModal('')} className={`px-6 py-3 rounded-lg font-medium ${theme.btn}`}>
+                <button onClick={() => setModal('')} className={`px-4 py-2 rounded font-medium text-sm ${theme.btn}`}>
                   Cancel
                 </button>
               </div>
