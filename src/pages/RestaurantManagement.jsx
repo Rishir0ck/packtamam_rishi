@@ -3,83 +3,71 @@ import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Filter, Loader2
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
+const OUTLET_TYPES = [
+  'Restaurant', 'Cafe', 'Fast Food', 'Fine Dining', 'Bakery', 'Food Truck', 
+  'Catering', 'Bar & Grill', 'Pizzeria', 'Buffet', 'Delivery Only', 'Cloud Kitchen'
+]
+
 export default function RestaurantManagement() {
   const { isDark } = useContext(ThemeContext)
   const [state, setState] = useState({
-    restaurants: [],
-    loading: true,
-    error: '',
-    selected: null,
-    search: '',
-    filter: 'all',
-    modal: '',
-    editData: null,
-    saving: false,
-    newFranchise: { name: '', address: '', manager: '', phone: '' }
+    restaurants: [], loading: true, error: '', selected: null, search: '', 
+    filter: 'all', modal: '', editData: null, saving: false,
+    newFranchise: { name: '', email: '', owner_name: '', mobile_number: '' }
   })
 
-  const updateState = (updates) => setState(prev => ({ ...prev, ...updates }))
+  const update = (updates) => setState(prev => ({ ...prev, ...updates }))
+  const theme = (light, dark = '') => isDark ? `${dark} dark` : light
 
   useEffect(() => { fetchRestaurants() }, [])
 
   const fetchRestaurants = async () => {
     try {
-      updateState({ loading: true, error: '' })
+      update({ loading: true, error: '' })
       const result = await AdminService.getApprovedBusinessList(1, 100)
       
       if (result.success) {
         const restaurants = result.data.data?.map(r => ({
-          id: r.id,
-          name: r.business_name || r.name,
-          owner: r.owner_name || r.owner,
-          legal_entity_name: r.legal_entity_name || 'N/A',
-          email: r.email,
-          phone: r.mobile_number,
+          id: r.id, name: r.business_name || r.name, owner: r.owner_name || r.owner,
+          legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
           address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
-          city: r.city,
-          franchise_code: r.franchise_code,
-          fssai_no: r.fssai_no || 'N/A',
-          gst_no: r.gst_no || 'N/A',
-          outlet_type: r.outlet_type || 'Not specified',
+          city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
+          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'Restaurant',
           joinedDate: r.created_at?.split('T')[0] || r.joinedDate,
           status: r.status === 'Approved' ? 'active' : 'inactive',
           profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
           restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
           franchises: r.franchises || []
         })) || []
-        
-        updateState({ restaurants })
+        update({ restaurants })
       } else {
-        updateState({ error: result.error || 'Failed to fetch restaurants' })
+        update({ error: result.error || 'Failed to fetch restaurants' })
       }
     } catch (err) {
-      updateState({ error: 'Failed to load restaurants' })
+      update({ error: 'Failed to load restaurants' })
       console.error('Error:', err)
     } finally {
-      updateState({ loading: false })
+      update({ loading: false })
     }
   }
 
   const updateRestaurantStatus = async (id, status) => {
     try {
-      updateState({ saving: true })
+      update({ saving: true })
       const result = await AdminService.updateBusinessStatus(id, status)
       
       if (result.success) {
-        updateState({ 
-          restaurants: state.restaurants.map(r => r.id === id ? { ...r, status: status.toLowerCase() } : r)
-        })
+        update({ restaurants: state.restaurants.map(r => r.id === id ? { ...r, status: status.toLowerCase() } : r) })
         return true
       } else {
-        updateState({ error: result.error || 'Failed to update status' })
+        update({ error: result.error || 'Failed to update status' })
         return false
       }
     } catch (err) {
-      updateState({ error: 'Failed to update restaurant status' })
-      console.error('Error:', err)
+      update({ error: 'Failed to update restaurant status' })
       return false
     } finally {
-      updateState({ saving: false })
+      update({ saving: false })
     }
   }
 
@@ -98,7 +86,7 @@ export default function RestaurantManagement() {
     if (!state.editData) return
     
     try {
-      updateState({ saving: true })
+      update({ saving: true })
       const original = state.restaurants.find(r => r.id === state.editData.id)
       
       if (original?.status !== state.editData.status) {
@@ -106,33 +94,29 @@ export default function RestaurantManagement() {
         if (!success) return
       }
       
-      updateState({
+      update({
         restaurants: state.restaurants.map(r => r.id === state.editData.id ? state.editData : r),
-        modal: '',
-        editData: null
+        modal: '', editData: null
       })
     } catch (err) {
-      updateState({ error: 'Failed to save changes' })
-      console.error('Error:', err)
+      update({ error: 'Failed to save changes' })
     } finally {
-      updateState({ saving: false })
+      update({ saving: false })
     }
   }
 
   const addFranchise = () => {
-    if (state.newFranchise.name && state.newFranchise.address) {
+    if (state.newFranchise.name && state.newFranchise.email) {
       const franchise = { ...state.newFranchise, id: Date.now(), status: 'active' }
-      updateState({
+      update({
         editData: { ...state.editData, franchises: [...(state.editData.franchises || []), franchise] },
-        newFranchise: { name: '', address: '', manager: '', phone: '' }
+        newFranchise: { name: '', email: '', owner_name: '', mobile_number: '' }
       })
     }
   }
 
   const removeFranchise = (id) => {
-    updateState({
-      editData: { ...state.editData, franchises: state.editData.franchises.filter(f => f.id !== id) }
-    })
+    update({ editData: { ...state.editData, franchises: state.editData.franchises.filter(f => f.id !== id) } })
   }
 
   const stats = [
@@ -142,16 +126,15 @@ export default function RestaurantManagement() {
     { label: 'With Franchises', value: state.restaurants.filter(r => r.franchises?.length > 0).length, icon: Store, color: '#8b5cf6', filter: 'with-franchises' }
   ]
 
-  const themeClass = (lightClass, darkClass = '') => isDark ? `${darkClass} dark` : lightClass
-  const inputClass = `w-full p-2 border rounded text-sm ${themeClass('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`
+  const inputClass = `w-full p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`
   const buttonClass = 'px-4 py-2 text-white rounded-lg transition-colors text-sm'
 
   if (state.loading) {
     return (
-      <div className={`min-h-screen ${themeClass('bg-gray-50', 'bg-gray-900')} flex items-center justify-center`}>
+      <div className={`min-h-screen ${theme('bg-gray-50', 'bg-gray-900')} flex items-center justify-center`}>
         <div className="text-center">
-          <Loader2 className={`w-8 h-8 animate-spin mx-auto mb-4 ${themeClass('text-gray-900', 'text-white')}`} />
-          <p className={`text-lg font-medium ${themeClass('text-gray-900', 'text-white')}`}>Loading restaurants...</p>
+          <Loader2 className={`w-8 h-8 animate-spin mx-auto mb-4 ${theme('text-gray-900', 'text-white')}`} />
+          <p className={`text-lg font-medium ${theme('text-gray-900', 'text-white')}`}>Loading restaurants...</p>
         </div>
       </div>
     )
@@ -159,11 +142,11 @@ export default function RestaurantManagement() {
 
   const Modal = ({ title, children, onClose }) => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className={`rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto ${themeClass('bg-white', 'bg-gray-800')}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${themeClass('border-gray-200', 'border-gray-700')}`}>
-          <h2 className={`text-lg font-bold ${themeClass('text-gray-900', 'text-white')}`}>{title}</h2>
-          <button onClick={onClose} className={`p-2 rounded-lg ${themeClass('hover:bg-gray-100', 'hover:bg-gray-700')}`}>
-            <X className={`w-5 h-5 ${themeClass('text-gray-700', 'text-gray-300')}`} />
+      <div className={`rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto ${theme('bg-white', 'bg-gray-800')}`}>
+        <div className={`p-4 border-b flex items-center justify-between ${theme('border-gray-200', 'border-gray-700')}`}>
+          <h2 className={`text-lg font-bold ${theme('text-gray-900', 'text-white')}`}>{title}</h2>
+          <button onClick={onClose} className={`p-2 rounded-lg ${theme('hover:bg-gray-100', 'hover:bg-gray-700')}`}>
+            <X className={`w-5 h-5 ${theme('text-gray-700', 'text-gray-300')}`} />
           </button>
         </div>
         <div className="p-4">{children}</div>
@@ -172,17 +155,17 @@ export default function RestaurantManagement() {
   )
 
   return (
-    <div className={`min-h-screen ${themeClass('bg-gray-50', 'bg-gray-900')} p-4 transition-colors`}>
+    <div className={`min-h-screen ${theme('bg-gray-50', 'bg-gray-900')} p-4 transition-colors`}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')} mb-1`}>Restaurant Management</h1>
-            <p className={`text-sm ${themeClass('text-gray-600', 'text-gray-400')}`}>Manage approved restaurants and their franchises</p>
+            <h1 className={`text-2xl font-bold ${theme('text-gray-900', 'text-white')} mb-1`}>Restaurant Management</h1>
+            <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>Manage approved restaurants and their franchises</p>
           </div>
           <button 
             onClick={fetchRestaurants}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${themeClass('bg-white hover:bg-gray-50 text-gray-700 border border-gray-200', 'bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700')}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${theme('bg-white hover:bg-gray-50 text-gray-700 border border-gray-200', 'bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700')}`}
           >
             <RefreshCw className={`w-4 h-4 ${state.loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -204,23 +187,18 @@ export default function RestaurantManagement() {
             type="text" 
             placeholder="Search restaurants, owners, or outlet..." 
             value={state.search} 
-            onChange={(e) => updateState({ search: e.target.value })}
-            className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${themeClass('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
+            onChange={(e) => update({ search: e.target.value })}
+            className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
           />
         </div>
         <div className="relative">
           <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <select 
             value={state.filter} 
-            onChange={(e) => updateState({ filter: e.target.value })} 
-            className={`pl-9 pr-8 py-2.5 border rounded-lg focus:outline-none appearance-none transition-colors min-w-[180px] ${themeClass('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-800 text-white')}`}
+            onChange={(e) => update({ filter: e.target.value })} 
+            className={`pl-9 pr-8 py-2.5 border rounded-lg focus:outline-none appearance-none transition-colors min-w-[180px] ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-800 text-white')}`}
           >
-            {[
-              ['all', 'All Restaurants'],
-              ['active', 'Active Only'],
-              ['inactive', 'Inactive Only'],
-              ['with-franchises', 'With Franchises']
-            ].map(([value, label]) => (
+            {[['all', 'All Restaurants'], ['active', 'Active Only'], ['inactive', 'Inactive Only'], ['with-franchises', 'With Franchises']].map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
@@ -234,14 +212,14 @@ export default function RestaurantManagement() {
           return (
             <div 
               key={i} 
-              onClick={() => updateState({ filter: stat.filter })}
-              className={`rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${themeClass('bg-white border-gray-200 hover:bg-gray-50', 'bg-gray-800 border-gray-700 hover:bg-gray-750')} ${state.filter === stat.filter ? 'ring-2' : ''}`}
+              onClick={() => update({ filter: stat.filter })}
+              className={`rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${theme('bg-white border-gray-200 hover:bg-gray-50', 'bg-gray-800 border-gray-700 hover:bg-gray-750')} ${state.filter === stat.filter ? 'ring-2' : ''}`}
               style={{ ringColor: state.filter === stat.filter ? '#c79e73' : 'transparent' }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-xs ${themeClass('text-gray-600', 'text-gray-400')}`}>{stat.label}</p>
-                  <p className={`text-xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>{stat.value}</p>
+                  <p className={`text-xs ${theme('text-gray-600', 'text-gray-400')}`}>{stat.label}</p>
+                  <p className={`text-xl font-bold ${theme('text-gray-900', 'text-white')}`}>{stat.value}</p>
                 </div>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: stat.color }}>
                   <IconComponent className="w-4 h-4 text-white" />
@@ -256,33 +234,33 @@ export default function RestaurantManagement() {
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <Store className={`w-12 h-12 mx-auto mb-4 opacity-50 text-gray-400`} />
-            <p className={`text-lg font-medium ${themeClass('text-gray-900', 'text-white')}`}>No restaurants found</p>
-            <p className={`text-sm ${themeClass('text-gray-600', 'text-gray-400')}`}>Try adjusting your search or filter criteria</p>
+            <Store className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-400" />
+            <p className={`text-lg font-medium ${theme('text-gray-900', 'text-white')}`}>No restaurants found</p>
+            <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>Try adjusting your search or filter criteria</p>
           </div>
         ) : (
           filtered.map((r) => (
-            <div key={r.id} className={`rounded-lg border shadow-sm p-4 transition-colors ${themeClass('bg-white border-gray-200', 'bg-gray-800 border-gray-700')}`}>
+            <div key={r.id} className={`rounded-lg border shadow-sm p-4 transition-colors ${theme('bg-white border-gray-200', 'bg-gray-800 border-gray-700')}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img src={r.profileImg} alt={r.owner} className="w-10 h-10 rounded-full object-cover" />
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className={`font-semibold ${themeClass('text-gray-900', 'text-white')}`}>{r.name}</h3>
+                      <h3 className={`font-semibold ${theme('text-gray-900', 'text-white')}`}>{r.name}</h3>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         r.status === 'active' 
-                          ? themeClass('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
-                          : themeClass('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
+                          ? theme('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
+                          : theme('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
                       }`}>
                         {r.status}
                       </span>
                       {r.franchises?.length > 0 && (
-                        <span className={`px-2 py-1 rounded-full text-xs ${themeClass('bg-purple-50 text-purple-700', 'bg-purple-900/30 text-purple-300')}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${theme('bg-purple-50 text-purple-700', 'bg-purple-900/30 text-purple-300')}`}>
                           {r.franchises.length} franchise{r.franchises.length > 1 ? 's' : ''}
                         </span>
                       )}
                     </div>
-                    <div className={`text-sm flex items-center gap-4 mt-1 ${themeClass('text-gray-600', 'text-gray-400')}`}>
+                    <div className={`text-sm flex items-center gap-4 mt-1 ${theme('text-gray-600', 'text-gray-400')}`}>
                       <span>👤 {r.owner}</span>
                       <span>🍽️ {r.outlet_type}</span>
                       <span>📍 {r.address?.split(',')[0] || 'No address'}</span>
@@ -293,13 +271,13 @@ export default function RestaurantManagement() {
                 
                 <div className="flex items-center gap-2">
                   <button 
-                    onClick={() => updateState({ selected: r, modal: 'view' })} 
-                    className={`p-2 rounded-lg transition-colors ${themeClass('bg-gray-100 hover:bg-gray-200 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
+                    onClick={() => update({ selected: r, modal: 'view' })} 
+                    className={`p-2 rounded-lg transition-colors ${theme('bg-gray-100 hover:bg-gray-200 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button 
-                    onClick={() => updateState({ editData: { ...r }, modal: 'edit' })} 
+                    onClick={() => update({ editData: { ...r }, modal: 'edit' })} 
                     className="p-2 text-white rounded-lg transition-colors hover:opacity-80"
                     style={{ backgroundColor: '#c79e73' }}
                   >
@@ -314,18 +292,18 @@ export default function RestaurantManagement() {
 
       {/* View Modal */}
       {state.modal === 'view' && state.selected && (
-        <Modal title={state.selected.name} onClose={() => updateState({ modal: '' })}>
+        <Modal title={state.selected.name} onClose={() => update({ modal: '' })}>
           <div className="space-y-4">
             <img src={state.selected.restaurantImg} alt={state.selected.name} className="w-full h-48 object-cover rounded-lg" />
             
-            <div className={`grid grid-cols-2 gap-4 text-sm ${themeClass('text-gray-700', 'text-gray-300')}`}>
+            <div className={`grid grid-cols-2 gap-4 text-sm ${theme('text-gray-700', 'text-gray-300')}`}>
               <div className="space-y-2">
                 <div>👤 {state.selected.owner}</div>
                 <div>📧 {state.selected.email}</div>
                 <div>📞 {state.selected.phone}</div>
                 <div>🏢 {state.selected.legal_entity_name}</div>
-                <div>🧾FSSAI No. : {state.selected.fssai_no}</div>
-                <div className={themeClass('text-gray-700', 'text-gray-300')}>🏙️ {state.selected.city}</div>
+                <div>🧾 FSSAI: {state.selected.fssai_no}</div>
+                <div>🏙️ {state.selected.city}</div>
               </div>
               <div className="space-y-2">
                 <div>🍽️ {state.selected.outlet_type}</div>
@@ -333,35 +311,35 @@ export default function RestaurantManagement() {
                 <div>📅 {state.selected.joinedDate}</div>
                 <div className={`px-2 py-1 rounded text-xs inline-block ${
                   state.selected.status === 'active' 
-                  ? themeClass('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
-                  : themeClass('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
+                  ? theme('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
+                  : theme('bg-gray-100 text-gray-600', 'bg-gray-700 text-gray-400')
                 }`}>
                   Status: {state.selected.status}
                 </div>
-                <div>🧾GST No. : {state.selected.gst_no}</div>
-            <div className={themeClass('text-gray-700', 'text-gray-300')}>📍 {state.selected.address}</div>
+                <div>🧾 GST: {state.selected.gst_no}</div>
+                <div>📍 {state.selected.address}</div>
               </div>
             </div>
             
             {state.selected.franchises?.length > 0 && (
               <div>
-                <h3 className={`font-semibold mb-2 ${themeClass('text-gray-900', 'text-white')}`}>
+                <h3 className={`font-semibold mb-2 ${theme('text-gray-900', 'text-white')}`}>
                   Franchises ({state.selected.franchises.length})
                 </h3>
                 <div className="space-y-2">
                   {state.selected.franchises.map((f) => (
-                    <div key={f.id} className={`rounded-lg p-3 text-sm ${themeClass('bg-gray-50', 'bg-gray-700')}`}>
+                    <div key={f.id} className={`rounded-lg p-3 text-sm ${theme('bg-gray-50', 'bg-gray-700')}`}>
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>{f.name}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.email}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name}</div>
-                          <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.mobile_number}</div>
+                          <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{f.name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}>{f.email}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}>{f.mobile_number}</div>
                         </div>
                         <span className={`px-2 py-1 rounded text-xs ${
                           f.status === 'active' 
-                            ? themeClass('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
-                            : themeClass('bg-gray-200 text-gray-600', 'bg-gray-600 text-gray-400')
+                            ? theme('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
+                            : theme('bg-gray-200 text-gray-600', 'bg-gray-600 text-gray-400')
                         }`}>
                           {f.status}
                         </span>
@@ -377,7 +355,7 @@ export default function RestaurantManagement() {
 
       {/* Edit Modal */}
       {state.modal === 'edit' && state.editData && (
-        <Modal title={`Edit ${state.editData.name}`} onClose={() => updateState({ modal: '' })}>
+        <Modal title={`Edit ${state.editData.name}`} onClose={() => update({ modal: '' })}>
           <div className="space-y-4">
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
@@ -385,30 +363,40 @@ export default function RestaurantManagement() {
                 ['name', 'Restaurant Name'],
                 ['owner', 'Owner'],
                 ['email', 'Email'],
-                ['mobile_number', 'Phone'],
+                ['phone', 'Phone'],
                 ['address', 'Address', 'col-span-2'],
                 ['city', 'City'],
-                ['outlet_type', 'Outlet Type'],
-                ['leagal_entity_name', 'Leagal Entity Name'],
-                ['status', 'Status', '', 'select']
+                ['outlet_type', 'Outlet Type', '', 'outlet_select'],
+                ['legal_entity_name', 'Legal Entity Name'],
+                ['status', 'Status', '', 'status_select']
               ].map(([field, label, className = '', type = 'input']) => (
                 <div key={field} className={className}>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>
+                  <label className={`block text-sm font-medium mb-1 ${theme('text-gray-700', 'text-gray-300')}`}>
                     {label}
                   </label>
-                  {type === 'select' ? (
+                  {type === 'status_select' ? (
                     <select 
                       value={state.editData[field] || 'active'} 
-                      onChange={(e) => updateState({ editData: { ...state.editData, [field]: e.target.value } })}
+                      onChange={(e) => update({ editData: { ...state.editData, [field]: e.target.value } })}
                       className={inputClass}
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
+                  ) : type === 'outlet_select' ? (
+                    <select 
+                      value={state.editData[field] || 'Restaurant'} 
+                      onChange={(e) => update({ editData: { ...state.editData, [field]: e.target.value } })}
+                      className={inputClass}
+                    >
+                      {OUTLET_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   ) : (
                     <input 
                       value={state.editData[field] || ''} 
-                      onChange={(e) => updateState({ editData: { ...state.editData, [field]: e.target.value } })}
+                      onChange={(e) => update({ editData: { ...state.editData, [field]: e.target.value } })}
                       className={inputClass}
                     />
                   )}
@@ -418,18 +406,18 @@ export default function RestaurantManagement() {
 
             {/* Franchises */}
             <div>
-              <h3 className={`font-semibold mb-3 ${themeClass('text-gray-900', 'text-white')}`}>Franchises</h3>
+              <h3 className={`font-semibold mb-3 ${theme('text-gray-900', 'text-white')}`}>Franchises</h3>
               
               {/* Add New Franchise */}
-              <div className={`rounded-lg p-3 mb-3 ${themeClass('bg-gray-50', 'bg-gray-700')}`}>
+              <div className={`rounded-lg p-3 mb-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  {['name', 'email', 'owner name', 'phone'].map(field => (
+                  {Object.entries(state.newFranchise).map(([field, value]) => (
                     <input 
                       key={field}
-                      placeholder={`Franchise ${field}`}
-                      value={state.newFranchise[field]} 
-                      onChange={(e) => updateState({ newFranchise: { ...state.newFranchise, [field]: e.target.value } })}
-                      className={`p-2 border rounded text-sm ${themeClass('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-600 text-white placeholder-gray-400')}`}
+                      placeholder={`Franchise ${field.replace('_', ' ')}`}
+                      value={value} 
+                      onChange={(e) => update({ newFranchise: { ...state.newFranchise, [field]: e.target.value } })}
+                      className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-600 text-white placeholder-gray-400')}`}
                     />
                   ))}
                 </div>
@@ -445,12 +433,12 @@ export default function RestaurantManagement() {
               {/* Existing Franchises */}
               <div className="space-y-2">
                 {state.editData.franchises?.map((f) => (
-                  <div key={f.id} className={`rounded-lg p-3 ${themeClass('bg-gray-50', 'bg-gray-700')}`}>
+                  <div key={f.id} className={`rounded-lg p-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
                     <div className="flex justify-between items-start">
                       <div className="text-sm space-y-1">
-                        <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>{f.name}</div>
-                        <div className={themeClass('text-gray-600', 'text-gray-300')}>{f.email}</div>
-                        <div className={themeClass('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name} • {f.mobile_number}</div>
+                        <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{f.name}</div>
+                        <div className={theme('text-gray-600', 'text-gray-300')}>{f.email}</div>
+                        <div className={theme('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name} • {f.mobile_number}</div>
                       </div>
                       <button 
                         onClick={() => removeFranchise(f.id)}
@@ -465,7 +453,7 @@ export default function RestaurantManagement() {
             </div>
 
             {/* Actions */}
-            <div className={`flex gap-2 pt-4 border-t ${themeClass('border-gray-200', 'border-gray-700')}`}>
+            <div className={`flex gap-2 pt-4 border-t ${theme('border-gray-200', 'border-gray-700')}`}>
               <button 
                 onClick={handleSave}
                 disabled={state.saving}
@@ -476,9 +464,9 @@ export default function RestaurantManagement() {
                 {state.saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button 
-                onClick={() => updateState({ modal: '' })}
+                onClick={() => update({ modal: '' })}
                 disabled={state.saving}
-                className={`px-4 py-2 text-sm disabled:opacity-50 rounded-lg transition-colors ${themeClass('bg-gray-200 hover:bg-gray-300 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
+                className={`px-4 py-2 text-sm disabled:opacity-50 rounded-lg transition-colors ${theme('bg-gray-200 hover:bg-gray-300 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
               >
                 Cancel
               </button>

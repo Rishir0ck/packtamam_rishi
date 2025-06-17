@@ -208,7 +208,7 @@ export default function InventoryManagement() {
             <tbody className="divide-y divide-gray-200">
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
-                    <td className={`px-4 py-3 text-sm  ${theme.text}`}>{item.images?.length > 0 ? (item.images.map((img, idx) => (<img key={idx} src={img.image_url} alt={`Image ${idx + 1}`} className="w-16 h-16 object-cover mr-2 inline-block" />
+                    <td className={`px-4 py-3 text-sm  ${theme.text}`}>{item.images?.length > 0 ? (item.images.map((img, idx) => (<img key={idx} src={img.image_url} alt={`Image ${idx + 1}`} className="w-18 h-12 object-cover mr-2 inline-block" />
                           ))
                         ) : (
                           '-'
@@ -312,7 +312,7 @@ export default function InventoryManagement() {
               <tr key={item.id} className={theme.tableRow}>
                 <td className={`px-4 py-3 text-sm ${theme.text}`}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-10 h-10 rounded object-cover" />
+                    <img src={item.image_url} alt={item.name} className="w-10 h-15 rounded object-cover" />
                   ) : '-'}
                 </td>
                 <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
@@ -369,7 +369,7 @@ export default function InventoryManagement() {
                    {/* <p className={`mt-1 ${theme.text}`}>{value}</p> */}
                    <p className={`mt-1 ${theme.text}`}>
                     {label === 'Image' && value ? (
-                      <img src={value} alt="Selected" className="w-16 h-16 object-cover rounded" />
+                      <img src={value} alt="Selected" className="w-28 h-24 object-cover rounded" />
                     ) : (
                       value || '-'
                     )}
@@ -404,7 +404,7 @@ export default function InventoryManagement() {
                       <div className="mt-2 grid grid-cols-4 gap-2">
                         {editData.images.map((img) => (
                           <div key={img.id} className="relative group">
-                            <img src={img.image_url} alt="" className="w-full h-16 object-cover rounded" />
+                            <img src={img.image_url} alt="" className="w-28 h-16 object-cover rounded" />
                             <button onClick={() => setEditData(p => ({ 
                               ...p, images: p.images.filter(i => i.id !== img.id) 
                             }))}
@@ -576,13 +576,6 @@ export default function InventoryManagement() {
           </button>
         </div>
       )}
-
-      <div className="mb-4">
-        <p className={`${theme.muted}`}>
-          Showing {filteredData.length} {activeTab.replace('Slabs', ' slabs')} 
-          {activeTab === 'products' && filter !== 'all' && ` (${filter})`}
-        </p>
-      </div>
 
       {!filteredData.length ? (
         <div className="text-center py-16">
