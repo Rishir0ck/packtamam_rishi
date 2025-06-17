@@ -154,15 +154,28 @@ export default function InventoryManagement() {
   ]
 
   const productFields = [
-    { key: 'name', label: 'Name', required: true },
+    { key: 'name', label: 'Product Name', required: true },
     { key: 'category_id', label: 'Category', type: 'select', options: data.categories.map(c => ({ value: c.id, label: c.name })), required: true },
     { key: 'material_id', label: 'Material', type: 'select', options: data.materials.map(m => ({ value: m.id, label: m.name })), required: true },
     { key: 'hsn_code', label: 'HSN Code' },
     { key: 'shape', label: 'Shape' },
     { key: 'colour', label: 'Colour' },
-    { key: 'specs', label: 'Specifications' },
+    { key: 'specs', label: 'Specifications', span: 2 },
     { key: 'quality', label: 'Quality', type: 'select', options: [{ value: 'Standard', label: 'Standard' }, { value: 'Premium', label: 'Premium' }] },
-    { key: 'is_active', label: 'Active', type: 'checkbox' }
+    { key: 'inventory_code', label: 'Inventory Code' },
+    { key: 'cost_price', label: 'Cost Price (₹)', type: 'number' },
+    { key: 'markup', label: 'Markup (%)', type: 'number' },
+    { key: 'sell_price', label: 'Sell Price (₹)', type: 'number' },
+    { key: 'gross_profit', label: 'Gross Profit (₹)', type: 'number' },
+    { key: 'gst', label: 'GST (%)', type: 'number' },
+    { key: 'price_with_gst', label: 'Price with GST (₹)', type: 'number' },
+    { key: 'gst_amount', label: 'GST Amount (₹)', type: 'number' },
+    { key: 'gst_payable', label: 'GST Payable (₹)', type: 'number' },
+    { key: 'net_profit', label: 'Net Profit (₹)', type: 'number' },
+    { key: 'in_stock', label: 'In Stock', type: 'number' },
+    { key: 'pack_off', label: 'Pack Off', type: 'number' },
+    // { key: 'document', label: 'Document', type: 'file' },
+    { key: 'is_active', label: 'Active Status', type: 'checkbox', span: 2 }
   ]
 
   const priceSlabFields = [
@@ -185,7 +198,7 @@ export default function InventoryManagement() {
           <table className="w-full">
             <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
-                {['Product', 'Category', 'Material', 'HSN', 'Quality', 'Status', 'Actions'].map(header => (
+                {['Image','Product', 'Category', 'Material', 'HSN', 'Quality', 'Status', 'Actions'].map(header => (
                   <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     {header}
                   </th>
@@ -195,6 +208,11 @@ export default function InventoryManagement() {
             <tbody className="divide-y divide-gray-200">
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
+                    <td className={`px-4 py-3 text-sm  ${theme.text}`}>{item.images?.length > 0 ? (item.images.map((img, idx) => (<img key={idx} src={img.image_url} alt={`Image ${idx + 1}`} className="w-16 h-16 object-cover mr-2 inline-block" />
+                          ))
+                        ) : (
+                          '-'
+                        )}</td>
                   <td className={`px-4 py-3 ${theme.text}`}>
                     <div className="font-medium">{item.name}</div>
                     {(item.shape || item.colour) && (
@@ -203,7 +221,7 @@ export default function InventoryManagement() {
                       </div>
                     )}
                   </td>
-                  <td className={`px-4 py-3 text-sm ${theme.text}`}>{getName(item.category_id, 'categories')}</td>
+                      <td className={`px-4 py-3 text-sm ${theme.text}`}>{getName(item.category_id, 'categories')}</td>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>{getName(item.material_id, 'materials')}</td>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.hsn_code || '-'}</td>
                   <td className="px-4 py-3">
@@ -330,6 +348,7 @@ export default function InventoryManagement() {
             <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 {[
+                  ['Image', selected.images?.[0]?.image_url,'image_url'], 
                   ['Name', selected.name], 
                   ['Category', getName(selected.category_id, 'categories')], 
                   ['Material', getName(selected.material_id, 'materials')], 
@@ -341,7 +360,14 @@ export default function InventoryManagement() {
                 ].map(([label, value], i) => (
                   <div key={i}>
                     <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
-                    <p className={`mt-1 ${theme.text}`}>{value}</p>
+                   {/* <p className={`mt-1 ${theme.text}`}>{value}</p> */}
+                   <p className={`mt-1 ${theme.text}`}>
+                    {label === 'Image' && value ? (
+                      <img src={value} alt="Selected" className="w-16 h-16 object-cover rounded" />
+                    ) : (
+                      value || '-'
+                    )}
+                  </p>
                   </div>
                 ))}
                 {selected.specs && (
@@ -372,7 +398,7 @@ export default function InventoryManagement() {
                       <div className="mt-2 grid grid-cols-4 gap-2">
                         {editData.images.map((img) => (
                           <div key={img.id} className="relative group">
-                            <img src={img.url} alt="" className="w-full h-16 object-cover rounded" />
+                            <img src={img.image_url} alt="" className="w-full h-16 object-cover rounded" />
                             <button onClick={() => setEditData(p => ({ 
                               ...p, images: p.images.filter(i => i.id !== img.id) 
                             }))}
@@ -495,7 +521,7 @@ export default function InventoryManagement() {
               setEditData({ 
                 name: '', category_id: '', material_id: '', hsn_code: '', 
                 shape: '', colour: '', specs: '', quality: 'Standard', 
-                is_active: true, images: [] 
+                is_active: true, document: [] 
               }); 
               setModal('editProduct') 
             }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
