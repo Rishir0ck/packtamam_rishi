@@ -116,6 +116,11 @@ class AdminService {
     return await this.firebaseLogout();
   }
 
+  // Dashboard
+  async getDashboard() {
+    return this.makeAuthenticatedRequest('GET', `/api/admin/dashboard`);
+  }
+
   // Business Management API
   async getPendingBusinessList(page = 1, perPage = 10) {
     return this.makeAuthenticatedRequest('GET', `/api/admin/pending-business-list?page=${page}&per_page=${perPage}`);
