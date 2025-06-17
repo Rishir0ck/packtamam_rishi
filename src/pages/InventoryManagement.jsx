@@ -232,7 +232,12 @@ export default function InventoryManagement() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className={`w-2 h-2 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    {/* <div className={`w-2 h-2 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span>{item.is_active ? 'Active' : 'Inactive'}</span> */}
+                    <div className="flex items-center space-x-3">
+                      <span className={`inline-block w-3.5 h-3.5 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-red-500'} shadow-md`}aria-label={item.is_active ? 'Active status' : 'Inactive status'}></span>
+                      <span className={`text-sm font-semibold ${item.is_active ? 'text-green-600' : 'text-red-600'}`}>{item.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
@@ -241,7 +246,8 @@ export default function InventoryManagement() {
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editProduct') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
                       <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
-                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title="Toggle Status" />
+                        // color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title="Toggle Status" />
+                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'In Active' : 'Active'}  />
                       <ActionButton onClick={() => deleteItem(item.id, 'product')} 
                         color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
