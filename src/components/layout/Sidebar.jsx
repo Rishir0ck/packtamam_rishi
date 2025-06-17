@@ -18,7 +18,7 @@ const menuItems = [
     ]
   },
   { path: '/inventory-management', icon: Package, label: 'Inventory Management' },
-  { path: '/addtocart', icon: ShoppingCart, label: 'Add To Cart' },
+  { path: '/order-list', icon: ShoppingCart, label: 'Order List' },
   { path: '/profile', icon: User, label: 'Profile' },
 ]
 

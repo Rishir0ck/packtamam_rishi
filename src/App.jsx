@@ -40,7 +40,7 @@ function AppContent() {
         <Route path="restaurant-management" element={<RestaurantManagement />} />
         <Route path="outlet-type" element={<OutletManagement />} />
         <Route path="inventory-management" element={<InventoryManagement />} />
-        <Route path="addToCart" element={<AddToCart />} />
+        <Route path="order-list" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       {/* Catch all route - redirect to dashboard if authenticated, login if not */}
