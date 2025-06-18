@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Eye, Edit, Search, Package, Plus, Save, X, Layers, TrendingUp, Upload, Trash2, AlertCircle, Power } from 'lucide-react'
+import { Eye, Edit, Search, Package, Plus, Save, X, Layers, TrendingUp, Upload, Trash2, AlertCircle, Power, TrendingDown } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import adminService from '../Firebase/services/adminApiService'
 
@@ -190,6 +190,7 @@ export default function InventoryManagement() {
   const stats = useMemo(() => [
     { label: 'Total', value: data.products.length, icon: Package, color: '#c79e73', filter: 'all' },
     { label: 'Active', value: data.products.filter(p => p?.is_active).length, icon: TrendingUp, color: '#10b981', filter: 'active' },
+    { label: 'Inactive', value: data.products.filter(p => !p?.is_active).length, icon: TrendingDown, color: '#ef4444', filter: 'inactive' },
     { label: 'Premium', value: data.products.filter(p => p?.quality === 'Premium').length, icon: Layers, color: '#8b5cf6', filter: 'premium' }
   ], [data])
 
@@ -281,7 +282,7 @@ export default function InventoryManagement() {
                 <tr key={item.id} className={theme.tableRow}>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>
                     {item.images?.length > 0 ? (
-                      <img src={item.images[0].image_url} alt="Product" className="w-12 h-12 object-cover rounded" />
+                      <img src={item.images[0].image_url} alt="Product" className="w-28 h-12 object-cover rounded" />
                     ) : '-'}
                   </td>
                   <td className={`px-4 py-3 ${theme.text}`}>
@@ -616,7 +617,7 @@ export default function InventoryManagement() {
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-4 mb-6">
             {stats.map((stat, i) => {
               const Icon = stat.icon
               return (
