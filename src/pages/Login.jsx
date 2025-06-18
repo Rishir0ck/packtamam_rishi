@@ -116,7 +116,7 @@ export default function Login() {
               </div>
             </div>
             <h2 className="text-2xl font-bold mb-2" style={{ color: '#4a3728' }}>Welcome Back</h2>
-            <p className="text-gray-600">Sign in to Pack Tamam Dashboard</p>
+            <p className="text-gray-600">Sign in</p>
           </div>
 
           {/* Form */}
@@ -207,7 +207,7 @@ export default function Login() {
                   Signing In...
                 </div>
               ) : (
-                'Sign In to Dashboard'
+                'Sign In'
               )}
             </button>
           </form>

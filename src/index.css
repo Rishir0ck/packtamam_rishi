@@ -18,3 +18,9 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide Edge's default reveal and clear icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
