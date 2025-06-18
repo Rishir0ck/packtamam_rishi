@@ -31,7 +31,13 @@ export default function RestaurantOnboarding() {
       ])
       
       if (pending.success && approved.success && rejected.success && queryList.success) {
-        const allData = [...(pending.data.data || []), ...(approved.data.data || []), ...(rejected.data.data || []), ...(queryList.data.data || [])]
+        const allData = [
+          ...(pending.data.data || []).map(item => ({ ...item, status: 'pending' })),
+          ...(approved.data.data || []).map(item => ({ ...item, status: 'approved' })),
+          ...(rejected.data.data || []).map(item => ({ ...item, status: 'rejected' })),
+          ...(queryList.data.data || []).map(item => ({ ...item, status: 'query' }))
+        ]
+        
         const transformedData = allData.map(item => ({
           id: item.id,
           name: item.business_name || item.name || 'N/A',
@@ -44,7 +50,7 @@ export default function RestaurantOnboarding() {
           entity_name: item.legal_entity_name || 'N/A',
           franchise_code: item.franchise_code || 'N/A',
           appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-          status: item.status?.toLowerCase() || 'pending',
+          status: item.status,
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
           profileImg: item.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
           documents: item.documents || {},
@@ -68,13 +74,14 @@ export default function RestaurantOnboarding() {
       setModal('query')
       return
     }
+    
     setLoading(true)
+    setError('')
     try {
-      // Capitalize the action for API call
       const capitalizedAction = action.charAt(0).toUpperCase() + action.slice(1)
       const result = await AdminService.updateBusinessStatus(id, capitalizedAction)
       if (result.success) {
-        setAllRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: action } : r))
+        await loadRestaurants() // Reload to get fresh data
       } else throw new Error(result.error || 'Failed to update status')
     } catch (err) {
       setError(err.message || 'Failed to update restaurant status')
@@ -85,13 +92,13 @@ export default function RestaurantOnboarding() {
 
   const sendQuery = async () => {
     if (!query.trim() || !queryTarget) return
+    
     setLoading(true)
+    setError('')
     try {
       const result = await AdminService.updateBusinessStatus(queryTarget.id, 'Query', query.trim())
       if (result.success) {
-        setAllRestaurants(prev => prev.map(r => r.id === queryTarget.id ? { 
-          ...r, status: 'query', queryHistory: [...(r.queryHistory || []), { date: new Date().toISOString().split('T')[0], message: query.trim() }]
-        } : r))
+        await loadRestaurants() // Reload to get fresh data
         setModal('')
         setQuery('')
         setQueryTarget(null)
@@ -143,9 +150,7 @@ export default function RestaurantOnboarding() {
             <FileText className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
           </div>
           <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{name}</h4>
-          <button className={`w-full p-1 text-xs rounded ${isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`}>
-            N/A
-          </button>
+          <button className={`w-full p-1 text-xs rounded ${isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`}>N/A</button>
         </div>
       )
     }
@@ -157,9 +162,7 @@ export default function RestaurantOnboarding() {
     return (
       <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-3`}>
         <div className={`aspect-[4/3] ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded mb-2 flex items-center justify-center overflow-hidden`}>
-          {isImage ? (
-            <img src={doc.path} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-          ) : null}
+          {isImage ? <img src={doc.path} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} /> : null}
           <div className="text-center" style={{ display: !isImage ? 'flex' : 'none' }}>
             <FileText className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
           </div>
@@ -179,14 +182,12 @@ export default function RestaurantOnboarding() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
-      {/* Header */}
       <div className="mb-6">
         <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Restaurant Onboarding</h1>
         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Review and manage restaurant applications</p>
         {error && <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-red-900/30 text-red-300' : 'bg-red-50 text-red-700'} border text-sm`}>{error}</div>}
       </div>
 
-      {/* Search */}
       <div className="mb-6">
         <div className="relative">
           <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
@@ -194,7 +195,6 @@ export default function RestaurantOnboarding() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         {stats.map((stat, i) => {
           const IconComponent = stat.icon
@@ -214,7 +214,6 @@ export default function RestaurantOnboarding() {
         })}
       </div>
 
-      {/* Loading */}
       {loading && (
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-8 text-center`}>
           <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
@@ -222,7 +221,6 @@ export default function RestaurantOnboarding() {
         </div>
       )}
 
-      {/* Restaurant List */}
       {!loading && (
         <div className="space-y-3">
           {filtered.length === 0 ? (
@@ -239,6 +237,11 @@ export default function RestaurantOnboarding() {
                     <div>
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{r.owner} • {r.cuisine}</p>
+                      {r.status === 'query' && r.queryHistory?.length > 0 && (
+                        <p className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'} mt-1`}>
+                          Last Query: {r.queryHistory[r.queryHistory.length - 1]?.message?.substring(0, 50)}...
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -287,7 +290,6 @@ export default function RestaurantOnboarding() {
             </div>
             
             <div className="p-4 space-y-4">
-              {/* Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-2">
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact</h3>
@@ -306,7 +308,6 @@ export default function RestaurantOnboarding() {
                 </div>
               </div>
 
-              {/* Documents */}
               <div>
                 <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Documents</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -316,7 +317,6 @@ export default function RestaurantOnboarding() {
                 </div>
               </div>
 
-              {/* Query History */}
               {selected.queryHistory?.length > 0 && (
                 <div>
                   <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Query History</h3>
@@ -334,7 +334,6 @@ export default function RestaurantOnboarding() {
                 </div>
               )}
 
-              {/* Actions */}
               {(selected.status === 'pending' || selected.status === 'query') && (
                 <div className={`flex gap-2 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <button onClick={() => { handleAction(selected.id, 'approved'); setModal('') }} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm">Approve</button>
@@ -358,7 +357,9 @@ export default function RestaurantOnboarding() {
             <div className="p-4">
               <textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Write your query here..." className={`w-full h-24 p-3 border ${isDark ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg resize-none focus:outline-none text-sm`} />
               <div className="flex gap-2 mt-3">
-                <button onClick={sendQuery} disabled={!query.trim()} className={`flex-1 px-4 py-2 text-sm ${!query.trim() ? (isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-300 text-gray-500') : 'text-white'} rounded-lg`} style={{ backgroundColor: !query.trim() ? undefined : '#c79e73' }}>Send Query</button>
+                <button onClick={sendQuery} disabled={!query.trim() || loading} className={`flex-1 px-4 py-2 text-sm ${!query.trim() || loading ? (isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-300 text-gray-500') : 'text-white'} rounded-lg`} style={{ backgroundColor: !query.trim() || loading ? undefined : '#c79e73' }}>
+                  {loading ? 'Sending...' : 'Send Query'}
+                </button>
                 <button onClick={() => { setModal(''); setQuery(''); setQueryTarget(null) }} className={`px-4 py-2 text-sm ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} rounded-lg`}>Cancel</button>
               </div>
             </div>
