@@ -33,6 +33,7 @@ class AdminService {
     });
   }
 
+  // Authentication Methods
   async firebaseLogin(email, password) {
     try {
       if (!email || !password) throw new Error('Email and password are required');
@@ -116,12 +117,12 @@ class AdminService {
     return await this.firebaseLogout();
   }
 
-  // Dashboard
+  // Core API Methods
   async getDashboard() {
     return this.makeAuthenticatedRequest('GET', `/api/admin/dashboard`);
   }
 
-  // Business Management API
+  // Business Management
   async getPendingBusinessList(page = 1, perPage = 10) {
     return this.makeAuthenticatedRequest('GET', `/api/admin/pending-business-list?page=${page}&per_page=${perPage}`);
   }
@@ -144,7 +145,7 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business-status', payload);
   }
 
-  // Outlet Management API
+  // Outlet Management
   async getOutlets() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/outlets');
   }
@@ -157,7 +158,7 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-outlet', { id, is_active: isActive });
   }
 
-  // Sub Admin Management API
+  // Sub Admin Management
   async addSubAdmin(email, name) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name });
   }
@@ -170,7 +171,7 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/list-sub-admin');
   }
 
-  // Pricing Management API
+  // Pricing Management
   async listPriceSlabs() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/list-price-slabs');
   }
@@ -187,22 +188,13 @@ class AdminService {
     });
   }
 
-  // Product Management API
+  // Product Management
   async getProducts(categoryId = null, name = '') {
     const params = [];
     if (categoryId) params.push(`category_id=${categoryId}`);
     if (name) params.push(`name=${encodeURIComponent(name)}`);
     const query = params.length > 0 ? `?${params.join('&')}` : '';
     return this.makeAuthenticatedRequest('GET', `/api/admin/products${query}`);
-  }
-
-  async getCategories(categoryId = null) {
-    const query = categoryId ? `?category_id=${categoryId}` : '';
-    return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
-  }
-
-  async getMaterials() {
-    return this.makeAuthenticatedRequest('GET', '/api/admin/materials');
   }
 
   async addProduct(productData) {
@@ -217,15 +209,43 @@ class AdminService {
   }
 
   async updateProductStatus(productId, status) {
-  return this.makeAuthenticatedRequest('POST', '/api/admin/update-products-status', {
-    id: productId,is_active: status
-  });
+    return this.makeAuthenticatedRequest('POST', '/api/admin/update-products-status', {
+      id: productId, is_active: status
+    });
   }
 
+  // Category Management
+  async getCategories(categoryId = null) {
+    const query = categoryId ? `?category_id=${categoryId}` : '';
+    return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
+  }
+
+  async addCategory(categoryData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', categoryData);
+  }
+
+  async updateCategory(categoryId, categoryData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {
+      id: categoryId,
+      ...categoryData
+    });
+  }
+
+  // Material Management
+  async getMaterials() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/materials');
+  }
+
+  async addMaterial(materialData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/materials/add', materialData);
+  }
+
+  // User Data
   async getUserData() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/get-data');
   }
 
+  // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();
     const fields = ['name', 'category_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'quality'];
@@ -255,30 +275,9 @@ class AdminService {
       }
 
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        if (response.status === 404) throw new Error(`API endpoint not found: ${endpoint}`);
-        if (response.status >= 500) throw new Error(`Server error (${response.status})`);
-        throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}`);
-      }
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.clearAllAuth();
-          throw new Error('Session expired. Please login again.');
-        }
-        throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
-      }
-
-      return { success: true, data: responseData };
+      return this.handleResponse(response, endpoint);
     } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return { success: false, error: `Cannot connect to server at ${this.baseURL}` };
-      }
-      return { success: false, error: error.message };
+      return this.handleError(error);
     }
   }
 
@@ -293,30 +292,38 @@ class AdminService {
         body: formData
       });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        if (response.status === 404) throw new Error(`API endpoint not found: ${endpoint}`);
-        if (response.status >= 500) throw new Error(`Server error (${response.status})`);
-        throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}`);
-      }
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.clearAllAuth();
-          throw new Error('Session expired. Please login again.');
-        }
-        throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
-      }
-
-      return { success: true, data: responseData };
+      return this.handleResponse(response, endpoint);
     } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return { success: false, error: `Cannot connect to server at ${this.baseURL}` };
-      }
-      return { success: false, error: error.message };
+      return this.handleError(error);
     }
+  }
+
+  async handleResponse(response, endpoint) {
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      if (response.status === 404) throw new Error(`API endpoint not found: ${endpoint}`);
+      if (response.status >= 500) throw new Error(`Server error (${response.status})`);
+      throw new Error(`Expected JSON response but got ${contentType || 'unknown type'}`);
+    }
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.clearAllAuth();
+        throw new Error('Session expired. Please login again.');
+      }
+      throw new Error(responseData.message || responseData.error || `Request failed with status ${response.status}`);
+    }
+
+    return { success: true, data: responseData };
+  }
+
+  handleError(error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return { success: false, error: `Cannot connect to server at ${this.baseURL}` };
+    }
+    return { success: false, error: error.message };
   }
 
   async getCurrentIdToken() {
