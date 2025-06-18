@@ -270,30 +270,6 @@ export default function Dashboard() {
             <p className={`${isDark ? 'text-gray-300' : 'text-stone-600'} text-base lg:text-lg opacity-80`}>
               Welcome back! Here's your food inventory overview.
             </p>
-            {lastUpdated && (
-              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                Last updated: {lastUpdated.toLocaleTimeString()}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => fetchDashboardData(true)}
-              disabled={refreshing}
-              className={`px-3 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base flex items-center gap-2 ${
-                refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
-              }`}
-              style={{ backgroundColor: isDark ? '#6b7280' : '#9ca3af', color: 'white' }}
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
-            <button 
-              className="px-4 sm:px-6 py-2 text-white rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base"
-              style={{ backgroundColor: isDark ? '#43311e' : '#c79e73' }}
-            >
-              Export Report
-            </button>
           </div>
         </div>
 

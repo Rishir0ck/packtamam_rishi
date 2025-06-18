@@ -17,7 +17,10 @@ const menuItems = [
       { path: '/outlet-type', label: 'Outlet' }
     ]
   },
-  { path: '/inventory-management', icon: Package, label: 'Inventory' },
+  { path: '/inventory-management', icon: Package, label: 'Inventory',hasSubmenu: true,
+    submenu: [
+      { path: '/advertisement', label: 'Banner' }
+    ] },
   { path: '/order-list', icon: ShoppingCart, label: 'Order List' },
   { path: '/profile', icon: User, label: 'Profile' },
 ]
