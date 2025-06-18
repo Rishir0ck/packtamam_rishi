@@ -141,7 +141,7 @@ export default function RestaurantManagement() {
   }
 
   const Modal = ({ title, children, onClose }) => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
       <div className={`rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto ${theme('bg-white', 'bg-gray-800')}`}>
         <div className={`p-4 border-b flex items-center justify-between ${theme('border-gray-200', 'border-gray-700')}`}>
           <h2 className={`text-lg font-bold ${theme('text-gray-900', 'text-white')}`}>{title}</h2>
