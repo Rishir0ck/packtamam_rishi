@@ -597,13 +597,6 @@ export default function InventoryManagement() {
                 onChange={(e) => setSearch(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg ${theme.input}`} />
             </div>
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} 
-              className={`px-4 py-3 border rounded-lg ${theme.input}`}>
-              <option value="all">All Products</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="premium">Premium</option>
-            </select>
             <button onClick={() => { 
               setEditData({ 
                 name: '', category_id: '', material_id: '', hsn_code: '', 

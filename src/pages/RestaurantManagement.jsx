@@ -163,13 +163,6 @@ export default function RestaurantManagement() {
             <h1 className={`text-2xl font-bold ${theme('text-gray-900', 'text-white')} mb-1`}>Restaurant Management</h1>
             <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>Manage approved restaurants and their franchises</p>
           </div>
-          <button 
-            onClick={fetchRestaurants}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${theme('bg-white hover:bg-gray-50 text-gray-700 border border-gray-200', 'bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700')}`}
-          >
-            <RefreshCw className={`w-4 h-4 ${state.loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
         </div>
         
         {state.error && (
@@ -190,18 +183,6 @@ export default function RestaurantManagement() {
             onChange={(e) => update({ search: e.target.value })}
             className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
           />
-        </div>
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <select 
-            value={state.filter} 
-            onChange={(e) => update({ filter: e.target.value })} 
-            className={`pl-9 pr-8 py-2.5 border rounded-lg focus:outline-none appearance-none transition-colors min-w-[180px] ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-800 text-white')}`}
-          >
-            {[['all', 'All Restaurants'], ['active', 'Active Only'], ['inactive', 'Inactive Only'], ['with-franchises', 'With Franchises']].map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
         </div>
       </div>
 

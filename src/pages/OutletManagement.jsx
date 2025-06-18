@@ -135,23 +135,6 @@ export default function OutletManagement() {
             <h1 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')} mb-1`}>Outlet Management</h1>
             <p className={`text-sm ${themeClass('text-gray-600', 'text-gray-400')}`}>Manage outlet types and their status</p>
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => updateState({ modal: 'add' })}
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors hover:opacity-80"
-              style={{ backgroundColor: '#c79e73' }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Outlet
-            </button>
-            <button 
-              onClick={fetchOutlets}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${themeClass('bg-white hover:bg-gray-50 text-gray-700 border border-gray-200', 'bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700')}`}
-            >
-              <RefreshCw className={`w-4 h-4 ${state.loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
         </div>
         
         {state.error && (
@@ -173,18 +156,16 @@ export default function OutletManagement() {
             className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${themeClass('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
           />
         </div>
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <select
-            value={state.statusFilter}
-            onChange={(e) => updateState({ statusFilter: e.target.value })}
-            className={`pl-9 pr-8 py-2.5 border rounded-lg focus:outline-none appearance-none transition-colors min-w-[140px] ${themeClass('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-800 text-white')}`}
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
-        </div>
+        <div className="flex gap-2">
+            <button 
+              onClick={() => updateState({ modal: 'add' })}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors hover:opacity-80"
+              style={{ backgroundColor: '#c79e73' }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Outlet
+            </button>
+          </div>
       </div>
 
       {/* Stats Cards */}
@@ -202,12 +183,11 @@ export default function OutletManagement() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-xs font-medium ${themeClass('text-gray-600', 'text-gray-400')} mb-1`}>{stat.label}</p>
-                  <p className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>{stat.value}</p>
-                  <p className={`text-xs ${themeClass('text-gray-500', 'text-gray-500')} mt-1`}>Click to filter</p>
+                  <p className={`text-xs ${themeClass('text-gray-600', 'text-gray-400')}`}>{stat.label}</p>
+                  <p className={`text-xl ${themeClass('text-gray-900', 'text-white')}`}>{stat.value}</p>
                 </div>
                 <div 
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${stat.isActive ? 'scale-110 shadow-lg' : 'hover:scale-110'}`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${stat.isActive ? 'scale-110 shadow-lg' : 'hover:scale-110'}`}
                   style={{ backgroundColor: stat.color }}
                 >
                   <IconComponent className="w-5 h-5 text-white" />

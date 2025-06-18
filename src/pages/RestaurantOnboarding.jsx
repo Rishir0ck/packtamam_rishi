@@ -277,10 +277,6 @@ export default function RestaurantOnboarding() {
             <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>Restaurant Onboarding</h1>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Review and manage restaurant applications</p>
           </div>
-          <button onClick={loadRestaurants} disabled={loading} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-200' : 'bg-white hover:bg-gray-50 text-gray-700'} border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
         </div>
         {error && <div className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-red-900/30 border-red-600 text-red-300' : 'bg-red-50 border-red-200 text-red-700'} border text-sm`}>{error}</div>}
       </div>
@@ -290,16 +286,6 @@ export default function RestaurantOnboarding() {
         <div className="relative flex-1">
           <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
           <input type="text" placeholder="Search restaurants..." value={search} onChange={(e) => setSearch(e.target.value)} className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500'} rounded-lg focus:outline-none transition-colors`} />
-        </div>
-        <div className="relative">
-          <Filter className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className={`pl-9 pr-8 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none appearance-none transition-colors min-w-[140px]`}>
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="query">Query Sent</option>
-          </select>
         </div>
       </div>
 
