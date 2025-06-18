@@ -48,7 +48,7 @@ export default function RestaurantOnboarding() {
           status: item.status?.toLowerCase() || 'pending',
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
           profileImg: item.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-          restaurantImg: item.business_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
+          // restaurantImg: item.business_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
           documents: item.documents || {},
           queryHistory: item.query_history || []
         }))
@@ -397,9 +397,9 @@ export default function RestaurantOnboarding() {
             
             <div className="p-4 space-y-4">
               {/* Restaurant Image */}
-              <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg overflow-hidden h-40`}>
+              {/* <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg overflow-hidden h-40`}>
                 <img src={selected.restaurantImg} alt={selected.name} className="w-full h-full object-cover" />
-              </div>
+              </div> */}
 
               {/* Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
