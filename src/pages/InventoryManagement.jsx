@@ -164,28 +164,75 @@ export default function InventoryManagement() {
     })
   }, [apiCall])
 
+  // const saveItem = useCallback(() => {
+  //   if (!editData) return
+    
+  //   const isProduct = modal === 'editProduct'
+  //   const isEdit = data[isProduct ? 'products' : 'priceSlabs'].some(item => item.id === editData.id)
+    
+  //   // Apply pricing calculations for products
+  //   const finalData = isProduct ? updatePricing(editData) : editData
+    
+  //   const operation = isProduct 
+  //     ? (isEdit 
+  //         ? () => adminService.updateProduct(finalData.id, finalData)
+  //         : () => adminService.addProduct(finalData))
+  //     : (isEdit 
+  //         ? () => adminService.updatePriceSlab(finalData.id, finalData.min_qty, finalData.max_qty, finalData.price_per_unit)
+  //         : () => adminService.addPriceSlab(finalData.min_qty, finalData.max_qty, finalData.price_per_unit))
+    
+  //   apiCall(operation, () => { 
+  //     setModal('')
+  //     setEditData(null) 
+  //   })
+  // }, [data, editData, modal, apiCall, updatePricing])
+
   const saveItem = useCallback(() => {
-    if (!editData) return
-    
-    const isProduct = modal === 'editProduct'
-    const isEdit = data[isProduct ? 'products' : 'priceSlabs'].some(item => item.id === editData.id)
-    
-    // Apply pricing calculations for products
-    const finalData = isProduct ? updatePricing(editData) : editData
-    
-    const operation = isProduct 
-      ? (isEdit 
-          ? () => adminService.updateProduct(finalData.id, finalData)
-          : () => adminService.addProduct(finalData))
-      : (isEdit 
-          ? () => adminService.updatePriceSlab(finalData.id, finalData.min_qty, finalData.max_qty, finalData.price_per_unit)
-          : () => adminService.addPriceSlab(finalData.min_qty, finalData.max_qty, finalData.price_per_unit))
-    
-    apiCall(operation, () => { 
-      setModal('')
-      setEditData(null) 
-    })
-  }, [data, editData, modal, apiCall, updatePricing])
+  if (!editData) return;
+
+  const operations = {
+    editProduct: () => {
+      const finalData = updatePricing(editData);
+      return editData.id
+        ? adminService.updateProduct(finalData.id, finalData)
+        : adminService.addProduct(finalData);
+    },
+    editCategory: () =>
+      editData.id
+        ? adminService.updateCategory(editData.id, editData)
+        : adminService.addCategory(editData.name),
+    editMaterial: () =>
+      editData.id
+        ? adminService.updateMaterial?.(editData.id, editData)
+        : adminService.addMaterial(editData),
+    editSlab: () =>
+      editData.id
+        ? adminService.updatePriceSlab(
+            editData.id,
+            editData.min_qty,
+            editData.max_qty,
+            editData.price_per_unit
+          )
+        : adminService.addPriceSlab(
+            editData.min_qty,
+            editData.max_qty,
+            editData.price_per_unit
+          )
+  };
+
+  const operation = operations[modal];
+
+  if (!operation) {
+    console.error(`Unknown operation for modal: ${modal}`);
+    return;
+  }
+
+  apiCall(operation, () => {
+    setModal('');
+    setEditData(null);
+  });
+}, [editData, modal, apiCall, updatePricing]);
+
 
   const stats = useMemo(() => [
     { label: 'Total', value: data.products.length, icon: Package, color: '#c79e73', filter: 'all' },
@@ -229,7 +276,14 @@ export default function InventoryManagement() {
     { key: 'min_qty', label: 'Min Qty', type: 'number', required: true },
     { key: 'max_qty', label: 'Max Qty', type: 'number', required: true },
     { key: 'price_per_unit', label: 'Price/Unit', type: 'number', required: true }
+    
   ]
+
+  const category = [{ key: 'name', label: 'Category Name', required: true },
+      { key: 'is_active', label: 'Active Status', type: 'checkbox' }]
+
+  const material = [{ key: 'name', label: 'Material Name', required: true },
+      { key: 'is_active', label: 'Active Status', type: 'checkbox' }]
 
   const ActionButton = ({ onClick, color, icon: Icon, title }) => (
     <button onClick={onClick} className="p-2 rounded text-white hover:opacity-80 transition-opacity" 
@@ -369,40 +423,77 @@ export default function InventoryManagement() {
       )
     }
 
-    return (
-      <div className={`border rounded-lg overflow-hidden ${theme.card}`}>
-        <table className="w-full">
-          <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-            <tr>
-              {['Image','Name', 'Status'].map(header => (
-                <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredData.map((item) => (
-              <tr key={item.id} className={theme.tableRow}>
-                <td className={`px-4 py-3 text-sm ${theme.text}`}>
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-10 h-10 rounded object-cover" />
-                  ) : '-'}
-                </td>
-                <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {item.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
+    if (activeTab === 'categories') {
+      return (
+        <div className={`border rounded-lg overflow-hidden ${theme.card}`}>
+          <table className="w-full">
+            <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <tr>
+                {['Image', 'Name', 'Status', 'Actions'].map(header => (
+                  <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+                    {header}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredData.map((item) => (
+                <tr key={item.id} className={theme.tableRow}>
+                  <td className={`px-4 py-3 text-sm ${theme.text}`}>
+                    {item.image_url?.length > 0 ? (
+                      <img src={item.image_url} alt={item.name} className="w-10 h-18 object-cover rounded" />
+                    ) : '-'}
+                  </td>
+                  <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
+                  <td className="px-4 py-3"><span className={`px-2 py-1 text-xs rounded ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <ActionButton onClick={() => { setEditData({...item}); setModal('editCategory') }} 
+                        color="#c79e73" icon={Edit} title="Edit" />
+                      <ActionButton onClick={() => deleteItem(item.id, 'categories')} 
+                        color="#ef4444" icon={Trash2} title="Delete" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
+    if (activeTab === 'materials') {
+      return (
+        <div className={`border rounded-lg overflow-hidden ${theme.card}`}>
+          <table className="w-full">
+            <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <tr>
+                {['Name', 'Actions'].map(header => (
+                  <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredData.map((item) => (
+                <tr key={item.id} className={theme.tableRow}>
+                  <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <ActionButton onClick={() => { setEditData({...item}); setModal('materials') }} 
+                        color="#c79e73" icon={Edit} title="Edit" />
+                      <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
+                        color="#ef4444" icon={Trash2} title="Delete" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
   }
 
   const renderModal = () => {
@@ -417,7 +508,9 @@ export default function InventoryManagement() {
             <h2 className={`text-xl font-bold ${theme.text}`}>
               {modal === 'view' ? selected?.name : 
                modal === 'editProduct' ? (editData?.id ? 'Edit Product' : 'Add Product') : 
-               editData?.id ? 'Edit Price Slab' : 'Add Price Slab'}
+               modal === 'editCategory' ? (editData?.id ? 'Edit Category' : 'Add Category') :
+               modal === 'editMaterial' ? (editData?.id ? 'Edit Material' : 'Add Material') :
+               editData?.id ? 'Edit Price Slab' : 'Add Price Slab' }
             </h2>
             <button onClick={() => setModal('')} className={`p-2 rounded ${theme.btn}`}>
               <X className="w-5 h-5" />
@@ -463,10 +556,10 @@ export default function InventoryManagement() {
             </div>
           )}
 
-          {(modal === 'editProduct' || modal === 'editSlab') && editData && (
+          {(modal === 'editProduct' || modal === 'editCategory' || modal === 'editSlab') && editData && (
             <>
               <div className="p-4 max-h-96 overflow-y-auto">
-                {modal === 'editProduct' && (
+                {(modal === 'editProduct' || modal === 'editCategory') && (
                   <div className="mb-4">
                     <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Images</label>
                     <div className={`border-2 border-dashed rounded p-4 text-center ${theme.border}`}>
@@ -477,25 +570,52 @@ export default function InventoryManagement() {
                         <p className={`text-xs ${theme.muted}`}>Upload Images</p>
                       </label>
                     </div>
-                    {editData?.images?.length > 0 && (
+                    {/* For products (multiple images) */}
+                    {modal === 'editProduct' && editData?.images?.length > 0 && (
                       <div className="mt-2 grid grid-cols-6 gap-2">
                         {editData.images.map((img) => (
                           <div key={img.id} className="relative group">
-                            <img src={img.image_url || img.url} alt="" className="w-28 h-20 object-cover rounded" />
-                            <button onClick={() => setEditData(p => ({ 
-                              ...p, images: p.images.filter(i => i.id !== img.id) 
-                            }))}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100">
+                            <img
+                              src={img.image_url || img.url}
+                              alt=""
+                              className="w-28 h-20 object-cover rounded"
+                            />
+                            <button
+                              onClick={() =>
+                                setEditData((p) => ({
+                                  ...p,
+                                  images: p.images.filter((i) => i.id !== img.id),
+                                }))
+                              }
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                            >
                               <X className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
+
+                    {/* For category (single image_url) */}
+                    {modal === 'editCategory' && editData?.image_url && (
+                      <div className="mt-2 relative w-28 h-20">
+                        <img
+                          src={editData.image_url}
+                          alt=""
+                          className="w-18 h-20 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => setEditData((p) => ({ ...p, image_url: null }))}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-100"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className={`grid gap-3 ${modal === 'editProduct' ? 'grid-cols-3' : ''}`}>
-                  {(modal === 'editProduct' ? productFields : priceSlabFields).map(field => (
+                  {(modal === 'editProduct' ? productFields : modal === 'editCategory' ? category : priceSlabFields ).map(field => (
                     <div key={field.key} className={field.span === 2 ? 'col-span-2' : ''}>
                       <label className={`block text-sm mb-1 ${theme.muted}`}>
                         {field.label} {field.required && <span className="text-red-500">*</span>}
@@ -527,6 +647,7 @@ export default function InventoryManagement() {
                       )}
                     </div>
                   ))}
+
                 </div>
               </div>
               <div className={`p-4 border-t flex gap-3 ${theme.border}`}>
@@ -642,11 +763,27 @@ export default function InventoryManagement() {
             <p className={`${theme.muted}`}>Manage quantity-based pricing tiers</p>
           </div>
           <button onClick={() => { 
-            setEditData({ min_qty: 1, max_qty: 10, price_per_unit: 0 }); 
+            setEditData({ min_qty: 50, max_qty: 1000, price_per_unit: 0 }); 
             setModal('editSlab') 
           }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
             style={{ backgroundColor: '#c79e73' }}>
             <Plus className="w-5 h-5" />Add Price Slab
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className={`text-2xl font-semibold ${theme.text}`}>Categories</h2>
+            <p className={`${theme.muted}`}>Manage Categories</p>
+          </div>
+          <button onClick={() => { 
+            setEditData({ name: '', is_active: true }); 
+            setModal('editCategory') 
+          }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
+            style={{ backgroundColor: '#c79e73' }}>
+            <Plus className="w-5 h-5" />Add Category
           </button>
         </div>
       )}
