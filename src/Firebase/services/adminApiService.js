@@ -220,8 +220,8 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
   }
 
-  async addCategory(categoryData) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', categoryData);
+  async addCategory(name,categories,status) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', {name,categories,is_active: status});
   }
 
   async updateCategory(categoryId, categoryData) {
@@ -236,8 +236,8 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/materials');
   }
 
-  async addMaterial(materialData) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/materials/add', materialData);
+  async addMaterial(name) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/materials/add', {name});
   }
 
   // User Data

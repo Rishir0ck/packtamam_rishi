@@ -204,7 +204,7 @@ export default function InventoryManagement() {
     editMaterial: () =>
       editData.id
         ? adminService.updateMaterial?.(editData.id, editData)
-        : adminService.addMaterial(editData),
+        : adminService.addMaterial(editData.name),
     editSlab: () =>
       editData.id
         ? adminService.updatePriceSlab(
@@ -267,23 +267,16 @@ export default function InventoryManagement() {
     { key: 'inventory.gst_amount', label: 'GST Amount (₹)', type: 'number', readonly: true },
     { key: 'inventory.gst_payable', label: 'GST Payable (₹)', type: 'number', readonly: true },
     { key: 'inventory.net_profit', label: 'Net Profit (₹)', type: 'number', readonly: true },
-    { key: 'inventory.in_stock', label: 'In Stock', type: 'number', onChange: true },
     { key: 'inventory.pack_off', label: 'Pack Off', type: 'number' },
+    { key: 'inventory.in_stock', label: 'In Stock', type: 'radio' },
     { key: 'is_active', label: 'Active Status', type: 'checkbox', span: 2 }
   ]
 
-  const priceSlabFields = [
-    { key: 'min_qty', label: 'Min Qty', type: 'number', required: true },
-    { key: 'max_qty', label: 'Max Qty', type: 'number', required: true },
-    { key: 'price_per_unit', label: 'Price/Unit', type: 'number', required: true }
-    
-  ]
+  const priceSlabFields = [{ key: 'min_qty', label: 'Min Qty', type: 'number', required: true },{ key: 'max_qty', label: 'Max Qty', type: 'number', required: true },{ key: 'price_per_unit', label: 'Price/Unit', type: 'number', required: true }]
 
-  const category = [{ key: 'name', label: 'Category Name', required: true },
-      { key: 'is_active', label: 'Active Status', type: 'checkbox' }]
+  const category = [{ key: 'name', label: 'Category Name', required: true },{ key: 'is_active', label: 'Active Status', type: 'checkbox' }]
 
-  const material = [{ key: 'name', label: 'Material Name', required: true },
-      { key: 'is_active', label: 'Active Status', type: 'checkbox' }]
+  const material = [{ key: 'name', label: 'Material Name', required: true }]
 
   const ActionButton = ({ onClick, color, icon: Icon, title }) => (
     <button onClick={onClick} className="p-2 rounded text-white hover:opacity-80 transition-opacity" 
@@ -374,8 +367,8 @@ export default function InventoryManagement() {
                         color="#6b7280" icon={Eye} title="View" />
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editProduct') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
-                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
+                      {/* <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
+                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} /> */}
                       <ActionButton onClick={() => deleteItem(item.id, 'product')} 
                         color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
@@ -411,8 +404,8 @@ export default function InventoryManagement() {
                     <div className="flex gap-2">
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editSlab') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      <ActionButton onClick={() => deleteItem(item.id, 'priceSlab')} 
-                        color="#ef4444" icon={Trash2} title="Delete" />
+                      {/* <ActionButton onClick={() => deleteItem(item.id, 'priceSlab')} 
+                        color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>
@@ -440,7 +433,7 @@ export default function InventoryManagement() {
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>
-                    {item.image_url?.length > 0 ? (
+                    {item.image_url ? (
                       <img src={item.image_url} alt={item.name} className="w-10 h-18 object-cover rounded" />
                     ) : '-'}
                   </td>
@@ -450,8 +443,8 @@ export default function InventoryManagement() {
                     <div className="flex gap-2">
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editCategory') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      <ActionButton onClick={() => deleteItem(item.id, 'categories')} 
-                        color="#ef4444" icon={Trash2} title="Delete" />
+                      {/* <ActionButton onClick={() => deleteItem(item.id, 'categories')} 
+                        color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>
@@ -468,7 +461,7 @@ export default function InventoryManagement() {
           <table className="w-full">
             <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
-                {['Name', 'Actions'].map(header => (
+                {['Name'].map(header => (
                   <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     {header}
                   </th>
@@ -481,10 +474,10 @@ export default function InventoryManagement() {
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <ActionButton onClick={() => { setEditData({...item}); setModal('materials') }} 
-                        color="#c79e73" icon={Edit} title="Edit" />
-                      <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
-                        color="#ef4444" icon={Trash2} title="Delete" />
+                      {/* <ActionButton onClick={() => { setEditData({...item}); setModal('editMaterial') }} 
+                        color="#c79e73" icon={Edit} title="Edit" /> */}
+                      {/* <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
+                        color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>
@@ -532,7 +525,7 @@ export default function InventoryManagement() {
                   ['Cost Price', `₹${selected.inventory?.cost_price || 0}`],
                   ['Sell Price', `₹${selected.inventory?.sell_price || 0}`],
                   ['Price with GST', `₹${selected.inventory?.price_with_gst || 0}`],
-                  ['Stock', selected.inventory?.in_stock || 0],
+                  ['Stock', selected.inventory?.in_stock ? 'Yes' : 'No'],
                   ['Status', selected.is_active ? 'Active' : 'Inactive']
                 ].map(([label, value, type], i) => (
                   <div key={i}>
@@ -556,7 +549,7 @@ export default function InventoryManagement() {
             </div>
           )}
 
-          {(modal === 'editProduct' || modal === 'editCategory' || modal === 'editSlab') && editData && (
+          {(modal === 'editProduct' || modal === 'editSlab' || modal === 'editCategory' ||  modal === 'editMaterial') && editData && (
             <>
               <div className="p-4 max-h-96 overflow-y-auto">
                 {(modal === 'editProduct' || modal === 'editCategory') && (
@@ -615,7 +608,7 @@ export default function InventoryManagement() {
                   </div>
                 )}
                 <div className={`grid gap-3 ${modal === 'editProduct' ? 'grid-cols-3' : ''}`}>
-                  {(modal === 'editProduct' ? productFields : modal === 'editCategory' ? category : priceSlabFields ).map(field => (
+                  {(modal === 'editProduct' ? productFields : modal === 'editCategory' ? category : modal === 'editMaterial' ? material : priceSlabFields ).map(field => (
                     <div key={field.key} className={field.span === 2 ? 'col-span-2' : ''}>
                       <label className={`block text-sm mb-1 ${theme.muted}`}>
                         {field.label} {field.required && <span className="text-red-500">*</span>}
@@ -635,7 +628,18 @@ export default function InventoryManagement() {
                             onChange={(e) => handleFieldChange(field.key, e.target.checked)} />
                           <span className={`text-sm ${theme.text}`}>Active</span>
                         </label>
-                      ) : (
+                      ) : field.type === 'radio' ? (
+                        <label className="flex items-center gap-2">
+                          <input type="radio" name={field.key} // group radios by name
+                            checked={getFieldValue(editData, field.key) === true} // assuming your value is boolean
+                            onChange={() => handleFieldChange(field.key, true)}/>
+                          <span className={`text-sm ${theme.text}`}>Yes</span>
+                          <input type="radio" name={field.key} // group radios by name
+                            checked={getFieldValue(editData, field.key) === true} // assuming your value is boolean
+                            onChange={() => handleFieldChange(field.key, true)}/>
+                          <span className={`text-sm ${theme.text}`}>No</span>
+                        </label>
+                      ):(
                         <input 
                           type={field.type || 'text'} 
                           value={getFieldValue(editData, field.key)}
@@ -784,6 +788,22 @@ export default function InventoryManagement() {
           }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
             style={{ backgroundColor: '#c79e73' }}>
             <Plus className="w-5 h-5" />Add Category
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'materials' && (
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className={`text-2xl font-semibold ${theme.text}`}>Materials</h2>
+            <p className={`${theme.muted}`}>Manage Materials</p>
+          </div>
+          <button onClick={() => { 
+            setEditData({ name: ''}); 
+            setModal('editMaterial') 
+          }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
+            style={{ backgroundColor: '#c79e73' }}>
+            <Plus className="w-5 h-5" />Add Material
           </button>
         </div>
       )}
