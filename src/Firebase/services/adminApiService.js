@@ -257,6 +257,28 @@ class AdminService {
     return formData;
   }
 
+  // Banner Management APIs
+  async getBanners() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/banners');
+  }
+
+  async addBanner(bannerData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/add', bannerData);
+  }
+
+  async updateBanner(bannerId, bannerData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/update', {
+      id: bannerId,
+      ...bannerData
+    });
+  }
+
+  async deleteBanner(bannerId) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/delete', {
+      id: bannerId
+    });
+  }
+
   async makeAuthenticatedRequest(method, endpoint, data = null) {
     try {
       const token = this.getServerAuth();
