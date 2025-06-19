@@ -385,54 +385,6 @@ export default function RestaurantManagement() {
               ))}
             </div>
 
-            {/* Franchises */}
-            <div>
-              <h3 className={`font-semibold mb-3 ${theme('text-gray-900', 'text-white')}`}>Franchises</h3>
-              
-              {/* Add New Franchise */}
-              <div className={`rounded-lg p-3 mb-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  {Object.entries(state.newFranchise).map(([field, value]) => (
-                    <input 
-                      key={field}
-                      placeholder={`Franchise ${field.replace('_', ' ')}`}
-                      value={value} 
-                      onChange={(e) => update({ newFranchise: { ...state.newFranchise, [field]: e.target.value } })}
-                      className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-600 text-white placeholder-gray-400')}`}
-                    />
-                  ))}
-                </div>
-                <button 
-                  onClick={addFranchise}
-                  className={`w-full flex items-center justify-center gap-1 ${buttonClass} hover:opacity-80`}
-                  style={{ backgroundColor: '#c79e73' }}
-                >
-                  <Plus className="w-4 h-4" /> Add Franchise
-                </button>
-              </div>
-
-              {/* Existing Franchises */}
-              <div className="space-y-2">
-                {state.editData.franchises?.map((f) => (
-                  <div key={f.id} className={`rounded-lg p-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
-                    <div className="flex justify-between items-start">
-                      <div className="text-sm space-y-1">
-                        <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{f.name}</div>
-                        <div className={theme('text-gray-600', 'text-gray-300')}>{f.email}</div>
-                        <div className={theme('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name} • {f.mobile_number}</div>
-                      </div>
-                      <button 
-                        onClick={() => removeFranchise(f.id)}
-                        className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Actions */}
             <div className={`flex gap-2 pt-4 border-t ${theme('border-gray-200', 'border-gray-700')}`}>
               <button 

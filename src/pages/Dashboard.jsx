@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, Clock, Users, Package, BarChart3, Target, Loader2, RefreshCw, AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react'
+import { TrendingUp, Clock, Users, Package, BarChart3, Target, Loader2, AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import useTheme from '../hooks/useTheme'
 import AdminService from '../Firebase/services/adminApiService'
 
-// Default fallback data
-const defaultData = {
+const DEFAULT_DATA = {
   kpiData: [
-    { title: 'Total Revenue', value: '₹0', change: '0%', icon: TrendingUp, color: '#c79e73', isPositive: true },
-    { title: 'Pending Approvals', value: '0', change: '0%', icon: Clock, color: '#43311e', isPositive: false },
-    { title: 'Active Restaurants', value: '0', change: '0%', icon: Users, color: '#c79e73', isPositive: true },
-    { title: 'Inventory Items', value: '0', change: '0%', icon: Package, color: '#43311e', isPositive: true },
+    { title: 'Total Revenue', value: '₹0', icon: TrendingUp, color: '#c79e73', isPositive: true },
+    { title: 'Pending Approvals', value: '0', icon: Clock, color: '#43311e', isPositive: false },
+    { title: 'Active Restaurants', value: '0', icon: Users, color: '#c79e73', isPositive: true },
+    { title: 'Inventory Items', value: '0', icon: Package, color: '#43311e', isPositive: true },
   ],
-  chartData: Array.from({ length: 6 }, (_, i) => ({ name: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i], revenue: 0, orders: 0 })),
+  chartData: Array.from({ length: 6 }, (_, i) => ({ 
+    name: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i], 
+    revenue: 0, 
+    orders: 0 
+  })),
   inventoryData: [{ name: 'No Data', value: 100, color: '#c79e73' }],
   statsCards: [
-    { title: 'Weekly Growth', value: '0%', icon: BarChart3, trend: 'up' },
-    { title: 'Efficiency Rate', value: '0%', icon: Target, trend: 'up' },
-    { title: 'Customer Satisfaction', value: '0/5', icon: Users, trend: 'up' },
+    { title: 'Approval Rate', value: '0%', icon: BarChart3 },
+    { title: 'Active Outlets', value: '0', icon: Target },
+    { title: 'Total Businesses', value: '0', icon: Users },
   ],
   recentActivities: []
 }
@@ -28,84 +31,53 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
-  const [dashboardData, setDashboardData] = useState(defaultData)
+  const [dashboardData, setDashboardData] = useState(DEFAULT_DATA)
 
-  // Fetch and process dashboard data
   const fetchDashboardData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     setError(null)
 
     try {
-      // Check if user is authenticated
       if (!AdminService.isAuthenticated()) {
         throw new Error('Please login to access dashboard data')
       }
 
-      console.log('🔄 Fetching dashboard data...')
-      
-      // Fetch all data concurrently
-      const [
-        dashboardRes,
-        pendingRes,
-        approvedRes,
-        rejectedRes,
-        queryRes,
-        productsRes,
-        outletsRes,
-        userDataRes
-      ] = await Promise.allSettled([
-        AdminService.getDashboard(),
-        AdminService.getPendingBusinessList(1, 100),
-        AdminService.getApprovedBusinessList(1, 100),
-        AdminService.getRejectedBusinessList(1, 100),
-        AdminService.getQueryBusinessList(1, 100),
-        AdminService.getProducts(),
-        AdminService.getOutlets(),
-        AdminService.getUserData()
-      ])
+      const [dashboardRes, pendingRes, approvedRes, rejectedRes, queryRes, productsRes, outletsRes] = 
+        await Promise.allSettled([
+          AdminService.getDashboard(),
+          AdminService.getPendingBusinessList(1, 100),
+          AdminService.getApprovedBusinessList(1, 100),
+          AdminService.getRejectedBusinessList(1, 100),
+          AdminService.getQueryBusinessList(1, 100),
+          AdminService.getProducts(),
+          AdminService.getOutlets()
+        ])
 
-      // Helper function to extract data safely
       const extractData = (response, fallback = []) => 
         response.status === 'fulfilled' && response.value.success 
           ? response.value.data?.data || response.value.data || fallback
           : fallback
 
-      // Extract counts
-      const pending = extractData(pendingRes)
-      const approved = extractData(approvedRes)
-      const rejected = extractData(rejectedRes)
-      const query = extractData(queryRes)
-      const products = extractData(productsRes)
-      const outlets = extractData(outletsRes)
-      const userData = extractData(userDataRes, {})
-
       const counts = {
-        pending: Array.isArray(pending) ? pending.length : 0,
-        approved: Array.isArray(approved) ? approved.length : 0,
-        rejected: Array.isArray(rejected) ? rejected.length : 0,
-        query: Array.isArray(query) ? query.length : 0,
-        products: Array.isArray(products) ? products.length : 0,
-        outlets: Array.isArray(outlets) ? outlets.length : 0,
-        total: 0
+        pending: Array.isArray(extractData(pendingRes)) ? extractData(pendingRes).length : 0,
+        approved: Array.isArray(extractData(approvedRes)) ? extractData(approvedRes).length : 0,
+        rejected: Array.isArray(extractData(rejectedRes)) ? extractData(rejectedRes).length : 0,
+        query: Array.isArray(extractData(queryRes)) ? extractData(queryRes).length : 0,
+        products: Array.isArray(extractData(productsRes)) ? extractData(productsRes).length : 0,
+        outlets: Array.isArray(extractData(outletsRes)) ? extractData(outletsRes).length : 0,
       }
       counts.total = counts.approved + counts.pending + counts.rejected + counts.query
 
-      // Use dashboard API data if available, otherwise calculate
       const dashboardApiData = dashboardRes.status === 'fulfilled' && dashboardRes.value.success 
-        ? dashboardRes.value.data 
-        : null
+        ? dashboardRes.value.data : null
 
       const revenue = dashboardApiData?.totalRevenue || (counts.approved * 15000)
-      const growthRate = dashboardApiData?.growthRate || (counts.pending > 5 ? 8.2 : -5.1)
 
-      // Build KPI data
       const kpiData = [
         {
           title: 'Total Revenue',
           value: `₹${revenue.toLocaleString()}`,
-          change: dashboardApiData?.revenueChange || '+12.5%',
           icon: TrendingUp,
           color: '#c79e73',
           isPositive: true
@@ -113,7 +85,6 @@ export default function Dashboard() {
         {
           title: 'Pending Approvals',
           value: counts.pending.toString(),
-          change: `${growthRate > 0 ? '+' : ''}${growthRate}%`,
           icon: Clock,
           color: '#43311e',
           isPositive: counts.pending <= 5
@@ -121,7 +92,6 @@ export default function Dashboard() {
         {
           title: 'Active Restaurants',
           value: counts.approved.toString(),
-          change: dashboardApiData?.restaurantChange || '+5.8%',
           icon: Users,
           color: '#c79e73',
           isPositive: true
@@ -129,14 +99,12 @@ export default function Dashboard() {
         {
           title: 'Inventory Items',
           value: counts.products.toString(),
-          change: dashboardApiData?.inventoryChange || '+15.3%',
           icon: Package,
           color: '#43311e',
           isPositive: true
         }
       ]
 
-      // Generate chart data (use API data if available)
       const chartData = dashboardApiData?.chartData || 
         ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => ({
           name: month,
@@ -144,93 +112,41 @@ export default function Dashboard() {
           orders: Math.floor(counts.total * (0.8 + i * 0.03))
         }))
 
-      // Generate inventory/business distribution
       const inventoryData = counts.products > 0 ? [
         { name: 'Active Products', value: Math.floor(counts.products * 0.7), color: '#c79e73' },
         { name: 'Pending Products', value: Math.floor(counts.products * 0.2), color: '#43311e' },
         { name: 'Out of Stock', value: Math.floor(counts.products * 0.1), color: '#d4af86' }
-      ] : defaultData.inventoryData
+      ] : DEFAULT_DATA.inventoryData
 
-      // Stats cards
       const statsCards = [
         { 
           title: 'Approval Rate', 
           value: `${counts.total > 0 ? Math.round((counts.approved / counts.total) * 100) : 0}%`, 
-          icon: BarChart3, 
-          trend: 'up' 
+          icon: BarChart3
         },
-        { 
-          title: 'Active Outlets', 
-          value: counts.outlets.toString(), 
-          icon: Target, 
-          trend: 'up' 
-        },
-        { 
-          title: 'Total Businesses', 
-          value: counts.total.toString(), 
-          icon: Users, 
-          trend: 'up' 
-        }
+        { title: 'Active Outlets', value: counts.outlets.toString(), icon: Target },
+        { title: 'Total Businesses', value: counts.total.toString(), icon: Users }
       ]
 
-      // Recent activities
       const recentActivities = [
-        { 
-          id: 1, 
-          action: `${counts.pending} restaurants pending approval`, 
-          time: '2 hours ago', 
-          icon: Users, 
-          color: 'text-amber-600', 
-          bg: 'bg-amber-100 dark:bg-amber-900/20' 
-        },
-        { 
-          id: 2, 
-          action: `${counts.products} products in inventory`, 
-          time: '4 hours ago', 
-          icon: Package, 
-          color: 'text-yellow-700', 
-          bg: 'bg-yellow-100 dark:bg-yellow-900/20' 
-        },
-        { 
-          id: 3, 
-          action: `${counts.approved} restaurants approved`, 
-          time: '6 hours ago', 
-          icon: CheckCircle, 
-          color: 'text-green-600', 
-          bg: 'bg-green-100 dark:bg-green-900/20' 
-        },
-        { 
-          id: 4, 
-          action: `${counts.outlets} outlets active`, 
-          time: '8 hours ago', 
-          icon: ShoppingCart, 
-          color: 'text-blue-600', 
-          bg: 'bg-blue-100 dark:bg-blue-900/20' 
-        }
+        { id: 1, action: `${counts.pending} restaurants pending approval`, time: '2 hours ago', icon: Users, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/20' },
+        { id: 2, action: `${counts.products} products in inventory`, time: '4 hours ago', icon: Package, color: 'text-yellow-700', bg: 'bg-yellow-100 dark:bg-yellow-900/20' },
+        { id: 3, action: `${counts.approved} restaurants approved`, time: '6 hours ago', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/20' },
+        { id: 4, action: `${counts.outlets} outlets active`, time: '8 hours ago', icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/20' }
       ]
 
       setDashboardData({ kpiData, chartData, inventoryData, statsCards, recentActivities })
-      setLastUpdated(new Date())
-      console.log('✅ Dashboard data updated successfully')
-
     } catch (error) {
-      console.error('❌ Error fetching dashboard data:', error)
       setError(error.message || 'Failed to fetch dashboard data')
-      
-      if (!isRefresh) {
-        setDashboardData(defaultData)
-      }
+      if (!isRefresh) setDashboardData(DEFAULT_DATA)
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
   }
 
-  // Effects
   useEffect(() => {
     fetchDashboardData()
-    
-    // Auto-refresh every 5 minutes
     const interval = setInterval(() => fetchDashboardData(true), 5 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
@@ -244,15 +160,12 @@ export default function Dashboard() {
     }
   }, [loading, dashboardData.kpiData])
 
-  // Loading state
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin mx-auto text-amber-600" />
-          <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            Loading dashboard data...
-          </p>
+          <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard data...</p>
         </div>
       </div>
     )
@@ -264,9 +177,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="space-y-2">
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDark ? 'text-stone-500' : 'text-stone-800'}`}>
-              Dashboard
-            </h1>
+            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDark ? 'text-stone-500' : 'text-stone-800'}`}>Dashboard</h1>
             <p className={`${isDark ? 'text-gray-300' : 'text-stone-600'} text-base lg:text-lg opacity-80`}>
               Welcome back! Here's your food inventory overview.
             </p>
@@ -307,17 +218,6 @@ export default function Dashboard() {
                   style={{ backgroundColor: item.color }}
                 >
                   <item.icon className="w-5 h-5 lg:w-7 lg:h-7 text-white" />
-                </div>
-                <div className={`px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-bold shadow-md border transition-all duration-300 hover:scale-105 ${
-                  item.isPositive 
-                    ? isDark 
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : isDark 
-                      ? 'bg-red-500/20 text-red-300 border-red-500/30' 
-                      : 'bg-red-50 text-red-700 border-red-200'
-                }`}>
-                  {item.change}
                 </div>
               </div>
               <h3 className={`text-xl lg:text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2 tracking-tight`}>
@@ -448,7 +348,7 @@ export default function Dashboard() {
             System Overview
           </h3>
           <div className="space-y-3 lg:space-y-4">
-            {dashboardData.recentActivities.map((activity, index) => (
+            {dashboardData.recentActivities.map((activity) => (
               <div 
                 key={activity.id} 
                 className={`flex items-center space-x-3 lg:space-x-4 p-3 lg:p-4 rounded-xl lg:rounded-2xl ${isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80'} 
