@@ -367,8 +367,8 @@ export default function InventoryManagement() {
                         color="#6b7280" icon={Eye} title="View" />
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editProduct') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      {/* <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
-                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} /> */}
+                      <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} 
+                        color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
                       <ActionButton onClick={() => deleteItem(item.id, 'product')} 
                         color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
