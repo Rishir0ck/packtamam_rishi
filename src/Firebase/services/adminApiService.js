@@ -233,8 +233,8 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/materials');
   }
 
-  async addMaterial(name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/materials/add', {name});
+  async addMaterial(mName) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/materials/add', {name: mName});
   }
 
   // User Data
