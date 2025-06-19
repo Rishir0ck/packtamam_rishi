@@ -199,8 +199,8 @@ export default function InventoryManagement() {
     },
     editCategory: () =>
       editData.id
-        ? adminService.updateCategory(editData.id, editData)
-        : adminService.addCategory(editData.name),
+        ? adminService.updateCategory(editData.id, editData.is_active,editData.name)
+        : adminService.addCategory(editData.name,editData.categories),
     editMaterial: () =>
       editData.id
         ? adminService.updateMaterial?.(editData.id, editData)

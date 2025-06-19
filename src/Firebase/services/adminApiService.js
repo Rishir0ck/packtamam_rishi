@@ -220,15 +220,12 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
   }
 
-  async addCategory(name,categories,status) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', {name,categories,is_active: status});
+  async addCategory(name) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', {name});
   }
 
-  async updateCategory(categoryId, categoryData) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {
-      id: categoryId,
-      ...categoryData
-    });
+  async updateCategory(id, is_active,name) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {id,is_active,name});
   }
 
   // Material Management
