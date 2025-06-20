@@ -386,7 +386,7 @@ export default function RestaurantManagement() {
               <FormField field="outlet_type" label="Outlet Type" type="outlet_select" />
               <FormField field="legal_entity_name" label="Legal Entity Name" />
               <FormField field="franchise_code" label="Franchise Code" />
-              <FormField field="status" label="Status" type="status_select" className="col-span-2" />
+              <FormField field="status" label="Status" type="status_select" />
             </div>
 
             {/* Franchises */}
