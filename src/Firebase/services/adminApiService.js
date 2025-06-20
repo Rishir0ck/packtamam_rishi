@@ -145,6 +145,11 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business-status', payload);
   }
 
+  async updateBusiness(id, business_name, owner_name, email, mobile_number, city, address, business_type, outlet_type, legal_entity_name, franchise_code, is_active) {
+    const payload = { id, business_name, owner_name, email, mobile_number, city, address, business_type, outlet_type, legal_entity_name, franchise_code, is_active };
+    return this.makeAuthenticatedRequest('POST', '/api/admin/update-business', payload);
+  }
+
   // Outlet Management
   async getOutlets() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/outlets');

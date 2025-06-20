@@ -12,8 +12,8 @@ export default function RestaurantManagement() {
   const { isDark } = useContext(ThemeContext)
   const [state, setState] = useState({
     restaurants: [], loading: true, error: '', selected: null, search: '', 
-    filter: 'all', modal: '', editData: null, saving: false,
-    newFranchise: { name: '', email: '', owner_name: '', mobile_number: '' }
+    filter: 'all', modal: '', editData: {}, saving: false,
+    newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type:'',  }
   })
 
   const update = (updates) => setState(prev => ({ ...prev, ...updates }))
@@ -32,12 +32,12 @@ export default function RestaurantManagement() {
           legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
           address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
           city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
-          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'Restaurant',
-          joinedDate: r.created_at?.split('T')[0] || r.joinedDate,
+          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'Restaurant', lift: r.is_lift_available  && r.is_lift_access ? 'Yes' : 'No',
+          joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType : r.business_type || 'N/A',
           status: r.status === 'Approved' ? 'active' : 'inactive',
           profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
           restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
-          franchises: r.franchises || []
+          franchises: r.franchise || []
         })) || []
         update({ restaurants })
       } else {
@@ -110,7 +110,7 @@ export default function RestaurantManagement() {
       const franchise = { ...state.newFranchise, id: Date.now(), status: 'active' }
       update({
         editData: { ...state.editData, franchises: [...(state.editData.franchises || []), franchise] },
-        newFranchise: { name: '', email: '', owner_name: '', mobile_number: '' }
+        newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type:'' }
       })
     }
   }
@@ -131,12 +131,10 @@ export default function RestaurantManagement() {
 
   if (state.loading) {
     return (
-      <div className={`min-h-screen ${theme('bg-gray-50', 'bg-gray-900')} flex items-center justify-center`}>
-        <div className="text-center">
-          <Loader2 className={`w-8 h-8 animate-spin mx-auto mb-4 ${theme('text-gray-900', 'text-white')}`} />
-          <p className={`text-lg font-medium ${theme('text-gray-900', 'text-white')}`}>Loading restaurants...</p>
-        </div>
-      </div>
+      <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-8 text-center`}>
+                <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading restaurants...</p>
+              </div>
     )
   }
 
@@ -224,7 +222,7 @@ export default function RestaurantManagement() {
             <div key={r.id} className={`rounded-lg border shadow-sm p-4 transition-colors ${theme('bg-white border-gray-200', 'bg-gray-800 border-gray-700')}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img src={r.profileImg} alt={r.owner} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={r.profileImg} alt={""} className="w-10 h-10 rounded-full object-cover" />
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className={`font-semibold ${theme('text-gray-900', 'text-white')}`}>{r.name}</h3>
@@ -275,21 +273,7 @@ export default function RestaurantManagement() {
       {state.modal === 'view' && state.selected && (
         <Modal title={state.selected.name} onClose={() => update({ modal: '' })}>
           <div className="space-y-4">
-            <img src={state.selected.restaurantImg} alt={state.selected.name} className="w-full h-48 object-cover rounded-lg" />
-            
-            <div className={`grid grid-cols-2 gap-4 text-sm ${theme('text-gray-700', 'text-gray-300')}`}>
-              <div className="space-y-2">
-                <div>👤 {state.selected.owner}</div>
-                <div>📧 {state.selected.email}</div>
-                <div>📞 {state.selected.phone}</div>
-                <div>🏢 {state.selected.legal_entity_name}</div>
-                <div>🧾 FSSAI: {state.selected.fssai_no}</div>
-                <div>🏙️ {state.selected.city}</div>
-              </div>
-              <div className="space-y-2">
-                <div>🍽️ {state.selected.outlet_type}</div>
-                <div>🏷️ {state.selected.franchise_code}</div>
-                <div>📅 {state.selected.joinedDate}</div>
+            <img src={state.selected.profileImg} alt={""} className="w-24 h-24 object-cover rounded-lg" />
                 <div className={`px-2 py-1 rounded text-xs inline-block ${
                   state.selected.status === 'active' 
                   ? theme('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
@@ -297,8 +281,25 @@ export default function RestaurantManagement() {
                 }`}>
                   Status: {state.selected.status}
                 </div>
-                <div>🧾 GST: {state.selected.gst_no}</div>
-                <div>📍 {state.selected.address}</div>
+            <div className={`grid grid-cols-2 gap-4 text-sm ${theme('text-gray-700', 'text-gray-300')}`}>
+              <div className="space-y-2">
+                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Contact</strong></h3>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>👤 Owner Name :</strong> {state.selected.owner}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📧 Email :</strong> {state.selected.email}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📞 Phone No. :</strong> {state.selected.phone}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏢 Leagal Entity Name :</strong> {state.selected.legal_entity_name}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🧾 FSSAI No. :</strong> {state.selected.fssai_no}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏙️ City :</strong> {state.selected.city}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏙️ Lift Available :</strong> {state.selected.lift}</div>
+              </div>
+              <div className="space-y-2">
+                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Details</strong></h3>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🍽️ Business Type :</strong> {state.selected.businessType}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏬 Outlet Type :</strong> {state.selected.outlet_type}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏷️ Franchise Code :</strong> {state.selected.franchise_code}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📅 Applied Date :</strong> {state.selected.joinedDate}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🧾 GST No. :</strong> {state.selected.gst_no}</div>
+                <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📍Address :</strong> {state.selected.address}</div>
               </div>
             </div>
             
@@ -312,10 +313,11 @@ export default function RestaurantManagement() {
                     <div key={f.id} className={`rounded-lg p-3 text-sm ${theme('bg-gray-50', 'bg-gray-700')}`}>
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{f.name}</div>
-                          <div className={theme('text-gray-600', 'text-gray-300')}>{f.email}</div>
-                          <div className={theme('text-gray-600', 'text-gray-300')}>Manager: {f.owner_name}</div>
-                          <div className={theme('text-gray-600', 'text-gray-300')}>{f.mobile_number}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🧑🏼‍💼 Owner :</strong> {f.owner_name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏣 Business Name :</strong> {f.business_name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏬 Outlet Type :</strong> {f.outlet_type}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📧 Email :</strong> {f.email}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📞 Phone No. :</strong> {f.mobile_number}</div>
                         </div>
                         <span className={`px-2 py-1 rounded text-xs ${
                           f.status === 'active' 
@@ -342,13 +344,15 @@ export default function RestaurantManagement() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 ['name', 'Restaurant Name'],
-                ['owner', 'Owner'],
+                ['owner', 'Owner Name'],
                 ['email', 'Email'],
-                ['phone', 'Phone'],
+                ['phone', 'Phone No.'],
                 ['address', 'Address', 'col-span-2'],
                 ['city', 'City'],
+                ['businessType', 'Business Type'],
                 ['outlet_type', 'Outlet Type', '', 'outlet_select'],
                 ['legal_entity_name', 'Legal Entity Name'],
+                ['franchise_code', 'Franchise Code'],
                 ['status', 'Status', '', 'status_select']
               ].map(([field, label, className = '', type = 'input']) => (
                 <div key={field} className={className}>
@@ -377,12 +381,62 @@ export default function RestaurantManagement() {
                   ) : (
                     <input 
                       value={state.editData[field] || ''} 
-                      onChange={(e) => update({ editData: { ...state.editData, [field]: e.target.value } })}
+                      onChange={(e) => update({ editData: { ...state.editData, [field]: e.target.value, }, })}
                       className={inputClass}
                     />
                   )}
                 </div>
               ))}
+            </div>
+
+            {/* Franchises */}
+            <div>
+              <h3 className={`font-semibold mb-3 ${theme('text-gray-900', 'text-white')}`}>Franchises</h3>
+              
+              {/* Add New Franchise */}
+              <div className={`rounded-lg p-3 mb-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {Object.entries(state.newFranchise).map(([field, value]) => (
+                    <input 
+                      key={field}
+                      placeholder={`Franchise ${field.replace('_', ' ')}`}
+                      value={value} 
+                      onChange={(e) => update({ newFranchise: { ...state.newFranchise, [field]: e.target.value } })}
+                      className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-600 text-white placeholder-gray-400')}`}
+                    />
+                  ))}
+                </div>
+                <button 
+                  onClick={addFranchise}
+                  className={`w-full flex items-center justify-center gap-1 ${buttonClass} hover:opacity-80`}
+                  style={{ backgroundColor: '#c79e73' }}
+                >
+                  <Plus className="w-4 h-4" /> Add Franchise
+                </button>
+              </div>
+
+              {/* Existing Franchises */}
+              <div className="space-y-2">
+                {state.editData.franchises?.map((f) => (
+                  <div key={f.id} className={`rounded-lg p-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="text-sm space-y-1">
+                         <div className={theme('text-gray-600', 'text-gray-300')}><strong>🧑🏼‍💼 Owner :</strong> {f.owner_name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏣 Business Name :</strong> {f.business_name}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏬 Outlet Type :</strong> {f.outlet_type}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📧 Email :</strong> {f.email}</div>
+                          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📞 Phone No. :</strong> {f.mobile_number}</div>
+                      </div>
+                      <button 
+                        onClick={() => removeFranchise(f.id)}
+                        className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Actions */}

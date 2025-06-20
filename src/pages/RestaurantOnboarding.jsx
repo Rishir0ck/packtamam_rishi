@@ -348,16 +348,22 @@ export default function RestaurantOnboarding() {
                           <div className="space-y-4">
                             {selected.franchise.map(fr => (
                               <div key={fr.id} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                                <img
-                                  src={fr.profile_picture ? `/${fr.profile_picture}` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"}
-                                  alt={""}
-                                  className="w-20 h-20 object-cover rounded mb-2"
-                                />
-                                <p><strong>🏣 Business Name:</strong> {fr.business_name}</p>
-                                <p><strong>🧑🏼‍💼 Owner:</strong> {fr.owner_name}</p>
-                                <p><strong>📧 Email:</strong> {fr.email}</p>
-                                <p><strong>📞 Phone:</strong> {fr.mobile_number}</p>
-                                <p><strong>🏬 Outlet Type:</strong> {fr.outlet_type}</p>
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={fr.profile_picture ? `/${fr.profile_picture}` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"}
+                                    alt={""}
+                                    className="w-20 h-20 object-cover rounded mb-2"
+                                  />
+                                  <div>
+                                    <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{fr.business_name}</h2>
+                                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>by {fr.owner_name}</p>
+                                  </div>
+                                </div>
+                                <p><strong>🧑🏼‍💼 Owner :</strong> {fr.owner_name}</p>
+                                <p><strong>🏣 Business Name :</strong> {fr.business_name}</p>
+                                <p><strong>🏬 Outlet Type :</strong> {fr.outlet_type}</p>
+                                <p><strong>📧 Email :</strong> {fr.email}</p>
+                                <p><strong>📞 Phone No. :</strong> {fr.mobile_number}</p>
                               </div>
                             ))}
                           </div>
