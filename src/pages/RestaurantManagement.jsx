@@ -8,7 +8,7 @@ const OUTLET_TYPES = ['Restaurant', 'Cafe', 'Fast Food', 'Fine Dining', 'Bakery'
 export default function RestaurantManagement() {
   const { isDark } = useContext(ThemeContext)
   const [state, setState] = useState({
-    restaurants: [], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
+    restaurants: [], outletType:[], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
     newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' }
   })
 
@@ -330,7 +330,6 @@ export default function RestaurantManagement() {
                   ['🏢 Legal Entity:', state.selected.legal_entity_name],
                   ['🧾 FSSAI:', state.selected.fssai_no],
                   ['🏙️ City:', state.selected.city],
-                  ['🏙️ Lift:', state.selected.lift]
                 ].map(([label, value], i) => (
                   <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                     <strong>{label}</strong> {value}
@@ -345,7 +344,8 @@ export default function RestaurantManagement() {
                   ['🏷️ Franchise Code:', state.selected.franchise_code],
                   ['📅 Applied Date:', state.selected.joinedDate],
                   ['🧾 GST:', state.selected.gst_no],
-                  ['📍 Address:', state.selected.address]
+                  ['🚡 Lift:', state.selected.lift]
+                  // ['📍 Address:', state.selected.address]
                 ].map(([label, value], i) => (
                   <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                     <strong>{label}</strong> {value}

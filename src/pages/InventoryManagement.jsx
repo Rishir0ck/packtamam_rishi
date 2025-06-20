@@ -472,14 +472,14 @@ export default function InventoryManagement() {
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
-                  <td className="px-4 py-3">
+                  {/* <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      {/* <ActionButton onClick={() => { setEditData({...item}); setModal('editMaterial') }} 
-                        color="#c79e73" icon={Edit} title="Edit" /> */}
-                      {/* <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
-                        color="#ef4444" icon={Trash2} title="Delete" /> */}
+                      <ActionButton onClick={() => { setEditData({...item}); setModal('editMaterial') }} 
+                        color="#c79e73" icon={Edit} title="Edit" />
+                      <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
+                        color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>
