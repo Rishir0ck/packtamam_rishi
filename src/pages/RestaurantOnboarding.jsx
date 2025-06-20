@@ -237,7 +237,7 @@ export default function RestaurantOnboarding() {
               <div key={r.id} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border p-4`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={r.profileImg} alt={r.owner} className="w-10 h-10 rounded-full object-cover" />
+                    <img src={r.profileImg} alt={""} className="w-10 h-10 rounded-full object-cover" />
                     <div>
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{r.owner} • {r.cuisine}</p>
