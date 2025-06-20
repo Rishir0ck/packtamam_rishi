@@ -15,6 +15,7 @@ export default function RestaurantOnboarding() {
   const [modal, setModal] = useState('')
   const [query, setQuery] = useState('')
   const [queryTarget, setQueryTarget] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => { loadRestaurants() }, [])
   useEffect(() => { filterRestaurants() }, [filter, allRestaurants])
@@ -295,7 +296,7 @@ export default function RestaurantOnboarding() {
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-2">
-                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact</h3>
+                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Contact</strong></h3>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📧 Email :</strong> {selected.email}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📞 Phone No. :</strong> {selected.phone}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📍 Address :</strong> {selected.address}</div>
@@ -303,7 +304,7 @@ export default function RestaurantOnboarding() {
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📇 GST No. :</strong> {selected.gstNo}</div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Details</h3>
+                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Details</strong></h3>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🍽️ Business Type :</strong> {selected.cuisine}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏬 Outlet Type :</strong> {selected.outlet}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏢 Leagal Entity Name :</strong> {selected.entity_name}</div>
@@ -311,9 +312,9 @@ export default function RestaurantOnboarding() {
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🛗 Lift Available :</strong> {selected.liftInfo}</div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📅 Applied Date :</strong> {selected.appliedDate}</div>
                 </div>
-                {selected.queryHistory && (
+                {selected.queryHistory && selected.queryHistory.length > 0 && (
                 <div>
-                <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Query History</h3>
+                <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Query History</strong></h3>
                 <div className={`${isDark ? 'bg-yellow-900/30 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-3 text-sm`}>
                     <div className="flex justify-between items-start mb-1">
                     <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{selected.queryHistory}</p>
@@ -322,7 +323,50 @@ export default function RestaurantOnboarding() {
                 </div>
                 )}
 
-                {selected.franchise && selected.franchise.length > 0 && (
+                 <>
+                    {selected.franchise && selected.franchise.length > 0 && (
+                      <div>
+                        <h3
+                          onClick={() => setIsModalOpen(true)}
+                          className={`font-semibold mb-3 cursor-pointer underline ${isDark ? 'text-white' : 'text-gray-900'}`}
+                        // className={`font-semibold mb-3 cursor-pointer inline-block p-3 rounded shadow-sm border ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+                        >
+                          <strong>Franchise Info</strong>
+                        </h3>
+                      </div>
+                    )}
+                    {isModalOpen && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 backdrop-blur-sm">
+                        <div className={`bg-white p-6 rounded-lg max-w-md w-full ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-900'}`}>
+                          <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="text-right w-full mb-4 text-xl font-bold"
+                            aria-label="Close modal"
+                          >
+                            &times;
+                          </button>
+                          <div className="space-y-4">
+                            {selected.franchise.map(fr => (
+                              <div key={fr.id} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                                <img
+                                  src={fr.profile_picture ? `/${fr.profile_picture}` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"}
+                                  alt={""}
+                                  className="w-20 h-20 object-cover rounded mb-2"
+                                />
+                                <p><strong>🏣 Business Name:</strong> {fr.business_name}</p>
+                                <p><strong>🧑🏼‍💼 Owner:</strong> {fr.owner_name}</p>
+                                <p><strong>📧 Email:</strong> {fr.email}</p>
+                                <p><strong>📞 Phone:</strong> {fr.mobile_number}</p>
+                                <p><strong>🏬 Outlet Type:</strong> {fr.outlet_type}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+
+                {/* {selected.franchise && selected.franchise.length > 0 && (
                 <div>
                   <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Franchise Info</h3>
                     <div className="space-y-4">
@@ -342,11 +386,11 @@ export default function RestaurantOnboarding() {
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
 
               <div>
-                <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Documents</h3>
+                <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Documents</strong></h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {Object.entries(selected.documents).map(([key, docs]) => (
                     <DocCard key={key} docArray={docs} name={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} />
