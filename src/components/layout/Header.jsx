@@ -159,7 +159,7 @@ export default function Header() {
               </div>
               
               <div className="py-2">
-                <button 
+                {/* <button 
                   disabled={isLoggingOut}
                   className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
                     isDark 
@@ -169,9 +169,9 @@ export default function Header() {
                 >
                   <User className="w-4 h-4" />
                   <span>Profile</span>
-                </button>
+                </button> */}
                 
-                <hr className={`my-2 ${isDark ? 'border-gray-700' : 'border-[#c79e73]/20'}`} />
+                {/* <hr className={`my-2 ${isDark ? 'border-gray-700' : 'border-[#c79e73]/20'}`} /> */}
                 
                 <button 
                   onClick={handleLogout}
