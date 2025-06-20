@@ -49,12 +49,15 @@ export default function RestaurantOnboarding() {
           outlet: item.outlet_type || 'N/A',
           entity_name: item.legal_entity_name || 'N/A',
           franchise_code: item.franchise_code || 'N/A',
+          fssaiNo: item.fssai_no || 'N/A',
+          gstNo: item.gst_no || 'N/A',
           appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           status: item.status,
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
           profileImg: item.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
           documents: item.documents || {},
-          queryHistory: item.query_history || []
+          franchise: item.franchise || {},
+          queryHistory: item.query_message || []
         }))
         setAllRestaurants(transformedData)
       } else throw new Error('Failed to load restaurant data')
@@ -238,8 +241,8 @@ export default function RestaurantOnboarding() {
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{r.owner} • {r.cuisine}</p>
                       {r.status === 'query' && r.queryHistory?.length > 0 && (
-                        <p className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'} mt-1`}>
-                          Last Query: {r.queryHistory[r.queryHistory.length - 1]?.message?.substring(0, 50)}...
+                        <p className={`text-xs ${isDark ? 'text-yellow-400' : 'text-yellow-600'} mt-1`}>
+                          Last Query: {r.queryHistory}
                         </p>
                       )}
                     </div>
@@ -278,7 +281,7 @@ export default function RestaurantOnboarding() {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
               <div className="flex items-center gap-3">
-                <img src={selected.profileImg} alt={selected.owner} className="w-12 h-12 rounded-full object-cover" />
+                <img src={selected.profileImg} alt={""} className="w-12 h-12 rounded-full object-cover" />
                 <div>
                   <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selected.name}</h2>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>by {selected.owner}</p>
@@ -293,19 +296,53 @@ export default function RestaurantOnboarding() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-2">
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact</h3>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>📧 {selected.email}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>📞 {selected.phone}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>📍 {selected.address}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📧 Email :</strong> {selected.email}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📞 Phone No. :</strong> {selected.phone}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📍 Address :</strong> {selected.address}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📇 FSSAI No. :</strong> {selected.fssaiNo}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📇 GST No. :</strong> {selected.gstNo}</div>
                 </div>
                 <div className="space-y-2">
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Details</h3>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🍽️ {selected.cuisine}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏬 {selected.outlet}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏢 {selected.entity_name}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🏷️ {selected.franchise_code}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>🛗 {selected.liftInfo}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}>📅 {selected.appliedDate}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🍽️ Business Type :</strong> {selected.cuisine}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏬 Outlet Type :</strong> {selected.outlet}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏢 Leagal Entity Name :</strong> {selected.entity_name}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏷️ Franchise Code :</strong> {selected.franchise_code}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🛗 Lift Available :</strong> {selected.liftInfo}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📅 Applied Date :</strong> {selected.appliedDate}</div>
                 </div>
+                {selected.queryHistory && (
+                <div>
+                <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Query History</h3>
+                <div className={`${isDark ? 'bg-yellow-900/30 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-3 text-sm`}>
+                    <div className="flex justify-between items-start mb-1">
+                    <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{selected.queryHistory}</p>
+                    </div>
+                  </div>
+                </div>
+                )}
+
+                {selected.franchise && selected.franchise.length > 0 && (
+                <div>
+                  <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Franchise Info</h3>
+                    <div className="space-y-4">
+                      {selected.franchise.map(fr => (
+                        <div key={fr.id} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                          <img
+                            src={fr.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"}
+                            alt={""}
+                            className="w-12 h-12 object-cover rounded mb-2"
+                          />
+                          <p><strong>🏣 Business Name:</strong> {fr.business_name}</p>
+                          <p><strong>🧑🏼‍💼 Owner:</strong> {fr.owner_name}</p>
+                          <p><strong>📧 Email:</strong> {fr.email}</p>
+                          <p><strong>📞 Phone:</strong> {fr.mobile_number}</p>
+                          <p><strong>🏬 Outlet Type:</strong> {fr.outlet_type}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -316,23 +353,6 @@ export default function RestaurantOnboarding() {
                   ))}
                 </div>
               </div>
-
-              {selected.queryHistory?.length > 0 && (
-                <div>
-                  <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Query History</h3>
-                  <div className="space-y-2">
-                    {selected.queryHistory.map((q, i) => (
-                      <div key={i} className={`${isDark ? 'bg-yellow-900/30 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-3 text-sm`}>
-                        <div className="flex justify-between items-start mb-1">
-                          <span className={`font-medium ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>Query #{i + 1}</span>
-                          <span className={`text-xs ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>{q.date}</span>
-                        </div>
-                        <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{q.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {(selected.status === 'pending' || selected.status === 'query') && (
                 <div className={`flex gap-2 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
