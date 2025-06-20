@@ -88,7 +88,7 @@ export default function RestaurantManagement() {
 
   const addFranchise = () => {
     if (state.newFranchise.business_name && state.newFranchise.email) {
-      const franchise = { ...state.newFranchise, id: Date.now().toString(), profile_picture: '' }
+      const franchise = { ...state.newFranchise, profile_picture: '' }
       setState(prev => ({
         ...prev,
         editData: { ...prev.editData, franchises: [...(prev.editData.franchises || []), franchise] },
