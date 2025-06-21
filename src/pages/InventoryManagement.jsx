@@ -200,7 +200,7 @@ export default function InventoryManagement() {
     editCategory: () =>
       editData.id
         ? adminService.updateCategory(editData.id, editData.is_active,editData.name)
-        : adminService.addCategory(editData.name,editData.categories),
+        : adminService.addCategory(editData),
     editMaterial: () =>
       editData.id
         ? adminService.updateMaterial?.(editData.id, editData)
@@ -222,16 +222,9 @@ export default function InventoryManagement() {
 
   const operation = operations[modal];
 
-  if (!operation) {
-    console.error(`Unknown operation for modal: ${modal}`);
-    return;
-  }
+  if (!operation) {console.error(`Unknown operation for modal: ${modal}`);return;}
 
-  apiCall(operation, () => {
-    setModal('');
-    setEditData(null);
-  });
-}, [editData, modal, apiCall, updatePricing]);
+  apiCall(operation, () => {setModal('');setEditData(null);});}, [editData, modal, apiCall, updatePricing]);
 
 
   const stats = useMemo(() => [
@@ -255,7 +248,7 @@ export default function InventoryManagement() {
     { key: 'hsn_code', label: 'HSN Code' },
     { key: 'shape', label: 'Shape' },
     { key: 'colour', label: 'Colour' },
-    { key: 'specs', label: 'Specifications', span: 2 },
+    { key: 'specs', label: 'Description', span: 2 },
     { key: 'quality', label: 'Quality', type: 'select', options: [{ value: 'Standard', label: 'Standard' }, { value: 'Premium', label: 'Premium' }] },
     { key: 'inventory.inventory_code', label: 'Inventory Code' },
     { key: 'inventory.cost_price', label: 'Cost Price (₹)', type: 'number', onChange: true },
@@ -541,7 +534,7 @@ export default function InventoryManagement() {
                 ))}
                 {selected.specs && (
                   <div className="col-span-2">
-                    <p className={`text-sm font-medium ${theme.muted}`}>Specifications</p>
+                    <p className={`text-sm font-medium ${theme.muted}`}>Description</p>
                     <p className={`mt-1 ${theme.text}`}>{selected.specs}</p>
                   </div>
                 )}
@@ -575,11 +568,7 @@ export default function InventoryManagement() {
                             />
                             <button
                               onClick={() =>
-                                setEditData((p) => ({
-                                  ...p,
-                                  images: p.images.filter((i) => i.id !== img.id),
-                                }))
-                              }
+                                setEditData((p) => ({...p,images: p.images.filter((i) => i.id !== img.id),}))}
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
                             >
                               <X className="w-3 h-3" />
@@ -590,19 +579,24 @@ export default function InventoryManagement() {
                     )}
 
                     {/* For category (single image_url) */}
-                    {modal === 'editCategory' && editData?.image_url && (
-                      <div className="mt-2 relative w-28 h-20">
-                        <img
-                          src={editData.image_url}
-                          alt=""
-                          className="w-18 h-20 object-cover rounded"
-                        />
-                        <button
-                          onClick={() => setEditData((p) => ({ ...p, image_url: null }))}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-100"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                    {modal === 'editCategory' && editData?.images?.length > 0 && (
+                      <div className="mt-2 grid grid-cols-6 gap-2">
+                        {editData.images.map((img) => (
+                          <div key={img.id} className="relative group">
+                            <img
+                              src={img.image_url || img.url}
+                              alt=""
+                              className="w-30 h-24 object-cover rounded"
+                            />
+                            <button
+                              onClick={() =>
+                                setEditData((p) => ({...p,images: p.images.filter((i) => i.id !== img.id),}))}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

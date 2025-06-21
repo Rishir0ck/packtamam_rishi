@@ -225,8 +225,9 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', `/api/admin/categories${query}`);
   }
 
-  async addCategory(name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/add', {name});
+  async addCategory(categoryData) {
+    const formData = this.createCategoryFormData(categoryData);
+    return this.makeFormDataRequest('POST', '/api/admin/categories/add', formData);
   }
 
   async updateCategory(id, is_active,name) {
@@ -256,6 +257,20 @@ class AdminService {
     if (productData.images?.length > 0) {
       productData.images.forEach(image => {
         if (image.originFileObj) formData.append('images', image.originFileObj);
+      });
+    }
+    
+    return formData;
+  }
+
+  createCategoryFormData(categoryData) {
+    const formData = new FormData();
+    const fields = ['name', 'categories'];
+    fields.forEach(field => formData.append(field, categoryData[field] || ''));
+    
+    if (categoryData.categories?.length > 0) {
+      categoryData.categories.forEach(image => {
+        if (image.originFileObj) formData.append('categories', image.originFileObj);
       });
     }
     
