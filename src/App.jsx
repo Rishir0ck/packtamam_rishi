@@ -12,6 +12,7 @@ import OutletManagement from './pages/OutletManagement'
 import InventoryManagement from './pages/InventoryManagement'
 import Advertisement from './pages/Advertisement'
 import Profile from './pages/Profile'
+import Policy from './pages/Policy'
 import LoadingScreen from './components/common/LoadingScreen'
 import ResponsiveWarning from './components/common/ResponsiveWarning'
 import useResponsive from './hooks/useResponsive'
@@ -44,6 +45,7 @@ function AppContent() {
         <Route path="advertisement" element={<Advertisement />} />
         <Route path="order-list" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="policy" element={<Policy />} />
       </Route>
       {/* Catch all route - redirect to dashboard if authenticated, login if not */}
       <Route 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Users, Building2, Package, User, ChevronDown, ChevronRight, ShoppingCart } from 'lucide-react'
+import { Home, Users, Building2, Package, User, ChevronDown, ChevronRight, ShoppingCart, Shield  } from 'lucide-react'
 import useTheme from '../../hooks/useTheme'
 import logoImage from '../../assets/pack tamam.png'
 
@@ -24,6 +24,7 @@ const menuItems = [
     ] },
   { path: '/order-list', icon: ShoppingCart, label: 'Order List' },
   { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/policy', icon: Shield , label: 'Policy' },
 ]
 
 export default function Sidebar() {
