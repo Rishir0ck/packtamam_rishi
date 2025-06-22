@@ -16,14 +16,7 @@ export default function InventoryManagement() {
   const [filter, setFilter] = useState('all')
   const [isInitialized, setIsInitialized] = useState(false)
 
-  const theme = useMemo(() => ({
-    bg: isDark ? 'bg-gray-900' : 'bg-gray-50',
-    card: isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-    text: isDark ? 'text-white' : 'text-gray-900',
-    muted: isDark ? 'text-gray-400' : 'text-gray-600',
-    input: isDark ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500',
-    btn: isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
-    border: isDark ? 'border-gray-700' : 'border-gray-200',
+  const theme = useMemo(() => ({bg: isDark ? 'bg-gray-900' : 'bg-gray-50',card: isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',text: isDark ? 'text-white' : 'text-gray-900',muted: isDark ? 'text-gray-400' : 'text-gray-600',input: isDark ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500',btn: isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700',border: isDark ? 'border-gray-700' : 'border-gray-200',
     tableRow: isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
   }), [isDark])
 
@@ -38,19 +31,8 @@ export default function InventoryManagement() {
     setLoading(true)
     setError('')
     try {
-      const [products, categories, materials, priceSlabs] = await Promise.allSettled([
-        adminService.getProducts(), 
-        adminService.getCategories(), 
-        adminService.getMaterials(), 
-        adminService.listPriceSlabs()
-      ])
-      
-      setData({
-        products: extractData(products.value),
-        categories: extractData(categories.value),
-        materials: extractData(materials.value),
-        priceSlabs: extractData(priceSlabs.value)
-      })
+      const [products, categories, materials, priceSlabs] = await Promise.allSettled([adminService.getProducts(), adminService.getCategories(), adminService.getMaterials(), adminService.listPriceSlabs()])
+      setData({products: extractData(products.value),categories: extractData(categories.value),materials: extractData(materials.value),priceSlabs: extractData(priceSlabs.value)})
       setIsInitialized(true)
     } catch (err) {
       setError(`Failed to load data: ${err.message}`)
@@ -66,11 +48,7 @@ export default function InventoryManagement() {
   // Calculate pricing based on price slabs
   const calculatePricing = useCallback((basePrice, quantity = 1) => {
     if (!data.priceSlabs.length || !basePrice) return basePrice
-    
-    const applicableSlab = data.priceSlabs
-      .filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty)
-      .sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
-    
+    const applicableSlab = data.priceSlabs.filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty).sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
     return applicableSlab ? applicableSlab.price_per_unit : basePrice
   }, [data.priceSlabs])
 
@@ -92,18 +70,7 @@ export default function InventoryManagement() {
       const gstPayable = gstAmount
       const netProfit = grossProfit - (gstAmount * 0.1)
 
-      return {
-        ...formData,
-        inventory: {
-          ...inventory,
-          sell_price: Math.round(finalPrice * 100) / 100,
-          gross_profit: Math.round(grossProfit * 100) / 100,
-          gst_amount: Math.round(gstAmount * 100) / 100,
-          price_with_gst: Math.round(priceWithGst * 100) / 100,
-          gst_payable: Math.round(gstPayable * 100) / 100,
-          net_profit: Math.round(netProfit * 100) / 100
-        }
-      }
+      return {...formData,inventory: {...inventory,sell_price: Math.round(finalPrice * 100) / 100,gross_profit: Math.round(grossProfit * 100) / 100,gst_amount: Math.round(gstAmount * 100) / 100,price_with_gst: Math.round(priceWithGst * 100) / 100,gst_payable: Math.round(gstPayable * 100) / 100,net_profit: Math.round(netProfit * 100) / 100}}
     }
     return formData
   }, [calculatePricing])
@@ -126,11 +93,7 @@ export default function InventoryManagement() {
 
   const handleImageUpload = useCallback((files) => {
     const images = Array.from(files).map(file => ({
-      id: Date.now() + Math.random(), 
-      name: file.name, 
-      url: URL.createObjectURL(file), 
-      originFileObj: file
-    }))
+      id: Date.now() + Math.random(),name: file.name,url: URL.createObjectURL(file), originFileObj: file}))
     setEditData(prev => ({ ...prev, images: [...(prev.images || []), ...images] }))
   }, [])
 
@@ -164,29 +127,6 @@ export default function InventoryManagement() {
     })
   }, [apiCall])
 
-  // const saveItem = useCallback(() => {
-  //   if (!editData) return
-    
-  //   const isProduct = modal === 'editProduct'
-  //   const isEdit = data[isProduct ? 'products' : 'priceSlabs'].some(item => item.id === editData.id)
-    
-  //   // Apply pricing calculations for products
-  //   const finalData = isProduct ? updatePricing(editData) : editData
-    
-  //   const operation = isProduct 
-  //     ? (isEdit 
-  //         ? () => adminService.updateProduct(finalData.id, finalData)
-  //         : () => adminService.addProduct(finalData))
-  //     : (isEdit 
-  //         ? () => adminService.updatePriceSlab(finalData.id, finalData.min_qty, finalData.max_qty, finalData.price_per_unit)
-  //         : () => adminService.addPriceSlab(finalData.min_qty, finalData.max_qty, finalData.price_per_unit))
-    
-  //   apiCall(operation, () => { 
-  //     setModal('')
-  //     setEditData(null) 
-  //   })
-  // }, [data, editData, modal, apiCall, updatePricing])
-
   const saveItem = useCallback(() => {
   if (!editData) return;
 
@@ -207,18 +147,8 @@ export default function InventoryManagement() {
         : adminService.addMaterial(editData.name),
     editSlab: () =>
       editData.id
-        ? adminService.updatePriceSlab(
-            editData.id,
-            editData.min_qty,
-            editData.max_qty,
-            editData.price_per_unit
-          )
-        : adminService.addPriceSlab(
-            editData.min_qty,
-            editData.max_qty,
-            editData.price_per_unit
-          )
-  };
+        ? adminService.updatePriceSlab(editData.id,editData.min_qty,editData.max_qty,editData.price_per_unit)
+        : adminService.addPriceSlab(editData.min_qty,editData.max_qty,editData.price_per_unit)};
 
   const operation = operations[modal];
 
@@ -226,20 +156,14 @@ export default function InventoryManagement() {
 
   apiCall(operation, () => {setModal('');setEditData(null);});}, [editData, modal, apiCall, updatePricing]);
 
-
   const stats = useMemo(() => [
     { label: 'Total', value: data.products.length, icon: Package, color: '#c79e73', filter: 'all' },
     { label: 'Active', value: data.products.filter(p => p?.is_active).length, icon: TrendingUp, color: '#10b981', filter: 'active' },
     { label: 'Inactive', value: data.products.filter(p => !p?.is_active).length, icon: TrendingDown, color: '#ef4444', filter: 'inactive' },
-    { label: 'Premium', value: data.products.filter(p => p?.quality === 'Premium').length, icon: Layers, color: '#8b5cf6', filter: 'premium' }
-  ], [data])
+    { label: 'Premium', value: data.products.filter(p => p?.quality === 'Premium').length, icon: Layers, color: '#8b5cf6', filter: 'premium' }], [data])
 
   const tabs = [
-    { id: 'products', label: 'Products', icon: Package },
-    { id: 'priceSlabs', label: 'Discount', icon: TrendingUp },
-    { id: 'categories', label: 'Categories', icon: TrendingUp },
-    { id: 'materials', label: 'Materials', icon: Layers }
-  ]
+    { id: 'products', label: 'Products', icon: Package },{ id: 'priceSlabs', label: 'Discount', icon: TrendingUp },{ id: 'categories', label: 'Categories', icon: TrendingUp },{ id: 'materials', label: 'Materials', icon: Layers }]
 
   const productFields = [
     { key: 'name', label: 'Product Name', required: true },
@@ -310,11 +234,7 @@ export default function InventoryManagement() {
           <table className="w-full">
             <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
-                {['Image','Product', 'Category', 'Material', 'HSN', 'Quality', 'Price', 'Status', 'Actions'].map(header => (
-                  <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                    {header}
-                  </th>
-                ))}
+                {['Image','Product', 'Category', 'Material', 'HSN', 'Quality', 'Price', 'Status', 'Actions'].map(header => (<th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>{header}</th>))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
