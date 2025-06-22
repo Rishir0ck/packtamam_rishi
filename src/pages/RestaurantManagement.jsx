@@ -1,15 +1,27 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
-import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, RefreshCw } from 'lucide-react'
+import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, RefreshCw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
 const OUTLET_TYPES = ['Restaurant', 'Cafe', 'Fast Food', 'Fine Dining', 'Bakery', 'Food Truck', 'Catering', 'Bar & Grill', 'Pizzeria', 'Buffet', 'Delivery Only', 'Cloud Kitchen']
 
+const TABLE_COLUMNS = [
+  { key: 'name', label: 'Restaurant', sortable: true },
+  { key: 'owner', label: 'Owner', sortable: true },
+  { key: 'outlet_type', label: 'Type', sortable: true },
+  { key: 'city', label: 'City', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'franchises', label: 'Franchises', sortable: false },
+  { key: 'joinedDate', label: 'Joined', sortable: true },
+  { key: 'actions', label: 'Actions', sortable: false }
+]
+
 export default function RestaurantManagement() {
   const { isDark } = useContext(ThemeContext)
   const [state, setState] = useState({
-    restaurants: [], outletType:[], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
-    newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' }
+    restaurants: [], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
+    newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' },
+    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10
   })
 
   const theme = useCallback((light, dark = '') => isDark ? `${dark} dark` : light, [isDark])
@@ -46,17 +58,11 @@ export default function RestaurantManagement() {
   }
 
   const handleInputChange = useCallback((field, value) => {
-    setState(prev => ({
-      ...prev,
-      editData: { ...prev.editData, [field]: value }
-    }))
+    setState(prev => ({ ...prev, editData: { ...prev.editData, [field]: value } }))
   }, [])
 
   const handleNewFranchiseChange = useCallback((field, value) => {
-    setState(prev => ({
-      ...prev,
-      newFranchise: { ...prev.newFranchise, [field]: value }
-    }))
+    setState(prev => ({ ...prev, newFranchise: { ...prev.newFranchise, [field]: value } }))
   }, [])
 
   const handleSave = async () => {
@@ -104,6 +110,15 @@ export default function RestaurantManagement() {
     }))
   }
 
+  const handleSort = (key) => {
+    setState(prev => ({
+      ...prev,
+      sortBy: key,
+      sortOrder: prev.sortBy === key && prev.sortOrder === 'asc' ? 'desc' : 'asc',
+      currentPage: 1
+    }))
+  }
+
   const filtered = state.restaurants.filter(r => {
     const matchSearch = [r.name, r.owner, r.outlet_type].some(field => 
       field.toLowerCase().includes(state.search.toLowerCase())
@@ -114,6 +129,29 @@ export default function RestaurantManagement() {
       (state.filter === 'with-franchises' && r.franchises?.length > 0)
     return matchSearch && matchFilter
   })
+
+  const sortedData = [...filtered].sort((a, b) => {
+    if (!state.sortBy) return 0
+    let aVal = a[state.sortBy], bVal = b[state.sortBy]
+    
+    if (state.sortBy === 'franchises') {
+      aVal = a.franchises?.length || 0
+      bVal = b.franchises?.length || 0
+    }
+    
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase()
+      bVal = bVal.toLowerCase()
+    }
+    
+    if (aVal < bVal) return state.sortOrder === 'asc' ? -1 : 1
+    if (aVal > bVal) return state.sortOrder === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const totalPages = Math.ceil(sortedData.length / state.itemsPerPage)
+  const startIndex = (state.currentPage - 1) * state.itemsPerPage
+  const paginatedData = sortedData.slice(startIndex, startIndex + state.itemsPerPage)
 
   const stats = [
     { label: 'Total', value: state.restaurants.length, icon: Store, color: '#c79e73', filter: 'all' },
@@ -199,6 +237,62 @@ export default function RestaurantManagement() {
     </div>
   )
 
+  const SortIcon = ({ column }) => {
+    if (state.sortBy !== column) return <ChevronUp className="w-4 h-4 opacity-30" />
+    return state.sortOrder === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+  }
+
+  const Pagination = () => (
+    <div className={`flex items-center justify-between px-4 py-3 border-t ${theme('border-gray-200 bg-gray-50', 'border-gray-700 bg-gray-800')}`}>
+      <div className={`text-sm ${theme('text-gray-700', 'text-gray-300')}`}>
+        Showing {startIndex + 1} to {Math.min(startIndex + state.itemsPerPage, sortedData.length)} of {sortedData.length} results
+      </div>
+      <div className="flex items-center gap-2">
+        <select
+          value={state.itemsPerPage}
+          onChange={(e) => setState(prev => ({ ...prev, itemsPerPage: Number(e.target.value), currentPage: 1 }))}
+          className={`text-sm p-1 border rounded ${theme('border-gray-200 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
+        >
+          {[5, 10, 25, 50].map(size => (
+            <option key={size} value={size}>{size} per page</option>
+          ))}
+        </select>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setState(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }))}
+            disabled={state.currentPage === 1}
+            className={`p-1 rounded ${theme('bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50', 'bg-gray-700 border-gray-600 hover:bg-gray-600 disabled:opacity-50')}`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            const page = i + 1
+            return (
+              <button
+                key={page}
+                onClick={() => setState(prev => ({ ...prev, currentPage: page }))}
+                className={`px-3 py-1 text-sm rounded ${
+                  state.currentPage === page
+                    ? 'bg-blue-500 text-white'
+                    : theme('bg-white border border-gray-200 hover:bg-gray-50', 'bg-gray-700 border-gray-600 hover:bg-gray-600')
+                }`}
+              >
+                {page}
+              </button>
+            )
+          })}
+          <button
+            onClick={() => setState(prev => ({ ...prev, currentPage: Math.min(totalPages, prev.currentPage + 1) }))}
+            disabled={state.currentPage === totalPages}
+            className={`p-1 rounded ${theme('bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50', 'bg-gray-700 border-gray-600 hover:bg-gray-600 disabled:opacity-50')}`}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className={`min-h-screen ${theme('bg-gray-50', 'bg-gray-900')} p-4 transition-colors`}>
       {/* Header */}
@@ -220,7 +314,7 @@ export default function RestaurantManagement() {
           type="text" 
           placeholder="Search restaurants, owners, or outlet..." 
           value={state.search} 
-          onChange={(e) => setState(prev => ({ ...prev, search: e.target.value }))}
+          onChange={(e) => setState(prev => ({ ...prev, search: e.target.value, currentPage: 1 }))}
           className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:outline-none transition-colors ${theme('border-gray-200 bg-white text-gray-900 placeholder-gray-500', 'border-gray-600 bg-gray-800 text-white placeholder-gray-400')}`}
         />
       </div>
@@ -232,7 +326,7 @@ export default function RestaurantManagement() {
           return (
             <div 
               key={i} 
-              onClick={() => setState(prev => ({ ...prev, filter: stat.filter }))}
+              onClick={() => setState(prev => ({ ...prev, filter: stat.filter, currentPage: 1 }))}
               className={`rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${theme('bg-white border-gray-200 hover:bg-gray-50', 'bg-gray-800 border-gray-700 hover:bg-gray-750')} ${state.filter === stat.filter ? 'ring-2' : ''}`}
               style={{ ringColor: state.filter === stat.filter ? '#c79e73' : 'transparent' }}
             >
@@ -250,22 +344,50 @@ export default function RestaurantManagement() {
         })}
       </div>
 
-      {/* Restaurant List */}
-      <div className="space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <Store className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-400" />
-            <p className={`text-lg font-medium ${theme('text-gray-900', 'text-white')}`}>No restaurants found</p>
-          </div>
-        ) : (
-          filtered.map((r) => (
-            <div key={r.id} className={`rounded-lg border shadow-sm p-4 transition-colors ${theme('bg-white border-gray-200', 'bg-gray-800 border-gray-700')}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className={`font-semibold ${theme('text-gray-900', 'text-white')}`}>{r.name}</h3>
+      {/* Table */}
+      <div className={`rounded-lg border shadow-sm overflow-hidden ${theme('bg-white border-gray-200', 'bg-gray-800 border-gray-700')}`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className={`${theme('bg-gray-50', 'bg-gray-700')}`}>
+              <tr>
+                {TABLE_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme('text-gray-500', 'text-gray-300')} ${col.sortable ? 'cursor-pointer hover:bg-opacity-75' : ''}`}
+                    onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                  >
+                    <div className="flex items-center gap-1">
+                      {col.label}
+                      {col.sortable && <SortIcon column={col.key} />}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${theme('divide-gray-200', 'divide-gray-700')}`}>
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td colSpan={TABLE_COLUMNS.length} className="px-4 py-12 text-center">
+                    <Store className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-400" />
+                    <p className={`text-lg font-medium ${theme('text-gray-900', 'text-white')}`}>No restaurants found</p>
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((r) => (
+                  <tr key={r.id} className={`${theme('hover:bg-gray-50', 'hover:bg-gray-750')}`}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <img src={r.profileImg} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        <div>
+                          <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{r.name}</div>
+                          <div className={`text-xs ${theme('text-gray-500', 'text-gray-400')}`}>{r.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{r.owner}</td>
+                    <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{r.outlet_type}</td>
+                    <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{r.city?.split(',')[0] || 'N/A'}</td>
+                    <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         r.status === 'active' 
                           ? theme('bg-emerald-50 text-emerald-700', 'bg-emerald-900/30 text-emerald-300')
@@ -273,39 +395,41 @@ export default function RestaurantManagement() {
                       }`}>
                         {r.status}
                       </span>
-                      {r.franchises?.length > 0 && (
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.franchises?.length > 0 ? (
                         <span className={`px-2 py-1 rounded-full text-xs ${theme('bg-purple-50 text-purple-700', 'bg-purple-900/30 text-purple-300')}`}>
-                          {r.franchises.length} franchise{r.franchises.length > 1 ? 's' : ''}
+                          {r.franchises.length}
                         </span>
+                      ) : (
+                        <span className={`text-xs ${theme('text-gray-400', 'text-gray-500')}`}>-</span>
                       )}
-                    </div>
-                    <div className={`text-sm flex items-center gap-4 mt-1 ${theme('text-gray-600', 'text-gray-400')}`}>
-                      <span>👤 {r.owner}</span>
-                      <span>🍽️ {r.outlet_type}</span>
-                      <span>🏙️ {r.city?.split(',')[0] || 'No city'}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setState(prev => ({ ...prev, selected: r, modal: 'view' }))} 
-                    className={`p-2 rounded-lg transition-colors ${theme('bg-gray-100 hover:bg-gray-200 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setState(prev => ({ ...prev, editData: { ...r }, modal: 'edit' }))} 
-                    className="p-2 text-white rounded-lg transition-colors hover:opacity-80"
-                    style={{ backgroundColor: '#c79e73' }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+                    </td>
+                    <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{r.joinedDate}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => setState(prev => ({ ...prev, selected: r, modal: 'view' }))} 
+                          className={`p-1.5 rounded transition-colors ${theme('bg-gray-100 hover:bg-gray-200 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => setState(prev => ({ ...prev, editData: { ...r }, modal: 'edit' }))} 
+                          className="p-1.5 text-white rounded transition-colors hover:opacity-80"
+                          style={{ backgroundColor: '#c79e73' }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <Pagination />
       </div>
 
       {/* View Modal */}
@@ -345,7 +469,6 @@ export default function RestaurantManagement() {
                   ['📅 Applied Date:', state.selected.joinedDate],
                   ['🧾 GST:', state.selected.gst_no],
                   ['🚡 Lift:', state.selected.lift]
-                  // ['📍 Address:', state.selected.address]
                 ].map(([label, value], i) => (
                   <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                     <strong>{label}</strong> {value}

@@ -236,7 +236,7 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },
-    { id: 'priceSlabs', label: 'Price Slabs', icon: TrendingUp },
+    { id: 'priceSlabs', label: 'Discount', icon: TrendingUp },
     { id: 'categories', label: 'Categories', icon: TrendingUp },
     { id: 'materials', label: 'Materials', icon: Layers }
   ]

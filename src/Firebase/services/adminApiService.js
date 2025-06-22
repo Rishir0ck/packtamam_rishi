@@ -265,12 +265,12 @@ class AdminService {
 
   createCategoryFormData(categoryData) {
     const formData = new FormData();
-    const fields = ['name', 'categories'];
+    const fields = ['name', 'image_url'];
     fields.forEach(field => formData.append(field, categoryData[field] || ''));
     
-    if (categoryData.categories?.length > 0) {
-      categoryData.categories.forEach(image => {
-        if (image.originFileObj) formData.append('categories', image.originFileObj);
+    if (categoryData.images?.length > 0) {
+      categoryData.images.forEach(image => {
+        if (image.originFileObj) formData.append('image_url', image.originFileObj);
       });
     }
     

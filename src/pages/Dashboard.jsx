@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, Clock, Users, Package, BarChart3, Target, Loader2, AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react'
+import { TrendingUp, Clock, Users, Package, BarChart3, Target, RefreshCw, AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import useTheme from '../hooks/useTheme'
 import AdminService from '../Firebase/services/adminApiService'
 
 const DEFAULT_DATA = {
   kpiData: [
-    { title: 'Total Revenue', value: '₹0', icon: TrendingUp, color: '#c79e73', isPositive: true },
-    { title: 'Pending Approvals', value: '0', icon: Clock, color: '#43311e', isPositive: false },
-    { title: 'Active Restaurants', value: '0', icon: Users, color: '#c79e73', isPositive: true },
-    { title: 'Inventory Items', value: '0', icon: Package, color: '#43311e', isPositive: true },
+    { title: 'Total Revenue', value: '₹0', icon: TrendingUp },
+    { title: 'Pending Approvals', value: '0', icon: Clock },
+    { title: 'Active Restaurants', value: '0', icon: Users },
+    { title: 'Inventory Items', value: '0', icon: Package },
   ],
   chartData: Array.from({ length: 6 }, (_, i) => ({ 
     name: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i], 
@@ -21,8 +21,7 @@ const DEFAULT_DATA = {
     { title: 'Approval Rate', value: '0%', icon: BarChart3 },
     { title: 'Active Outlets', value: '0', icon: Target },
     { title: 'Total Businesses', value: '0', icon: Users },
-  ],
-  recentActivities: []
+  ]
 }
 
 export default function Dashboard() {
@@ -79,7 +78,7 @@ export default function Dashboard() {
           title: 'Total Revenue',
           value: `₹${revenue.toLocaleString()}`,
           icon: TrendingUp,
-          color: '#c79e73',
+          color: '#43311e',
           isPositive: true
         },
         {
@@ -93,7 +92,7 @@ export default function Dashboard() {
           title: 'Active Restaurants',
           value: counts.approved.toString(),
           icon: Users,
-          color: '#c79e73',
+          color: '#43311e',
           isPositive: true
         },
         {
@@ -128,14 +127,7 @@ export default function Dashboard() {
         { title: 'Total Businesses', value: counts.total.toString(), icon: Users }
       ]
 
-      const recentActivities = [
-        { id: 1, action: `${counts.pending} restaurants pending approval`, time: '2 hours ago', icon: Users, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/20' },
-        { id: 2, action: `${counts.products} products in inventory`, time: '4 hours ago', icon: Package, color: 'text-yellow-700', bg: 'bg-yellow-100 dark:bg-yellow-900/20' },
-        { id: 3, action: `${counts.approved} restaurants approved`, time: '6 hours ago', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/20' },
-        { id: 4, action: `${counts.outlets} outlets active`, time: '8 hours ago', icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/20' }
-      ]
-
-      setDashboardData({ kpiData, chartData, inventoryData, statsCards, recentActivities })
+      setDashboardData({ kpiData, chartData, inventoryData, statsCards })
     } catch (error) {
       setError(error.message || 'Failed to fetch dashboard data')
       if (!isRefresh) setDashboardData(DEFAULT_DATA)
@@ -164,7 +156,7 @@ export default function Dashboard() {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto text-amber-600" />
+          <RefreshCw className="w-12 h-12 animate-spin mx-auto text-amber-600" />
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard data...</p>
         </div>
       </div>
@@ -215,7 +207,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4 lg:mb-6">
                 <div 
                   className="w-10 h-10 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg transform hover:rotate-12 transition-transform duration-300"
-                  style={{ backgroundColor: item.color }}
+                  style={{ backgroundColor: isDark ? '#c79e73' : '#43311e' }}
                 >
                   <item.icon className="w-5 h-5 lg:w-7 lg:h-7 text-white" />
                 </div>
@@ -339,40 +331,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Activities */}
-        <div className={`${isDark ? 'bg-gray-800/80 border-gray-700/50' : 'bg-white/80 border-gray-200/50'} rounded-2xl lg:rounded-3xl p-4 lg:p-8 border shadow-xl backdrop-blur-sm`}>
-          <h3 className={`text-lg lg:text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 lg:mb-6 flex items-center gap-3`}>
-            <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: isDark ? '#c79e73' : '#43311e' }}>
-              <Clock className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
-            </div>
-            System Overview
-          </h3>
-          <div className="space-y-3 lg:space-y-4">
-            {dashboardData.recentActivities.map((activity) => (
-              <div 
-                key={activity.id} 
-                className={`flex items-center space-x-3 lg:space-x-4 p-3 lg:p-4 rounded-xl lg:rounded-2xl ${isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80'} 
-                  transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md group cursor-pointer`}
-              >
-                <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl ${activity.bg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
-                  <activity.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${activity.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} group-hover:text-current transition-colors text-sm lg:text-base truncate`}>
-                    {activity.action}
-                  </p>
-                  <p className={`text-xs lg:text-sm ${isDark ? 'text-gray-400' : 'text-stone-500'} mt-1`}>
-                    {activity.time}
-                  </p>
-                </div>
-                <div 
-                  className="w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0"
-                  style={{ backgroundColor: isDark ? '#c79e73' : '#43311e' }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        
       </div>
     </div>
   )
