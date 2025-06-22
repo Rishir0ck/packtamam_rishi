@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
-import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, RefreshCw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, User2, Phone, Key, MoveUpRight, CalendarDays, RefreshCw, FileText, Briefcase, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Building2 } from 'lucide-react'
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
@@ -187,11 +187,11 @@ export default function RestaurantManagement() {
     <div className={`rounded-lg p-3 text-sm ${theme('bg-gray-100', 'bg-gray-700')}`}>
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🧑🏼‍💼 Owner:</strong> {f.owner_name}</div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏣 Business:</strong> {f.business_name}</div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><strong>🏬 Outlet:</strong> {f.outlet_type}</div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📧 Email:</strong> {f.email}</div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><strong>📞 Phone:</strong> {f.mobile_number}</div>
+          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><User2 className="w-4 h-4" /><strong>Owner:</strong> {f.owner_name}</div></div>
+          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Briefcase className="w-4 h-4" /><strong>Business:</strong> {f.business_name}</div></div>
+          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Store className="w-4 h-4" /><strong>Outlet:</strong> {f.outlet_type}</div></div>
+          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Mail className="w-4 h-4" /><strong>Email:</strong> {f.email}</div></div>
+          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Phone className="w-4 h-4" /><strong>Phone:</strong> {f.mobile_number}</div></div>
         </div>
         {showActions && (
           <button onClick={() => onRemove(f.id)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded">
@@ -448,12 +448,12 @@ export default function RestaurantManagement() {
               <div className="space-y-2">
                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact</h3>
                 {[
-                  ['👤 Owner:', state.selected.owner],
-                  ['📧 Email:', state.selected.email],
-                  ['📞 Phone:', state.selected.phone],
-                  ['🏢 Legal Entity:', state.selected.legal_entity_name],
-                  ['🧾 FSSAI:', state.selected.fssai_no],
-                  ['🏙️ City:', state.selected.city],
+                  [<><User2 className="w-4 h-4 inline-block mr-1" /> <strong>Owner:</strong></>, state.selected.owner],
+                  [<><Mail className="w-4 h-4 inline-block mr-1" /> <strong>Email:</strong></>, state.selected.email],
+                  [<><Phone className="w-4 h-4 inline-block mr-1" /> <strong>Phone:</strong></>, state.selected.phone],
+                  [<><Building2 className="w-4 h-4 inline-block mr-1" /> <strong>Legal Entity:</strong></>, state.selected.legal_entity_name],
+                  [<><FileText className="w-4 h-4 inline-block mr-1" /> <strong>FSSAI:</strong></>, state.selected.fssai_no],
+                  [<><MapPin className="w-4 h-4 inline-block mr-1" /> <strong>City:</strong></>, state.selected.city],
                 ].map(([label, value], i) => (
                   <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                     <strong>{label}</strong> {value}
@@ -463,12 +463,12 @@ export default function RestaurantManagement() {
               <div className="space-y-2">
                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Details</h3>
                 {[
-                  ['🍽️ Business Type:', state.selected.businessType],
-                  ['🏬 Outlet Type:', state.selected.outlet_type],
-                  ['🏷️ Franchise Code:', state.selected.franchise_code],
-                  ['📅 Applied Date:', state.selected.joinedDate],
-                  ['🧾 GST:', state.selected.gst_no],
-                  ['🚡 Lift:', state.selected.lift]
+                  [<><Briefcase className="w-4 h-4 inline-block mr-1" /><strong>Business Type:</strong></>, state.selected.businessType],
+                  [<><Store className="w-4 h-4 inline-block mr-1" /><strong>Outlet Type:</strong></>, state.selected.outlet_type],
+                  [<><Key className="w-4 h-4 inline-block mr-1" /><strong>Franchise Code:</strong></>, state.selected.franchise_code],
+                  [<><CalendarDays className="w-4 h-4 inline-block mr-1" /><strong>Applied Date:</strong></>, state.selected.joinedDate],
+                  [<><FileText className="w-4 h-4 inline-block mr-1" /> <strong>GST:</strong></>, state.selected.gst_no],
+                  [<><MoveUpRight className="w-4 h-4 inline-block mr-1" /><strong>Lift Available:</strong></>, state.selected.lift]
                 ].map(([label, value], i) => (
                   <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
                     <strong>{label}</strong> {value}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Eye, Check, X, MessageSquare, Search, Download, FileText, Store, Clock, AlertCircle, CheckCircle, XCircle, RefreshCw, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, Check, X, MessageSquare, Search, Download, FileText, Store, Clock, AlertCircle, CheckCircle, XCircle, RefreshCw, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Phone, MapPin, Briefcase, Building, Building2, Key, MoveUpRight, CalendarDays, User2  } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import AdminService from '../Firebase/services/adminApiService'
 
@@ -397,7 +397,7 @@ export default function RestaurantOnboarding() {
 
       {/* Detail Modal */}
       {modal === 'details' && selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
               <div className="flex items-center gap-3">
@@ -416,20 +416,20 @@ export default function RestaurantOnboarding() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-2">
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Contact</strong></h3>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📧 Email:</strong> {selected.email}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📞 Phone:</strong> {selected.phone}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📍 Address:</strong> {selected.address}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📇 FSSAI:</strong> {selected.fssaiNo}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📇 GST:</strong> {selected.gstNo}</div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Mail className="w-4 h-4" /><strong>Email:</strong> {selected.email}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Phone className="w-4 h-4" /><strong>Phone:</strong> {selected.phone}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><MapPin className="w-8 h-8" /><strong>Address:</strong> {selected.address}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><FileText className="w-4 h-4" /><strong>FSSAI:</strong> {selected.fssaiNo}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><FileText className="w-4 h-4" /> <strong>GST:</strong> {selected.gstNo}</div></div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Details</strong></h3>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🍽️ Business Type:</strong> {selected.cuisine}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏬 Outlet Type:</strong> {selected.outlet}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏢 Legal Entity:</strong> {selected.entity_name}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🏷️ Franchise Code:</strong> {selected.franchise_code}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>🛗 Lift Available:</strong> {selected.liftInfo}</div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><strong>📅 Applied Date:</strong> {selected.appliedDate}</div>
+                  <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Details</strong></h3>  
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Briefcase className="w-4 h-4" /><strong>Business Type:</strong> {selected.cuisine}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Store className="w-4 h-4" /><strong>Outlet Type:</strong> {selected.outlet}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Building2 className="w-4 h-4" /><strong>Legal Entity:</strong> {selected.entity_name}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Key className="w-4 h-4" /><strong>Franchise Code:</strong> {selected.franchise_code}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><MoveUpRight className="w-4 h-4" /><strong>Lift Available:</strong> {selected.liftInfo}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><CalendarDays className="w-4 h-4" /><strong>Applied Date:</strong> {selected.appliedDate}</div></div>
                 </div>
                 
                 {selected.queryHistory && selected.queryHistory.length > 0 && (
@@ -498,7 +498,7 @@ export default function RestaurantOnboarding() {
       {/* Franchise Modal */}
       {isModalOpen && selected && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 backdrop-blur-sm">
-          <div className={`bg-white p-6 rounded-lg max-w-md w-full ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-900'}`}>
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white '} p-6 rounded-lg max-w-md w-full `}>
             <button onClick={() => setIsModalOpen(false)} className="text-right w-full mb-4 text-xl font-bold">&times;</button>
             <div className="space-y-4">
               {selected.franchise.map(fr => (
@@ -510,10 +510,10 @@ export default function RestaurantOnboarding() {
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>by {fr.owner_name}</p>
                     </div>
                   </div>
-                  <p><strong>🧑🏼‍💼 Owner:</strong> {fr.owner_name}</p>
-                  <p><strong>📧 Email:</strong> {fr.email}</p>
-                  <p><strong>📞 Phone:</strong> {fr.mobile_number}</p>
-                  <p><strong>🏬 Outlet Type:</strong> {fr.outlet_type}</p>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><User2 className="w-4 h-4" /><strong>Owner:</strong> {fr.owner_name}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Mail className="w-4 h-4" /><strong>Email:</strong> {fr.email}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Phone className="w-4 h-4" /><strong>Phone:</strong> {fr.mobile_number}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Store className="w-4 h-4" /><strong>Outlet Type:</strong> {fr.outlet_type}</div></div>
                 </div>
               ))}
             </div>
