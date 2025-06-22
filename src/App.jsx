@@ -10,6 +10,7 @@ import RestaurantOnboarding from './pages/RestaurantOnboarding'
 import RestaurantManagement from './pages/RestaurantManagement'
 import OutletManagement from './pages/OutletManagement'
 import InventoryManagement from './pages/InventoryManagement'
+import Product from './pages/Product'
 import Advertisement from './pages/Advertisement'
 import Profile from './pages/Profile'
 import Policy from './pages/Policy'
@@ -42,6 +43,7 @@ function AppContent() {
         <Route path="restaurant-management" element={<RestaurantManagement />} />
         <Route path="outlet-type" element={<OutletManagement />} />
         <Route path="inventory-management" element={<InventoryManagement />} />
+        <Route path="product" element={<Product />} />
         <Route path="advertisement" element={<Advertisement />} />
         <Route path="order-list" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />

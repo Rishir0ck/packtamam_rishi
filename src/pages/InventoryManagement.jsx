@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Eye, Edit, Search, Package, Plus, Save, X, Layers, TrendingUp, Upload, Trash2, AlertCircle, Power, TrendingDown } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import adminService from '../Firebase/services/adminApiService'
+import { useNavigate } from 'react-router-dom';
 
 export default function InventoryManagement() {
   const { isDark } = useTheme()
@@ -15,6 +16,9 @@ export default function InventoryManagement() {
   const [activeTab, setActiveTab] = useState('products')
   const [filter, setFilter] = useState('all')
   const [isInitialized, setIsInitialized] = useState(false)
+  const navigate = useNavigate();
+  const handleClick = () => {navigate('/product')};
+
 
   const theme = useMemo(() => ({bg: isDark ? 'bg-gray-900' : 'bg-gray-50',card: isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',text: isDark ? 'text-white' : 'text-gray-900',muted: isDark ? 'text-gray-400' : 'text-gray-600',input: isDark ? 'border-gray-600 bg-gray-800 text-white placeholder-gray-400' : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500',btn: isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700',border: isDark ? 'border-gray-700' : 'border-gray-200',
     tableRow: isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
@@ -636,14 +640,7 @@ export default function InventoryManagement() {
                 onChange={(e) => setSearch(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg ${theme.input}`} />
             </div>
-            <button onClick={() => { 
-              setEditData({ 
-                name: '', category_id: '', material_id: '', hsn_code: '', 
-                shape: '', colour: '', specs: '', quality: 'Standard', 
-                is_active: true, document: [] 
-              }); 
-              setModal('editProduct') 
-            }} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
+            <button onClick={handleClick} className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" 
               style={{ backgroundColor: '#c79e73' }}>
               <Plus className="w-5 h-5" />Add Product
             </button>
