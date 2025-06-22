@@ -226,13 +226,13 @@ export default function AdvertisementModule() {
           <div className="flex gap-3">
             <Btn onClick={() => setPreviewMode(!previewMode)}
                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                   previewMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                   previewMode ? 'bg-yellow-600 bg-opacity-59 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                  }`}>
               <Smartphone className="w-4 h-4" />
               {previewMode ? 'Exit Preview' : 'Mobile Preview'}
             </Btn>
             <Btn onClick={() => setShowAddForm(true)}
-                 className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium bg-orange-500 hover:bg-orange-600">
+                 className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" style={{ backgroundColor: '#c79e73' }}>
               <Plus className="w-4 h-4" />Add Advertisement
             </Btn>
           </div>
@@ -263,7 +263,7 @@ export default function AdvertisementModule() {
             
             <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg overflow-hidden`} 
                  style={{ aspectRatio: '9/16' }}>
-              <div className="bg-blue-600 text-white p-2 text-center text-sm font-medium">App Header</div>
+              <div className="text-white p-2 text-center text-sm font-medium" style={{ backgroundColor: '#c79e73' }}>App Header</div>
               
               <AdSlider placement="Header" heightClass="h-20" />
 
@@ -279,10 +279,6 @@ export default function AdvertisementModule() {
                 <div className={`${isDark ? 'bg-gray-600' : 'bg-gray-300'} h-6 rounded`}></div>
               </div>
 
-              <div className="mt-auto">
-                <AdSlider placement="Footer" heightClass="h-16" />
-                <div className="bg-gray-800 text-white p-2 text-center text-sm">App Footer</div>
-              </div>
             </div>
           </div>
         </div>
@@ -360,7 +356,7 @@ export default function AdvertisementModule() {
 
                 <div className="flex gap-3">
                   <Btn type="submit" 
-                       className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium bg-orange-500 hover:bg-orange-600">
+                       className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium" style={{ backgroundColor: '#c79e73' }}>
                     <Save className="w-4 h-4" />{editingAd ? 'Update' : 'Save'}
                   </Btn>
                   <Btn type="button" onClick={resetForm} 
@@ -383,7 +379,7 @@ export default function AdvertisementModule() {
                 <h3 className={`text-lg font-medium ${theme.text} mb-2`}>No advertisements found</h3>
                 <p className={`${theme.textMuted} mb-4`}>Start by creating your first advertisement</p>
                 <Btn onClick={() => setShowAddForm(true)} 
-                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                     className="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg" style={{ backgroundColor: '#c79e73' }}>
                   <Plus className="w-4 h-4" />Add Advertisement
                 </Btn>
               </div>

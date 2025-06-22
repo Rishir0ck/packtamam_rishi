@@ -116,22 +116,23 @@ export default function ProfileManager(){
           <div className={`px-6 py-4 border-b ${themeClass('border-gray-200', 'border-gray-700')}`}>
             <div className="flex justify-between items-center">
               <h1 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>Profile Management</h1>
-              <button onClick={() => openModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
-                <span>Add Profile</span>
-              </button>
+              
             </div>
             <div className="mt-4 flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search profiles..."
-                  className={`pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white placeholder-gray-400')}`}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <button onClick={() => openModal()} className=" text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2" style={{ backgroundColor: '#c79e73' }}>
+                <Plus className="w-4 h-4" />
+                <span>Add Profile</span>
+              </button>
             </div>
           </div>
 
@@ -296,7 +297,8 @@ export default function ProfileManager(){
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  className="px-4 py-2  text-white rounded-lg ransition-colors flex items-center space-x-2"
+                  style={{ backgroundColor: '#c79e73' }}
                 >
                   <Save className="w-4 h-4" />
                   <span>{editingProfile ? 'Update' : 'Create'} Profile</span>

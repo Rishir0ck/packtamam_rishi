@@ -121,18 +121,12 @@ export default function PolicyAdmin() {
         <div className={`rounded-lg shadow-sm p-6 mb-6 ${themeClass('bg-white', 'bg-gray-800 border border-gray-700')}`}>
           <div className="flex justify-between items-center mb-4">
             <h1 className={`text-3xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>Policy Management</h1>
-            <button 
-              onClick={() => openModal()} 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={20} /> Create Policy
-            </button>
           </div>
           
           {/* Search and Filter */}
           <div className="flex gap-4 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
               <input
                 type="text"
                 placeholder="Search policies..."
@@ -141,13 +135,13 @@ export default function PolicyAdmin() {
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
               />
             </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+            <button 
+              onClick={() => openModal()} 
+              className=" text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              style={{ backgroundColor: '#c79e73' }}
             >
-              {policyTypes.map(type => <option key={type} value={type}>{type}</option>)}
-            </select>
+              <Plus size={20} /> Create Policy
+            </button>
           </div>
         </div>
 
