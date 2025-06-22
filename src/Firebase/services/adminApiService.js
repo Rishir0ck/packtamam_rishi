@@ -265,7 +265,7 @@ class AdminService {
 
   createCategoryFormData(categoryData) {
     const formData = new FormData();
-    const fields = ['name', 'image_url'];
+    const fields = ['name'];
     fields.forEach(field => formData.append(field, categoryData[field] || ''));
     
     if (categoryData.images?.length > 0) {
@@ -277,13 +277,30 @@ class AdminService {
     return formData;
   }
 
-  // Banner Management APIs
+  createBannerFormData(bannerData) {
+    const formData = new FormData();
+    // Remove 'image_url' from the fields array since we handle it separately
+    const fields = ['title', 'placement', 'start_date', 'end_date', 'priority', 'is_active'];
+    fields.forEach(field => formData.append(field, bannerData[field] || ''));
+    
+    // Handle image file separately
+    if (bannerData.images?.length > 0) {
+      bannerData.images.forEach(image => {
+        if (image.originFileObj) formData.append('image_url', image.originFileObj);
+      });
+    }
+    
+    return formData;
+  }
+
+  // Advertisement Management APIs
   async getBanners() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/banners');
   }
 
   async addBanner(bannerData) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/add', bannerData);
+    const formData = this.createBannerFormData(bannerData);
+    return this.makeFormDataRequest('POST', '/api/admin/banners/add', formData);
   }
 
   async updateBanner(bannerId, bannerData) {
