@@ -13,10 +13,7 @@ export default function AdvertisementModule() {
   const { isDark } = useTheme();
   const hasFetched = useRef(false);
 
-  const [form, setForm] = useState({
-    title: '', images: [], placement: 'Header', is_active: true,
-    start_date: '', end_date: '', priority: 1
-  });
+  const [form, setForm] = useState({title: '', images: [], placement: 'Header', is_active: true, priority: 1});
 
   const placements = [
     { value: 'Header', label: 'Header - Top of screen' },
@@ -58,8 +55,7 @@ export default function AdvertisementModule() {
 
   // Helper functions
   const resetForm = () => {
-    setForm({ title: '', images: [], placement: 'Header', is_active: true,
-             start_date: '', end_date: '', priority: 1 });
+    setForm({ title: '', images: [], placement: 'Header', is_active: true, priority: 1 });
     setShowForm(false);
     setEditing(null);
   };
@@ -107,8 +103,7 @@ export default function AdvertisementModule() {
   const handleEdit = (ad) => {
     setForm({
       title: ad.title || '', images: [], placement: ad.placement || 'Header',
-      is_active: ad.is_active !== false, start_date: ad.start_date || '',
-      end_date: ad.end_date || '', priority: ad.priority || 1
+      is_active: ad.is_active !== false, priority: ad.priority || 1
     });
     setEditing(ad);
     setShowForm(true);
@@ -257,17 +252,6 @@ export default function AdvertisementModule() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium ${theme.text} mb-2`}>Start Date</label>
-                  <Input type="date" name="start_date" value={form.start_date} onChange={handleChange} />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium ${theme.text} mb-2`}>End Date</label>
-                  <Input type="date" name="end_date" value={form.end_date} onChange={handleChange} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Priority</label>
                   <Input type="number" name="priority" value={form.priority}
                          onChange={handleChange} min="1" />
@@ -330,9 +314,6 @@ export default function AdvertisementModule() {
                     <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
                       Priority
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Duration
-                    </th>
                     <th className={`px-6 py-3 text-right text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
                       Actions
                     </th>
@@ -369,18 +350,6 @@ export default function AdvertisementModule() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`text-sm ${theme.text}`}>{ad.priority || 1}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${theme.muted}`}>
-                          {ad.start_date || ad.end_date ? (
-                            <div>
-                              {ad.start_date && <div>From: {ad.start_date}</div>}
-                              {ad.end_date && <div>To: {ad.end_date}</div>}
-                            </div>
-                          ) : (
-                            'No date set'
-                          )}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
