@@ -71,7 +71,7 @@ export default function Dashboard() {
       const dashboardApiData = dashboardRes.status === 'fulfilled' && dashboardRes.value.success 
         ? dashboardRes.value.data : null
 
-      const revenue = dashboardApiData?.totalRevenue || (counts.approved * 15000)
+      const revenue = dashboardApiData?.totalRevenue || (counts.approved * 1000)
 
       const kpiData = [
         {

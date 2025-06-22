@@ -339,9 +339,6 @@ export default function RestaurantOnboarding() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button onClick={() => { setSelected(r); setModal('details') }} className={`p-2 ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} rounded-lg`}>
-                              <Eye className="w-4 h-4" />
-                            </button>
                             {(r.status === 'pending' || r.status === 'query') && (
                               <>
                                 <button onClick={() => handleAction(r.id, 'approved')} className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg">
@@ -355,6 +352,9 @@ export default function RestaurantOnboarding() {
                                 </button>
                               </>
                             )}
+                            <button onClick={() => { setSelected(r); setModal('details') }} className={`p-2 ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} rounded-lg`}>
+                              <Eye className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
