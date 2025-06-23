@@ -272,7 +272,7 @@ class AdminService {
 
   createCategoryFormData(categoryData) {
     const formData = new FormData();
-    const fields = ['name'];
+    const fields = ['name', 'is_active'];
     fields.forEach(field => formData.append(field, categoryData[field]));
     
     if (categoryData.images?.length > 0) {
@@ -287,7 +287,7 @@ class AdminService {
   createBannerFormData(bannerData) {
     const formData = new FormData();
     // Remove 'image_url' from the fields array since we handle it separately
-    const fields = ['title', 'placement', 'start_date', 'end_date', 'priority', 'is_active'];
+    const fields = ['title', 'placement', 'priority', 'is_active'];
     fields.forEach(field => formData.append(field, bannerData[field] || ''));
     
     // Handle image file separately
