@@ -3,7 +3,7 @@ import { Package, Utensils, Coffee } from 'lucide-react'
 
 export default function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-orange-300  to-zinc-900 flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#c79e73' }}>
       <div className="relative">
         {/* Floating 3D Elements */}
         <div className="absolute -top-20 -left-20 animate-float">
@@ -29,9 +29,13 @@ export default function LoadingScreen() {
           <div className="text-center">
             {/* 3D Logo Container */}
             <div className="relative mb-8">
-              <div className="w-24 h-24 mx-auto bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl shadow-2xl animate-rotate3d flex items-center justify-center">
-                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">PT</span>
+              <div className="w-24 h-24 mx-auto bg-gradient-to-r rounded-2xl shadow-2xl animate-rotate3d flex items-center justify-center">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center">                  
+                    <img
+                      src="/favicon.ico"
+                      alt="PT Icon"
+                      className="w-8 h-8"
+                    />
                 </div>
               </div>
             </div>
