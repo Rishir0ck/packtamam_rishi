@@ -46,38 +46,38 @@ export default function InventoryManagement() {
 
   useEffect(() => { !isInitialized && loadData() }, [isInitialized, loadData])
 
-  const getName = useCallback((id, type) => 
-    data[type]?.find(item => item.id === id)?.name || 'Unknown', [data])
+  // const getName = useCallback((id, type) => 
+  //   data[type]?.find(item => item.id === id)?.name || 'Unknown', [data])
 
   // Calculate pricing based on price slabs
-  const calculatePricing = useCallback((basePrice, quantity = 1) => {
-    if (!data.priceSlabs.length || !basePrice) return basePrice
-    const applicableSlab = data.priceSlabs.filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty).sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
-    return applicableSlab ? applicableSlab.price_per_unit : basePrice
-  }, [data.priceSlabs])
+  // const calculatePricing = useCallback((basePrice, quantity = 1) => {
+  //   if (!data.priceSlabs.length || !basePrice) return basePrice
+  //   const applicableSlab = data.priceSlabs.filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty).sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
+  //   return applicableSlab ? applicableSlab.price_per_unit : basePrice
+  // }, [data.priceSlabs])
 
   // Auto-calculate pricing fields based on inventory structure
-  const updatePricing = useCallback((formData) => {
-    const inventory = formData.inventory || {}
-    const { cost_price, markup, gst = 18, in_stock = 1 } = inventory
-    const costPrice = parseFloat(cost_price) || 0
-    const markupPercent = parseFloat(markup) || 0
-    const gstPercent = parseFloat(gst) || 18
-    const quantity = parseFloat(in_stock) || 1
+  // const updatePricing = useCallback((formData) => {
+  //   const inventory = formData.inventory || {}
+  //   const { cost_price, markup, gst = 18, in_stock = 1 } = inventory
+  //   const costPrice = parseFloat(cost_price) || 0
+  //   const markupPercent = parseFloat(markup) || 0
+  //   const gstPercent = parseFloat(gst) || 18
+  //   const quantity = parseFloat(in_stock) || 1
 
-    if (costPrice > 0) {
-      const sellPrice = costPrice + (costPrice * markupPercent / 100)
-      const finalPrice = calculatePricing(sellPrice, quantity)
-      const grossProfit = finalPrice - costPrice
-      const gstAmount = finalPrice * gstPercent / 100
-      const priceWithGst = finalPrice + gstAmount
-      const gstPayable = gstAmount
-      const netProfit = grossProfit - (gstAmount * 0.1)
+  //   if (costPrice > 0) {
+  //     const sellPrice = costPrice + (costPrice * markupPercent / 100)
+  //     const finalPrice = calculatePricing(sellPrice, quantity)
+  //     const grossProfit = finalPrice - costPrice
+  //     const gstAmount = finalPrice * gstPercent / 100
+  //     const priceWithGst = finalPrice + gstAmount
+  //     const gstPayable = gstAmount
+  //     const netProfit = grossProfit - (gstAmount * 0.1)
 
-      return {...formData,inventory: {...inventory,sell_price: Math.round(finalPrice * 100) / 100,gross_profit: Math.round(grossProfit * 100) / 100,gst_amount: Math.round(gstAmount * 100) / 100,price_with_gst: Math.round(priceWithGst * 100) / 100,gst_payable: Math.round(gstPayable * 100) / 100,net_profit: Math.round(netProfit * 100) / 100}}
-    }
-    return formData
-  }, [calculatePricing])
+  //     return {...formData,inventory: {...inventory,sell_price: Math.round(finalPrice * 100) / 100,gross_profit: Math.round(grossProfit * 100) / 100,gst_amount: Math.round(gstAmount * 100) / 100,price_with_gst: Math.round(priceWithGst * 100) / 100,gst_payable: Math.round(gstPayable * 100) / 100,net_profit: Math.round(netProfit * 100) / 100}}
+  //   }
+  //   return formData
+  // }, [calculatePricing])
 
   const filteredData = useMemo(() => {
     if (activeTab !== 'products') return data[activeTab] || []
@@ -135,12 +135,12 @@ export default function InventoryManagement() {
   if (!editData) return;
 
   const operations = {
-    editProduct: () => {
-      const finalData = updatePricing(editData);
-      return editData.id
-        ? adminService.updateProduct(finalData.id, finalData)
-        : adminService.addProduct(finalData);
-    },
+    // editProduct: () => {
+    //   const finalData = updatePricing(editData);
+    //   return editData.id
+    //     ? adminService.updateProduct(finalData.id, finalData)
+    //     : adminService.addProduct(finalData);
+    // },
     editCategory: () =>
       editData.id
         ? adminService.updateCategory(editData.id, editData.is_active,editData.name)
@@ -158,7 +158,7 @@ export default function InventoryManagement() {
 
   if (!operation) {console.error(`Unknown operation for modal: ${modal}`);return;}
 
-  apiCall(operation, () => {setModal('');setEditData(null);});}, [editData, modal, apiCall, updatePricing]);
+  apiCall(operation, () => {setModal('');setEditData(null);});}, [editData, modal, apiCall]);
 
   const stats = useMemo(() => [
     { label: 'Total', value: data.products.length, icon: Package, color: '#c79e73', filter: 'all' },
@@ -223,13 +223,13 @@ export default function InventoryManagement() {
     setFieldValue(newData, field, value)
     
     // Auto-calculate pricing when relevant fields change
-    if (field.includes('cost_price') || field.includes('markup') || field.includes('gst') || field.includes('in_stock')) {
-      const updatedData = updatePricing(newData)
-      setEditData(updatedData)
-    } else {
-      setEditData(newData)
-    }
-  }, [editData, updatePricing])
+    // if (field.includes('cost_price') || field.includes('markup') || field.includes('gst') || field.includes('in_stock')) {
+    //   const updatedData = updatePricing(newData)
+    //   setEditData(updatedData)
+    // } else {
+    //   setEditData(newData)
+    // }
+  }, [editData])
 
   const renderTable = () => {
     if (activeTab === 'products') {
