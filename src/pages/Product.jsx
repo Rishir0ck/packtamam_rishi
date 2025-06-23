@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Upload, Plus, Trash2, Package, X, Image, DollarSign, Layers, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Upload, Plus, Trash2, Package, X, Image, DollarSign, Layers, ArrowRight, ArrowLeft, CheckCircle, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import useTheme from '../hooks/useTheme';
 
 export default function ProductForm() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
@@ -16,9 +17,21 @@ export default function ProductForm() {
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
 
+  const { isDark } = useTheme();
+
+  const theme = isDark ? {
+    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white',
+    muted: 'text-gray-300', border: 'border-gray-700',
+    input: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700'
+  } : {
+    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900',
+    muted: 'text-gray-600', border: 'border-gray-200',
+    input: 'bg-white border-gray-300', hover: 'hover:bg-gray-50'
+  };
+
   const steps = [
     { id: 1, title: 'Basic Info', icon: Package, desc: 'Product details and images' },
-    { id: 2, title: 'Sizes & Pricing', icon: DollarSign, desc: 'Individual size pricing' },
+    { id: 2, title: 'Sizes & Pricing', icon: IndianRupee, desc: 'Individual size pricing' },
     { id: 3, title: 'Bulk Pricing', icon: Layers, desc: 'Price slabs for bulk orders' },
     { id: 4, title: 'Review', icon: CheckCircle, desc: 'Final review and save' }
   ];
@@ -31,10 +44,10 @@ export default function ProductForm() {
 
   const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
     <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
       <input
         type={type} value={value || ''} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
-        className={`w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${readOnly ? 'bg-gray-100' : ''}`}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
         step={type === 'number' ? '0.01' : undefined}
       />
     </div>
@@ -121,16 +134,16 @@ export default function ProductForm() {
     const productData = { ...formData, images, sizes };
     console.log('Product Data:', productData);
     
-    // Save product data (you can customize this)
+    // Save product data
     const savedProducts = JSON.parse(localStorage.getItem('savedProducts') || '[]');
     savedProducts.push({ ...productData, id: Date.now(), createdAt: new Date().toISOString() });
     localStorage.setItem('savedProducts', JSON.stringify(savedProducts));
     
     navigate('/inventory-management');
-  };    
+  };
 
   const StepProgress = () => (
-    <div className="bg-gray-50 px-6 py-4">
+    <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-4 border-b ${theme.border}`}>
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const Icon = step.icon;
@@ -141,17 +154,17 @@ export default function ProductForm() {
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                 isActive ? 'bg-blue-600 border-blue-600 text-white' :
                 isCompleted ? 'bg-green-500 border-green-500 text-white' :
-                'bg-white border-gray-300 text-gray-400'
+                'border-gray-300 text-gray-400' + (isDark ? ' bg-gray-600' : ' bg-white')
               }`}>
                 <Icon className="w-4 h-4" />
               </div>
               <div className="ml-2 hidden sm:block">
-                <p className={`font-medium text-sm ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'}`}>
+                <p className={`font-medium text-sm ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : theme.muted}`}>
                   {step.title}
                 </p>
-                <p className="text-xs text-gray-400">{step.desc}</p>
+                <p className={`text-xs ${theme.muted}`}>{step.desc}</p>
               </div>
-              {index < steps.length - 1 && <div className={`w-8 h-0.5 mx-2 ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}`} />}
+              {index < steps.length - 1 && <div className={`w-8 h-0.5 mx-2 ${isCompleted ? 'bg-green-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`} />}
             </div>
           );
         })}
@@ -161,16 +174,16 @@ export default function ProductForm() {
 
   const BasicInfoStep = () => (
     <div className="grid lg:grid-cols-2 gap-6">
-      <div className="bg-gray-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <div className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+        <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${theme.text}`}>
           <Image className="w-5 h-5" />Product Images
         </h3>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors mb-4">
+        <div className={`border-2 border-dashed ${theme.border} rounded-lg p-6 text-center hover:border-blue-400 transition-colors mb-4`}>
           <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" id="image-upload" />
           <label htmlFor="image-upload" className="cursor-pointer">
-            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600 font-medium">Upload Images</p>
-            <p className="text-sm text-gray-400">Multiple files supported</p>
+            <Upload className={`w-10 h-10 ${theme.muted} mx-auto mb-2`} />
+            <p className={`${theme.text} font-medium`}>Upload Images</p>
+            <p className={`${theme.muted} text-sm`}>Multiple files supported</p>
           </label>
         </div>
         <div className="grid grid-cols-4 gap-2">
@@ -184,30 +197,30 @@ export default function ProductForm() {
           ))}
         </div>
       </div>
-      <div className="bg-gray-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4">Product Details</h3>
+      <div className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${theme.text}`}>Product Details</h3>
         <div className="grid grid-cols-2 gap-3">
           {basicFields.map(([label, field]) => (
             <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
               <input
                 type="text" value={formData[field] || ''} onChange={(e) => handleInputChange(field, e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
               />
             </div>
           ))}
         </div>
         <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Specification</label>
+          <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
           <textarea
             value={formData.specification} onChange={(e) => handleInputChange('specification', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={2}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
           />
         </div>
         <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">In Stock</label>
+          <label className={`block text-sm font-medium ${theme.text} mb-1`}>In Stock</label>
           <select value={formData.inStock} onChange={(e) => handleInputChange('inStock', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
@@ -219,16 +232,16 @@ export default function ProductForm() {
   const SizePricingStep = () => (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold">Product Sizes & Individual Pricing</h3>
-        <button onClick={addSize} className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-2">
+        <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
+        <button onClick={addSize} className=" text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
           <Plus className="w-4 h-4" />Add Size
         </button>
       </div>
       <div className="space-y-6">
         {sizes.map((size, index) => (
-          <div key={size.id} className="bg-gray-50 rounded-xl p-6">
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
             <div className="flex justify-between items-center mb-4">
-              <h4 className="font-medium text-lg">Size #{index + 1}</h4>
+              <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
               {sizes.length > 1 && (
                 <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
                   <Trash2 className="w-4 h-4" />Remove
@@ -243,7 +256,7 @@ export default function ProductForm() {
                 { title: 'Final Price', color: 'purple', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true], ['Net Profit (₹)', 'netProfit', 'number', true]] }
               ].map(section => (
                 <div key={section.title} className="space-y-3">
-                  <h5 className={`font-medium text-center bg-${section.color}-100 py-2 rounded-lg text-sm`}>{section.title}</h5>
+                  <h5 className={`font-medium text-center py-2 rounded-lg text-sm ${isDark ? 'bg-gray-600 text-gray-200' : `bg-${section.color}-100 text-${section.color}-800`}`}>{section.title}</h5>
                   {section.fields.map(([label, field, type = 'text', readOnly = false]) => (
                     <Input key={field} label={label} type={type} value={size[field]} readOnly={readOnly}
                       onChange={(e) => calculateSizePrice(size.id, field, e.target.value)} />
@@ -259,40 +272,40 @@ export default function ProductForm() {
 
   const BulkPricingStep = () => (
     <div>
-      <h3 className="text-lg font-semibold mb-6">Bulk Pricing Slabs (Pack-wise)</h3>
+      <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
       <div className="space-y-6">
         {sizes.map((size, sizeIndex) => (
-          <div key={size.id} className="bg-gray-50 rounded-xl p-6">
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
             <div className="flex justify-between items-center mb-4">
-              <h4 className="font-medium text-lg">{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
+              <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
               <button onClick={() => addPriceSlab(size.id)}
-                className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors flex items-center gap-1">
+                className=" text-white px-3 py-1 rounded text-sm  transition-colors flex items-center gap-1" style={{ backgroundColor: '#c79e73' }}>
                 <Plus className="w-3 h-3" />Add Slab
               </button>
             </div>
-            <div className="bg-white rounded-lg p-4 overflow-x-auto">
-              <div className="grid grid-cols-12 gap-2 mb-3 text-sm font-medium text-gray-700 min-w-[600px]">
+            <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
+              <div className={`grid grid-cols-12 gap-4 mb-3 text-sm font-medium ${theme.text} min-w-[700px]`}>
                 {['#', 'Min Quantity', 'Price/Pack (₹)', 'GST (%)', 'Final Price (₹)', 'Action'].map((header, i) => (
-                  <div key={header} className={`col-span-${[1, 3, 3, 2, 2, 1][i]}`}>{header}</div>
+                  <div key={header} className={`col-span-${[1, 2, 2, 2, 2, 1][i]}`}>{header}</div>
                 ))}
               </div>
-              <div className="space-y-2 min-w-[600px]">
+              <div className="space-y-3 min-w-[700px]">
                 {size.priceSlabs.map((slab, index) => (
-                  <div key={slab.id} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-1 text-sm text-gray-500">#{index + 1}</div>
+                  <div key={slab.id} className="grid grid-cols-12 gap-4 items-center">
+                    <div className={`col-span-1 text-sm ${theme.muted}`}>#{index + 1}</div>
                     {[
-                      ['quantity', 3, 'Min packs'],
-                      ['price', 3, 'Price'],
+                      ['quantity', 2, 'Min packs'],
+                      ['price', 2, 'Price'],
                       ['gst', 2, 'GST%'],
                     ].map(([field, span, placeholder]) => (
                       <div key={field} className={`col-span-${span}`}>
                         <input type="number" value={slab[field]} onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
                           placeholder={placeholder} step={field === 'price' || field === 'gst' ? '0.01' : undefined} />
                       </div>
                     ))}
                     <div className="col-span-2">
-                      <input type="number" value={slab.finalPrice} className="w-full p-2 border border-gray-300 rounded bg-gray-100" readOnly />
+                      <input type="number" value={slab.finalPrice} className={`w-full p-2 border rounded opacity-60 ${theme.input}`} readOnly />
                     </div>
                     <div className="col-span-1 text-center">
                       {size.priceSlabs.length > 1 && (
@@ -313,21 +326,21 @@ export default function ProductForm() {
 
   const ReviewStep = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold mb-6">Review Product Details</h3>
+      <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Review Product Details</h3>
       
       {/* Basic Info Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3">
+      <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
+        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
           <h4 className="font-semibold">Basic Information</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr><th className="px-4 py-2 text-left font-medium text-gray-700">Field</th><th className="px-4 py-2 text-left font-medium text-gray-700">Value</th></tr>
+            <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+              <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className={`divide-y ${theme.border}`}>
               {[...basicFields, ['In Stock', 'inStock'], ['Specification', 'specification'], ['Images', `${images.length} uploaded`]].map(([field, key]) => (
-                <tr key={field}><td className="px-4 py-2 font-medium">{field}</td><td className="px-4 py-2">{key === 'Images' ? `${images.length} uploaded` : formData[key] || '-'}</td></tr>
+                <tr key={field} className={theme.hover}><td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td><td className={`px-4 py-2 ${theme.text}`}>{key === 'Images' ? `${images.length} uploaded` : formData[key] || '-'}</td></tr>
               ))}
             </tbody>
           </table>
@@ -335,21 +348,21 @@ export default function ProductForm() {
       </div>
 
       {/* Pricing Summary */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3">
+      <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
+        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
           <h4 className="font-semibold">Sizes & Pricing Summary</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>{['Size', 'Pack Off', 'Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className="px-3 py-2 text-left font-medium text-gray-700">{h}</th>)}</tr>
+            <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+              <tr>{['Size', 'Pack Off', 'Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className={`divide-y ${theme.border}`}>
               {sizes.map((size, i) => (
-                <tr key={size.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 font-medium">{size.size || `Size ${i + 1}`}</td>
+                <tr key={size.id} className={theme.hover}>
+                  <td className={`px-3 py-2 font-medium ${theme.text}`}>{size.size || `Size ${i + 1}`}</td>
                   {['packOff', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => (
-                    <td key={field} className={`px-3 py-2 ${field === 'priceWithGst' ? 'font-bold text-green-600' : field === 'netProfit' ? 'font-medium text-blue-600' : ''}`}>
+                    <td key={field} className={`px-3 py-2 ${theme.text} ${field === 'priceWithGst' ? 'font-bold text-green-600' : field === 'netProfit' ? 'font-medium text-blue-600' : ''}`}>
                       {field === 'gst' ? `${size[field] || '0'}%` : field === 'packOff' ? size[field] || '-' : `₹${size[field] || '0.00'}`}
                     </td>
                   ))}
@@ -363,7 +376,7 @@ export default function ProductForm() {
 
       {/* Bulk Pricing Details */}
       {sizes.some(size => size.priceSlabs.some(slab => slab.quantity || slab.price)) && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3">
             <h4 className="font-semibold">Bulk Pricing Details</h4>
           </div>
@@ -373,22 +386,22 @@ export default function ProductForm() {
               if (!validSlabs.length) return null;
               return (
                 <div key={size.id}>
-                  <h5 className="font-medium text-gray-800 mb-2">
-                    <span className="bg-gray-100 px-3 py-1 rounded-lg text-sm">{size.size || `Size ${sizeIndex + 1}`}</span>
+                  <h5 className={`font-medium ${theme.text} mb-2`}>
+                    <span className={`px-3 py-1 rounded-lg text-sm ${isDark ? 'bg-gray-600' : 'bg-gray-100'}`}>{size.size || `Size ${sizeIndex + 1}`}</span>
                   </h5>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border border-gray-200 rounded-lg">
-                      <thead className="bg-gray-50">
-                        <tr>{['Slab', 'Min Qty', 'Price/Pack (₹)', 'GST (%)', 'Final (₹)'].map(h => <th key={h} className="px-4 py-2 text-left font-medium text-gray-700">{h}</th>)}</tr>
+                    <table className={`w-full text-sm border ${theme.border} rounded-lg`}>
+                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+                        <tr>{['Slab', 'Min Qty', 'Price/Pack (₹)', 'GST (%)', 'Final (₹)'].map(h => <th key={h} className={`px-4 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className={`divide-y ${theme.border}`}>
                         {validSlabs.map((slab, slabIndex) => (
-                          <tr key={slab.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 font-medium">#{slabIndex + 1}</td>
-                            <td className="px-4 py-2">{slab.quantity || '-'}</td>
-                            <td className="px-4 py-2">₹{slab.price || '0.00'}</td>
-                            <td className="px-4 py-2">{slab.gst || '0'}%</td>
-                            <td className="px-4 py-2 font-bold text-green-600">₹{slab.finalPrice || '0.00'}</td>
+                          <tr key={slab.id} className={theme.hover}>
+                            <td className={`px-4 py-2 font-medium ${theme.text}`}>#{slabIndex + 1}</td>
+                            <td className={`px-4 py-2 ${theme.text}`}>{slab.quantity || '-'}</td>
+                            <td className={`px-4 py-2 ${theme.text}`}>₹{slab.price || '0.00'}</td>
+                            <td className={`px-4 py-2 ${theme.text}`}>{slab.gst || '0'}%</td>
+                            <td className={`px-4 py-2 font-bold text-green-600`}>₹{slab.finalPrice || '0.00'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -404,14 +417,14 @@ export default function ProductForm() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className={`max-w-7xl mx-auto p-6 min-h-screen ${theme.bg}`}>
+      <div className={`max-w-7xl mx-auto ${theme.card} rounded-2xl shadow-xl overflow-hidden border ${theme.border}`}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+        <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6 border-b ${theme.border}`}>
+          <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-3`}>
             <Package className="w-7 h-7" />Product Management System
           </h1>
-          <p className="text-blue-100 mt-1">Professional multi-step product creation</p>
+          <p className={`${theme.muted} mt-1`}>Professional multi-step product creation</p>
         </div>
 
         <StepProgress />
@@ -425,7 +438,7 @@ export default function ProductForm() {
         </div>
 
         {/* Navigation */}
-        <div className="bg-gray-50 px-6 py-4 flex justify-between border-t">
+        <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-4 flex justify-between border-t ${theme.border}`}>
           <button onClick={prevStep} disabled={currentStep === 1}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${
               currentStep === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-600 text-white hover:bg-gray-700'
@@ -434,12 +447,12 @@ export default function ProductForm() {
           </button>
           {currentStep < 4 ? (
             <button onClick={nextStep}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2">
+              className=" text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
               Next<ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button onClick={handleSubmit}
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-2 rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold">
+              className="text-white px-8 py-2 rounded-lg transition-all flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
               Save Product
             </button>
           )}
