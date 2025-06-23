@@ -113,8 +113,8 @@ export default function InventoryManagement() {
         } else {
           return await adminService.addCategory({
             name: editData.name,
-            is_active: editData.is_active,
-            image_url: editData.images?.[0]?.url
+            // is_active: editData.is_active,
+            image_url: editData.images?.[0]?.url || editData.image_url
           });
         }
       } catch (err) {

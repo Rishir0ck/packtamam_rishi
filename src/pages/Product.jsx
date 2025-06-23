@@ -1,32 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Plus, Trash2, Package, X, Image, DollarSign, Layers, ArrowRight, ArrowLeft, CheckCircle, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
+import adminService from '../Firebase/services/adminApiService'; // Import your admin service
 
-export default function ProductForm() {
+export default function ProductForm({ editProduct = null }) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [images, setImages] = useState(editProduct?.images || []);
   const [formData, setFormData] = useState({
-    productName: '', category: '', material: '', hsnCode: '', shape: '', color: '',
-    specification: '', quality: '', inventoryCode: '', inStock: 'Yes'
+    name: editProduct?.name || '',
+    category_id: editProduct?.category_id || '',
+    material_id: editProduct?.material_id || '',
+    hsn_code: editProduct?.hsn_code || '',
+    shape: editProduct?.shape || '',
+    colour: editProduct?.colour || '',
+    specs: editProduct?.specs || '',
+    quality: editProduct?.quality || '',
+    inventoryCode: editProduct?.inventoryCode || '',
+    inStock: editProduct?.inStock || 'Yes'
   });
-  const [sizes, setSizes] = useState([{
+  const [sizes, setSizes] = useState(editProduct?.sizes || [{
     id: 1, size: '', costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',
     gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
 
   const { isDark } = useTheme();
-
   const theme = isDark ? {
-    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white',
-    muted: 'text-gray-300', border: 'border-gray-700',
-    input: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700'
+    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white', muted: 'text-gray-300', 
+    border: 'border-gray-700', input: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700'
   } : {
-    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900',
-    muted: 'text-gray-600', border: 'border-gray-200',
-    input: 'bg-white border-gray-300', hover: 'hover:bg-gray-50'
+    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600', 
+    border: 'border-gray-200', input: 'bg-white border-gray-300', hover: 'hover:bg-gray-50'
   };
 
   const steps = [
@@ -36,20 +45,44 @@ export default function ProductForm() {
     { id: 4, title: 'Review', icon: CheckCircle, desc: 'Final review and save' }
   ];
 
-  const basicFields = [
-    ['Product Name', 'productName'], ['Category', 'category'], ['Material', 'material'],
-    ['HSN Code', 'hsnCode'], ['Shape', 'shape'], ['Color', 'color'],
-    ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
-  ];
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
 
-  const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
+  const loadInitialData = async () => {
+    setLoading(true);
+    try {
+      const [categoriesRes, materialsRes] = await Promise.all([
+        adminService.getCategories(),
+        adminService.getMaterials()
+      ]);
+      
+      if (categoriesRes.success) setCategories(categoriesRes.data || []);
+      if (materialsRes.success) setMaterials(materialsRes.data || []);
+    } catch (error) {
+      console.error('Failed to load initial data:', error);
+    }
+    setLoading(false);
+  };
+
+  const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "", options = null }) => (
     <div className={className}>
       <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
-      <input
-        type={type} value={value || ''} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
-        step={type === 'number' ? '0.01' : undefined}
-      />
+      {options && Array.isArray(options) ? (
+        <select value={value || ''} onChange={onChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
+          <option value="">Select {label}</option>
+          {options.map(opt => (
+            <option key={opt.id} value={opt.id}>{opt.name}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type} value={value || ''} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
+          step={type === 'number' ? '0.01' : undefined}
+        />
+      )}
     </div>
   );
 
@@ -59,17 +92,21 @@ export default function ProductForm() {
     setSizes(prev => prev.map(size => {
       if (size.id !== sizeId) return size;
       const updated = { ...size, [field]: value };
+      
+      // Auto-calculate pricing fields
       if (field === 'costPrice' || field === 'markupPrice') {
         const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
         const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
         updated.sellPrice = (cost + markup).toFixed(2);
         updated.grossProfit = markup.toFixed(2);
       }
+      
       if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
         const sellPrice = parseFloat(updated.sellPrice) || 0;
         const gstRate = parseFloat(field === 'gst' ? value : size.gst) || 0;
         const gstAmount = (sellPrice * gstRate) / 100;
         const costPrice = parseFloat(updated.costPrice) || 0;
+        
         updated.gstAmount = gstAmount.toFixed(2);
         updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
         updated.payableGst = gstAmount.toFixed(2);
@@ -102,7 +139,12 @@ export default function ProductForm() {
     const files = Array.from(e.target.files);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (e) => setImages(prev => [...prev, { id: Date.now() + Math.random(), url: e.target.result, name: file.name }]);
+      reader.onload = (e) => setImages(prev => [...prev, { 
+        id: Date.now() + Math.random(), 
+        url: e.target.result, 
+        name: file.name,
+        originFileObj: file // Store original file for API
+      }]);
       reader.readAsDataURL(file);
     });
   };
@@ -130,16 +172,54 @@ export default function ProductForm() {
   const nextStep = () => currentStep < 4 && setCurrentStep(currentStep + 1);
   const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
 
-  const handleSubmit = () => {
-    const productData = { ...formData, images, sizes };
-    console.log('Product Data:', productData);
-    
-    // Save product data
-    const savedProducts = JSON.parse(localStorage.getItem('savedProducts') || '[]');
-    savedProducts.push({ ...productData, id: Date.now(), createdAt: new Date().toISOString() });
-    localStorage.setItem('savedProducts', JSON.stringify(savedProducts));
-    
-    navigate('/inventory-management');
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      // Prepare product data for API
+      const productData = {
+        ...formData,
+        images: images.filter(img => img.originFileObj), // Only new images for API
+        sizes // Include sizes data
+      };
+
+      let result;
+      if (editProduct) {
+        result = await adminService.updateProduct(editProduct.id, productData);
+      } else {
+        result = await adminService.addProduct(productData);
+      }
+
+      if (result.success) {
+        // Save price slabs for each size
+        for (const size of sizes) {
+          for (const slab of size.priceSlabs) {
+            if (slab.quantity && slab.price) {
+              const slabData = {
+                product_id: result.data?.id || editProduct?.id,
+                size_id: size.id,
+                min_qty: parseInt(slab.quantity),
+                max_qty: parseInt(slab.quantity) + 99, // Adjust as needed
+                price_per_unit: parseFloat(slab.price)
+              };
+              
+              if (slab.id && editProduct) {
+                await adminService.updatePriceSlab(slab.id, slabData.min_qty, slabData.max_qty, slabData.price_per_unit);
+              } else {
+                await adminService.addPriceSlab(slabData.min_qty, slabData.max_qty, slabData.price_per_unit);
+              }
+            }
+          }
+        }
+        
+        navigate('/inventory-management');
+      } else {
+        alert('Failed to save product: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error saving product: ' + error.message);
+    }
+    setLoading(false);
   };
 
   const StepProgress = () => (
@@ -197,33 +277,25 @@ export default function ProductForm() {
           ))}
         </div>
       </div>
+      
       <div className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
         <h3 className={`text-lg font-semibold mb-4 ${theme.text}`}>Product Details</h3>
         <div className="grid grid-cols-2 gap-3">
-          {basicFields.map(([label, field]) => (
-            <div key={field}>
-              <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
-              <input
-                type="text" value={formData[field] || ''} onChange={(e) => handleInputChange(field, e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
-              />
-            </div>
-          ))}
+          <Input label="Product Name" value={formData.name} onChange={(e) => handleInputChange('name', e.target.value)} />
+          <Input label="Category" value={formData.category_id} onChange={(e) => handleInputChange('category_id', e.target.value)} options={categories} />
+          <Input label="Material" value={formData.material_id} onChange={(e) => handleInputChange('material_id', e.target.value)} options={materials} />
+          <Input label="HSN Code" value={formData.hsn_code} onChange={(e) => handleInputChange('hsn_code', e.target.value)} />
+          <Input label="Shape" value={formData.shape} onChange={(e) => handleInputChange('shape', e.target.value)} />
+          <Input label="Color" value={formData.colour} onChange={(e) => handleInputChange('colour', e.target.value)} />
+          <Input label="Quality" value={formData.quality} onChange={(e) => handleInputChange('quality', e.target.value)} />
+          <Input label="Inventory Code" value={formData.inventoryCode} onChange={(e) => handleInputChange('inventoryCode', e.target.value)} />
         </div>
         <div className="mt-3">
-          <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
-          <textarea
-            value={formData.specification} onChange={(e) => handleInputChange('specification', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
-          />
+          <Input label="Specifications" value={formData.specs} onChange={(e) => handleInputChange('specs', e.target.value)} />
         </div>
         <div className="mt-3">
-          <label className={`block text-sm font-medium ${theme.text} mb-1`}>In Stock</label>
-          <select value={formData.inStock} onChange={(e) => handleInputChange('inStock', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
+          <Input label="In Stock" value={formData.inStock} onChange={(e) => handleInputChange('inStock', e.target.value)} 
+            options={[{id: 'Yes', name: 'Yes'}, {id: 'No', name: 'No'}]} />
         </div>
       </div>
     </div>
@@ -233,7 +305,7 @@ export default function ProductForm() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
-        <button onClick={addSize} className=" text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
+        <button onClick={addSize} className="text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
           <Plus className="w-4 h-4" />Add Size
         </button>
       </div>
@@ -250,13 +322,13 @@ export default function ProductForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { title: 'Size Details', color: 'blue', fields: [['Size', 'size'], ['Pack Off', 'packOff']] },
-                { title: 'Cost & Markup', color: 'orange', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup Price (₹)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
-                { title: 'Selling Price', color: 'green', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number'], ['GST Amount (₹)', 'gstAmount', 'number', true]] },
-                { title: 'Final Price', color: 'purple', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true], ['Net Profit (₹)', 'netProfit', 'number', true]] }
+                { title: 'Size Details', fields: [['Size', 'size'], ['Pack Off', 'packOff']] },
+                { title: 'Cost & Markup', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup Price (₹)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
+                { title: 'Selling Price', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number'], ['GST Amount (₹)', 'gstAmount', 'number', true]] },
+                { title: 'Final Price', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true], ['Net Profit (₹)', 'netProfit', 'number', true]] }
               ].map(section => (
                 <div key={section.title} className="space-y-3">
-                  <h5 className={`font-medium text-center py-2 rounded-lg text-sm ${isDark ? 'bg-gray-600 text-gray-200' : `bg-${section.color}-100 text-${section.color}-800`}`}>{section.title}</h5>
+                  <h5 className={`font-medium text-center py-2 rounded-lg text-sm ${isDark ? 'bg-gray-600 text-gray-200' : 'bg-blue-100 text-blue-800'}`}>{section.title}</h5>
                   {section.fields.map(([label, field, type = 'text', readOnly = false]) => (
                     <Input key={field} label={label} type={type} value={size[field]} readOnly={readOnly}
                       onChange={(e) => calculateSizePrice(size.id, field, e.target.value)} />
@@ -279,7 +351,7 @@ export default function ProductForm() {
             <div className="flex justify-between items-center mb-4">
               <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
               <button onClick={() => addPriceSlab(size.id)}
-                className=" text-white px-3 py-1 rounded text-sm  transition-colors flex items-center gap-1" style={{ backgroundColor: '#c79e73' }}>
+                className="text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1" style={{ backgroundColor: '#c79e73' }}>
                 <Plus className="w-3 h-3" />Add Slab
               </button>
             </div>
@@ -330,17 +402,28 @@ export default function ProductForm() {
       
       {/* Basic Info Table */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
-          <h4 className="font-semibold">Basic Information</h4>
+        <div className={`px-6 py-3 ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+          <h4 className={`font-semibold ${theme.text}`}>Basic Information</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
-            </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['In Stock', 'inStock'], ['Specification', 'specification'], ['Images', `${images.length} uploaded`]].map(([field, key]) => (
-                <tr key={field} className={theme.hover}><td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td><td className={`px-4 py-2 ${theme.text}`}>{key === 'Images' ? `${images.length} uploaded` : formData[key] || '-'}</td></tr>
+              {[
+                ['Product Name', formData.name],
+                ['Category', categories.find(c => c.id == formData.category_id)?.name || 'Not selected'],
+                ['Material', materials.find(m => m.id == formData.material_id)?.name || 'Not selected'],
+                ['HSN Code', formData.hsn_code],
+                ['Shape', formData.shape],
+                ['Color', formData.colour],
+                ['Quality', formData.quality],
+                ['Specifications', formData.specs],
+                ['In Stock', formData.inStock],
+                ['Images', `${images.length} uploaded`]
+              ].map(([field, value]) => (
+                <tr key={field} className={theme.hover}>
+                  <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
+                  <td className={`px-4 py-2 ${theme.text}`}>{value || '-'}</td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -349,72 +432,51 @@ export default function ProductForm() {
 
       {/* Pricing Summary */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
-          <h4 className="font-semibold">Sizes & Pricing Summary</h4>
+        <div className={`px-6 py-3 ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+          <h4 className={`font-semibold ${theme.text}`}>Sizes & Pricing Summary</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr>{['Size', 'Pack Off', 'Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
+              <tr>{['Size', 'Pack Off', 'Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => 
+                <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>
+              )}</tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
               {sizes.map((size, i) => (
                 <tr key={size.id} className={theme.hover}>
                   <td className={`px-3 py-2 font-medium ${theme.text}`}>{size.size || `Size ${i + 1}`}</td>
-                  {['packOff', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => (
-                    <td key={field} className={`px-3 py-2 ${theme.text} ${field === 'priceWithGst' ? 'font-bold text-green-600' : field === 'netProfit' ? 'font-medium text-blue-600' : ''}`}>
-                      {field === 'gst' ? `${size[field] || '0'}%` : field === 'packOff' ? size[field] || '-' : `₹${size[field] || '0.00'}`}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2 text-center"><span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{size.priceSlabs.length}</span></td>
+                  <td className={`px-3 py-2 ${theme.text}`}>{size.packOff || '-'}</td>
+                  <td className={`px-3 py-2 ${theme.text}`}>₹{size.costPrice || '0.00'}</td>
+                  <td className={`px-3 py-2 ${theme.text}`}>₹{size.markupPrice || '0.00'}</td>
+                  <td className={`px-3 py-2 ${theme.text}`}>₹{size.sellPrice || '0.00'}</td>
+                  <td className={`px-3 py-2 ${theme.text}`}>{size.gst || '0'}%</td>
+                  <td className={`px-3 py-2 font-bold text-green-600`}>₹{size.priceWithGst || '0.00'}</td>
+                  <td className={`px-3 py-2 font-medium text-blue-600`}>₹{size.netProfit || '0.00'}</td>
+                  <td className="px-3 py-2 text-center">
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {size.priceSlabs.length}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-
-      {/* Bulk Pricing Details */}
-      {sizes.some(size => size.priceSlabs.some(slab => slab.quantity || slab.price)) && (
-        <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3">
-            <h4 className="font-semibold">Bulk Pricing Details</h4>
-          </div>
-          <div className="p-6 space-y-4">
-            {sizes.map((size, sizeIndex) => {
-              const validSlabs = size.priceSlabs.filter(slab => slab.quantity || slab.price);
-              if (!validSlabs.length) return null;
-              return (
-                <div key={size.id}>
-                  <h5 className={`font-medium ${theme.text} mb-2`}>
-                    <span className={`px-3 py-1 rounded-lg text-sm ${isDark ? 'bg-gray-600' : 'bg-gray-100'}`}>{size.size || `Size ${sizeIndex + 1}`}</span>
-                  </h5>
-                  <div className="overflow-x-auto">
-                    <table className={`w-full text-sm border ${theme.border} rounded-lg`}>
-                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-                        <tr>{['Slab', 'Min Qty', 'Price/Pack (₹)', 'GST (%)', 'Final (₹)'].map(h => <th key={h} className={`px-4 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme.border}`}>
-                        {validSlabs.map((slab, slabIndex) => (
-                          <tr key={slab.id} className={theme.hover}>
-                            <td className={`px-4 py-2 font-medium ${theme.text}`}>#{slabIndex + 1}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>{slab.quantity || '-'}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>₹{slab.price || '0.00'}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>{slab.gst || '0'}%</td>
-                            <td className={`px-4 py-2 font-bold text-green-600`}>₹{slab.finalPrice || '0.00'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className={theme.text}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`max-w-7xl mx-auto p-6 min-h-screen ${theme.bg}`}>
@@ -422,7 +484,8 @@ export default function ProductForm() {
         {/* Header */}
         <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6 border-b ${theme.border}`}>
           <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-3`}>
-            <Package className="w-7 h-7" />Product Management System
+            <Package className="w-7 h-7" />
+            {editProduct ? 'Edit Product' : 'Product Management System'}
           </h1>
           <p className={`${theme.muted} mt-1`}>Professional multi-step product creation</p>
         </div>

@@ -5,6 +5,7 @@ import { useAuthGuard } from '../Firebase/hooks/useAuthGuard' // Import the auth
 // Import the logo from assets folder
 import logoImage from '../assets/pack tamam.png'
 
+
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
@@ -39,17 +40,20 @@ export default function Login() {
       
       if (result.success) {
         console.log('✅ Login successful, navigating to dashboard')
-        // Navigation will be handled by the useEffect when isAuthenticated changes
-        // But we can also navigate here as a fallback
-        // navigate('/dashboard', { replace: true })
         window.location.href = '/dashboard' // Use window.location.href to ensure full reload
+        // navigate('/dashboard');
       } else {
         console.log('❌ Login failed:', result.error)
         setError(result.error || 'Login failed. Please try again.')
       }
     } catch (err) {
       console.error('❌ Login error:', err)
-      setError('An unexpected error occurred. Please try again.')
+      // Development fallback - only show in development mode
+      if (process.env.NODE_ENV === 'development') {
+        setError(`API Error: ${err.message}. Using development fallback credentials (admin@example.com/admin123) might help.`)
+      } else {
+        setError('An unexpected error occurred. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }

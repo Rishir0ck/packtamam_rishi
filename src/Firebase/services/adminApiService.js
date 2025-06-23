@@ -204,7 +204,7 @@ class AdminService {
 
   async addProduct(productData) {
     const formData = this.createProductFormData(productData);
-    return this.makeFormDataRequest('POST', '/api/admin/add-products', formData);
+    return this.makeFormDataRequest('POST', '/api/products', formData);
   }
 
   async updateProduct(productId, productData) {
@@ -230,8 +230,8 @@ class AdminService {
     return this.makeFormDataRequest('POST', '/api/admin/categories/add', formData);
   }
 
-  async updateCategory(id, name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {id, name});
+  async updateCategory(id, name, is_active) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {id, name, is_active});
   }
 
   // Material Management
@@ -251,9 +251,16 @@ class AdminService {
   // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();
-    const fields = ['name', 'category_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'quality'];
-    fields.forEach(field => formData.append(field, productData[field] || ''));
+    const fields = ['productName', 'category', 'material', 'hsn_code', 'shape', 'color', 'specification', 'quality','inventoryCode','inStock','size'];
+    fields.forEach(field => formData.append(field, productData[field]));
     
+     // ✅ Handle size array as JSON string
+      if (Array.isArray(productData.size)) {
+        formData.append('size', JSON.stringify(productData.size));
+      } else {
+        formData.append('size', '[]'); // or '' if you prefer
+      }
+
     if (productData.images?.length > 0) {
       productData.images.forEach(image => {
         if (image.originFileObj) formData.append('images', image.originFileObj);
