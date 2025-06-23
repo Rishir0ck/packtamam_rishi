@@ -46,39 +46,6 @@ export default function InventoryManagement() {
 
   useEffect(() => { !isInitialized && loadData() }, [isInitialized, loadData])
 
-  // const getName = useCallback((id, type) => 
-  //   data[type]?.find(item => item.id === id)?.name || 'Unknown', [data])
-
-  // Calculate pricing based on price slabs
-  // const calculatePricing = useCallback((basePrice, quantity = 1) => {
-  //   if (!data.priceSlabs.length || !basePrice) return basePrice
-  //   const applicableSlab = data.priceSlabs.filter(slab => quantity >= slab.min_qty && quantity <= slab.max_qty).sort((a, b) => b.price_per_unit - a.price_per_unit)[0]
-  //   return applicableSlab ? applicableSlab.price_per_unit : basePrice
-  // }, [data.priceSlabs])
-
-  // Auto-calculate pricing fields based on inventory structure
-  // const updatePricing = useCallback((formData) => {
-  //   const inventory = formData.inventory || {}
-  //   const { cost_price, markup, gst = 18, in_stock = 1 } = inventory
-  //   const costPrice = parseFloat(cost_price) || 0
-  //   const markupPercent = parseFloat(markup) || 0
-  //   const gstPercent = parseFloat(gst) || 18
-  //   const quantity = parseFloat(in_stock) || 1
-
-  //   if (costPrice > 0) {
-  //     const sellPrice = costPrice + (costPrice * markupPercent / 100)
-  //     const finalPrice = calculatePricing(sellPrice, quantity)
-  //     const grossProfit = finalPrice - costPrice
-  //     const gstAmount = finalPrice * gstPercent / 100
-  //     const priceWithGst = finalPrice + gstAmount
-  //     const gstPayable = gstAmount
-  //     const netProfit = grossProfit - (gstAmount * 0.1)
-
-  //     return {...formData,inventory: {...inventory,sell_price: Math.round(finalPrice * 100) / 100,gross_profit: Math.round(grossProfit * 100) / 100,gst_amount: Math.round(gstAmount * 100) / 100,price_with_gst: Math.round(priceWithGst * 100) / 100,gst_payable: Math.round(gstPayable * 100) / 100,net_profit: Math.round(netProfit * 100) / 100}}
-  //   }
-  //   return formData
-  // }, [calculatePricing])
-
   const filteredData = useMemo(() => {
     if (activeTab !== 'products') return data[activeTab] || []
     return data.products.filter(p => {
@@ -135,12 +102,6 @@ export default function InventoryManagement() {
   if (!editData) return;
 
   const operations = {
-    // editProduct: () => {
-    //   const finalData = updatePricing(editData);
-    //   return editData.id
-    //     ? adminService.updateProduct(finalData.id, finalData)
-    //     : adminService.addProduct(finalData);
-    // },
     editCategory: () =>
       editData.id
         ? adminService.updateCategory(editData.id, editData.is_active,editData.name)
@@ -168,30 +129,6 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },{ id: 'priceSlabs', label: 'Discount', icon: TrendingUp },{ id: 'categories', label: 'Categories', icon: TrendingUp },{ id: 'materials', label: 'Materials', icon: Layers }]
-
-  const productFields = [
-    { key: 'name', label: 'Product Name', required: true },
-    { key: 'category_id', label: 'Category', type: 'select', options: data.categories.map(c => ({ value: c.id, label: c.name })), required: true },
-    { key: 'material_id', label: 'Material', type: 'select', options: data.materials.map(m => ({ value: m.id, label: m.name })), required: true },
-    { key: 'hsn_code', label: 'HSN Code' },
-    { key: 'shape', label: 'Shape' },
-    { key: 'colour', label: 'Colour' },
-    { key: 'specs', label: 'Description', span: 2 },
-    { key: 'quality', label: 'Quality', type: 'select', options: [{ value: 'Standard', label: 'Standard' }, { value: 'Premium', label: 'Premium' }] },
-    { key: 'inventory.inventory_code', label: 'Inventory Code' },
-    { key: 'inventory.cost_price', label: 'Cost Price (₹)', type: 'number', onChange: true },
-    { key: 'inventory.markup', label: 'Markup (%)', type: 'number', onChange: true },
-    { key: 'inventory.sell_price', label: 'Sell Price (₹)', type: 'number', readonly: true },
-    { key: 'inventory.gross_profit', label: 'Gross Profit (₹)', type: 'number', readonly: true },
-    { key: 'inventory.gst', label: 'GST (%)', type: 'number', onChange: true },
-    { key: 'inventory.price_with_gst', label: 'Price with GST (₹)', type: 'number', readonly: true },
-    { key: 'inventory.gst_amount', label: 'GST Amount (₹)', type: 'number', readonly: true },
-    { key: 'inventory.gst_payable', label: 'GST Payable (₹)', type: 'number', readonly: true },
-    { key: 'inventory.net_profit', label: 'Net Profit (₹)', type: 'number', readonly: true },
-    { key: 'inventory.pack_off', label: 'Pack Off', type: 'number' },
-    { key: 'inventory.in_stock', label: 'In Stock', type: 'radio' },
-    { key: 'is_active', label: 'Active Status', type: 'checkbox', span: 2 }
-  ]
 
   const priceSlabFields = [{ key: 'min_qty', label: 'Min Qty', type: 'number', required: true },{ key: 'max_qty', label: 'Max Qty', type: 'number', required: true },{ key: 'price_per_unit', label: 'Price/Unit', type: 'number', required: true }]
 
@@ -221,14 +158,6 @@ export default function InventoryManagement() {
   const handleFieldChange = useCallback((field, value) => {
     const newData = { ...editData }
     setFieldValue(newData, field, value)
-    
-    // Auto-calculate pricing when relevant fields change
-    // if (field.includes('cost_price') || field.includes('markup') || field.includes('gst') || field.includes('in_stock')) {
-    //   const updatedData = updatePricing(newData)
-    //   setEditData(updatedData)
-    // } else {
-    //   setEditData(newData)
-    // }
   }, [editData])
 
   const renderTable = () => {
@@ -321,8 +250,6 @@ export default function InventoryManagement() {
                     <div className="flex gap-2">
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editSlab') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      {/* <ActionButton onClick={() => deleteItem(item.id, 'priceSlab')} 
-                        color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>
@@ -360,8 +287,6 @@ export default function InventoryManagement() {
                     <div className="flex gap-2">
                       <ActionButton onClick={() => { setEditData({...item}); setModal('editCategory') }} 
                         color="#c79e73" icon={Edit} title="Edit" />
-                      {/* <ActionButton onClick={() => deleteItem(item.id, 'categories')} 
-                        color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>
@@ -389,14 +314,6 @@ export default function InventoryManagement() {
               {filteredData.map((item) => (
                 <tr key={item.id} className={theme.tableRow}>
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
-                  {/* <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <ActionButton onClick={() => { setEditData({...item}); setModal('editMaterial') }} 
-                        color="#c79e73" icon={Edit} title="Edit" />
-                      <ActionButton onClick={() => deleteItem(item.id, 'materials')} 
-                        color="#ef4444" icon={Trash2} title="Delete" />
-                    </div>
-                  </td> */}
                 </tr>
               ))}
             </tbody>
