@@ -230,8 +230,8 @@ class AdminService {
     return this.makeFormDataRequest('POST', '/api/admin/categories/add', formData);
   }
 
-  async updateCategory(id, is_active,name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {id,is_active,name});
+  async updateCategory(id, name) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/categories/update', {id, name});
   }
 
   // Material Management
@@ -266,7 +266,7 @@ class AdminService {
   createCategoryFormData(categoryData) {
     const formData = new FormData();
     const fields = ['name'];
-    fields.forEach(field => formData.append(field, categoryData[field] || ''));
+    fields.forEach(field => formData.append(field, categoryData[field]));
     
     if (categoryData.images?.length > 0) {
       categoryData.images.forEach(image => {
