@@ -1,6 +1,6 @@
 // CategoriesTab.jsx
-import React, { useState, useCallback } from 'react'
-import { Plus, Package, Edit, Upload, X, Save } from 'lucide-react'
+import React, { useState, useCallback, useMemo } from 'react'
+import { Plus, Package, Edit, Upload, X, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from './Modal'
 import ActionButton from './ActionButton'
 import adminService from '../Firebase/services/adminApiService'
@@ -8,6 +8,35 @@ import adminService from '../Firebase/services/adminApiService'
 export default function CategoriesTab({ data, loading, apiCall, theme }) {
   const [modal, setModal] = useState('')
   const [editData, setEditData] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  const handleSort = useCallback((key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }))
+    setCurrentPage(1)
+  }, [])
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig.key) return data
+    return [...data].sort((a, b) => {
+      const aVal = a[sortConfig.key]
+      const bVal = b[sortConfig.key]
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [data, sortConfig])
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return sortedData.slice(start, start + itemsPerPage)
+  }, [sortedData, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage)
 
   const handleImageUpload = useCallback((files) => {
     const images = Array.from(files).map(file => ({
@@ -40,10 +69,59 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
     })
   }, [editData, apiCall])
 
-  const categoryFields = [
-    { key: 'name', label: 'Category Name', required: true },
-    { key: 'is_active', label: 'Active Status', type: 'checkbox' }
-  ]
+  const openModal = useCallback((item = null) => {
+    setEditData(item ? { ...item, images: [] } : { name: '', is_active: true, images: [] })
+    setModal('editCategory')
+  }, [])
+
+  const SortIcon = ({ column }) => {
+    if (sortConfig.key !== column) return <ChevronUp className="w-4 h-4 opacity-30" />
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="w-4 h-4 text-blue-500" />
+      : <ChevronDown className="w-4 h-4 text-blue-500" />
+  }
+
+  const Pagination = () => (
+    <div className="flex items-center justify-between px-4 py-3 border-t">
+      <div className="flex items-center gap-2">
+        <span className={`text-sm ${theme.muted}`}>Rows per page:</span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => {
+            setItemsPerPage(Number(e.target.value))
+            setCurrentPage(1)
+          }}
+          className={`px-2 py-1 border rounded text-sm ${theme.input || 'border-gray-200'}`}
+        >
+          {[5, 10, 20, 50].map(size => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="flex items-center gap-4">
+        <span className={`text-sm ${theme.muted}`}>
+          {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className={`p-1 rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className={`p-1 rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   if (!data.length) {
     return (
@@ -63,11 +141,8 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
           <p className={`${theme.muted}`}>Manage Categories</p>
         </div>
         <button
-          onClick={() => {
-            setEditData({ name: '', is_active: true, images: [] })
-            setModal('editCategory')
-          }}
-          className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium"
+          onClick={() => openModal()}
+          className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#c79e73' }}
         >
           <Plus className="w-5 h-5" />
@@ -79,42 +154,63 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
         <table className="w-full">
           <thead className={`${theme.isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
             <tr>
-              {['Image', 'Name', 'Status', 'Actions'].map(header => (
-                <th key={header} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                  {header}
+              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+                Image
+              </th>
+              {[
+                { key: 'name', label: 'Name' },
+                { key: 'is_active', label: 'Status' }
+              ].map(({ key, label }) => (
+                <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+                  <button
+                    onClick={() => handleSort(key)}
+                    className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                  >
+                    {label}
+                    <SortIcon column={key} />
+                  </button>
                 </th>
               ))}
+              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {data.map((item) => (
-              <tr key={item.id} className={`${theme.tableRow || 'hover:bg-gray-50'}`}>
+            {paginatedData.map((item) => (
+              <tr key={item.id} className={`${theme.tableRow || 'hover:bg-gray-50'} transition-colors`}>
                 <td className={`px-4 py-3 text-sm ${theme.text}`}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-10 h-18 object-cover rounded" />
-                  ) : '-'}
+                    <img src={item.image_url} alt={item.name} className="w-10 h-10 object-cover rounded" />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                      <Package className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
                 </td>
                 <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                    item.is_active 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : 'bg-red-100 text-red-700 border border-red-200'
                   }`}>
                     {item.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <ActionButton
-                    onClick={() => {
-                      setEditData({ ...item, images: [] })
-                      setModal('editCategory')
-                    }}
-                    color="#c79e73" icon={Edit} title="Edit"
+                    onClick={() => openModal(item)}
+                    color="#c79e73"
+                    icon={Edit}
+                    title="Edit"
                   />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <Pagination />
       </div>
 
       <Modal
@@ -126,7 +222,7 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
         <div className="p-4 max-h-96 overflow-y-auto">
           <div className="mb-4">
             <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Images</label>
-            <div className={`border-2 border-dashed rounded p-4 text-center ${theme.border}`}>
+            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors hover:border-blue-300 ${theme.border}`}>
               <input
                 type="file"
                 multiple
@@ -136,19 +232,19 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
                 id="img"
               />
               <label htmlFor="img" className="cursor-pointer">
-                <Upload className={`w-6 h-6 mx-auto mb-1 ${theme.muted}`} />
-                <p className={`text-xs ${theme.muted}`}>Upload Images</p>
+                <Upload className={`w-6 h-6 mx-auto mb-2 ${theme.muted}`} />
+                <p className={`text-sm ${theme.muted}`}>Click to upload images</p>
               </label>
             </div>
 
             {(editData?.images?.length > 0 || editData?.image_url) && (
-              <div className="mt-2 grid grid-cols-6 gap-2">
+              <div className="mt-3 grid grid-cols-4 gap-2">
                 {(editData.images?.length > 0 ? editData.images : [{ url: editData.image_url, id: 'existing' }]).map((img, index) => (
                   <div key={img.id || index} className="relative group">
                     <img
                       src={img.image_url || img.url}
                       alt=""
-                      className="w-30 h-24 object-cover rounded"
+                      className="w-full h-20 object-cover rounded-lg"
                     />
                     <button
                       onClick={() => {
@@ -161,7 +257,7 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
                           }))
                         }
                       }}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -171,49 +267,49 @@ export default function CategoriesTab({ data, loading, apiCall, theme }) {
             )}
           </div>
 
-          <div className="grid gap-3">
-            {categoryFields.map(field => (
-              <div key={field.key}>
-                <label className={`block text-sm mb-1 ${theme.muted}`}>
-                  {field.label} {field.required && <span className="text-red-500">*</span>}
-                </label>
-                {field.type === 'checkbox' ? (
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={editData?.[field.key] ?? true}
-                      onChange={(e) => handleFieldChange(field.key, e.target.checked)}
-                    />
-                    <span className={`text-sm ${theme.text}`}>Active</span>
-                  </label>
-                ) : (
-                  <input
-                    type="text"
-                    value={editData?.[field.key] || ''}
-                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                    className={`w-full p-2 border rounded text-sm ${theme.input || 'border-gray-200 bg-white'}`}
-                  />
-                )}
-              </div>
-            ))}
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
+                Category Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editData?.name || ''}
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
+                placeholder="Enter category name"
+              />
+            </div>
+            
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={editData?.is_active ?? true}
+                  onChange={(e) => handleFieldChange('is_active', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className={`text-sm font-medium ${theme.text}`}>Active Status</span>
+              </label>
+            </div>
           </div>
         </div>
 
-        <div className={`p-4 border-t flex gap-3 ${theme.border}`}>
+        <div className={`p-4 border-t flex justify-end gap-3 ${theme.border}`}>
+          <button
+            onClick={() => setModal('')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${theme.btn || 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Cancel
+          </button>
           <button
             onClick={saveItem}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-white rounded font-medium disabled:opacity-50 text-sm"
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg font-medium disabled:opacity-50 text-sm hover:opacity-90 transition-opacity"
             style={{ backgroundColor: '#c79e73' }}
           >
             <Save className="w-4 h-4" />
             {loading ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            onClick={() => setModal('')}
-            className={`px-4 py-2 rounded font-medium text-sm ${theme.btn || 'bg-gray-100 hover:bg-gray-200'}`}
-          >
-            Cancel
           </button>
         </div>
       </Modal>

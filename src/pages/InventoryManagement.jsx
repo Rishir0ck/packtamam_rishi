@@ -10,7 +10,7 @@ import MaterialsTab from './MaterialsTab'
 
 export default function InventoryManagement() {
   const { isDark } = useTheme()
-  const [data, setData] = useState({ products: [], categories: [], materials: [], priceSlabs: [] })
+  const [data, setData] = useState({ products: [], categories: [], materials: [] })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('products')
