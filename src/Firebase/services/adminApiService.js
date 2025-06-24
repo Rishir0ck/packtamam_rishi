@@ -204,7 +204,7 @@ class AdminService {
 
   async addProduct(productData) {
     const formData = this.createProductFormData(productData);
-    return this.makeFormDataRequest('POST', '/api/products', formData);
+    return this.makeFormDataRequest('POST', '/api/admin/add-products', formData);
   }
 
   async updateProduct(productId, productData) {

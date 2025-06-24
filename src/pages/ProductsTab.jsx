@@ -15,15 +15,10 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const navigate = useNavigate()
 
-  // Helper function to get primary inventory (first one or default)
-  const getPrimaryInventory = useCallback((product) => {
-    return product.inventories?.[0] || {}
-  }, [])
-
-  // Helper function to get price from inventory
+  const getPrimaryInventory = useCallback((product) => product.inventories?.[0] || {}, [])
   const getPrice = useCallback((product) => {
-    const inventory = getPrimaryInventory(product)
-    return inventory.priceWithGst || inventory.sellPrice || 0
+    const inv = getPrimaryInventory(product)
+    return inv.priceWithGst || inv.sellPrice || 0
   }, [getPrimaryInventory])
 
   const handleSort = useCallback((key) => {
@@ -34,49 +29,32 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
     setCurrentPage(1)
   }, [])
 
-  const filteredData = useMemo(() => {
-    return data.filter(p => {
-      const searchFields = [p.name, p.hsn_code, p.shape, p.colour, p.category?.name, p.material?.name]
-      const searchMatch = !search || searchFields.some(field => 
-        field?.toLowerCase().includes(search.toLowerCase())
-      )
-
+  const filteredData = useMemo(() => 
+    data.filter(p => {
+      const searchMatch = !search || [p.name, p.hsn_code, p.shape, p.colour, p.category?.name, p.material?.name]
+        .some(field => field?.toLowerCase().includes(search.toLowerCase()))
+      
       const filterMatch = filter === 'all' ||
         (filter === 'premium' && p.quality === 'Premium') ||
         (filter === 'active' && p.is_active) ||
         (filter === 'inactive' && !p.is_active)
       
       return searchMatch && filterMatch
-    })
-  }, [data, search, filter])
+    }), [data, search, filter])
 
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData
     
     return [...filteredData].sort((a, b) => {
       let aVal, bVal
-      
       switch (sortConfig.key) {
-        case 'category':
-          aVal = a.category?.name || ''
-          bVal = b.category?.name || ''
-          break
-        case 'material':
-          aVal = a.material?.name || ''
-          bVal = b.material?.name || ''
-          break
-        case 'price':
-          aVal = getPrice(a)
-          bVal = getPrice(b)
-          break
-        default:
-          aVal = a[sortConfig.key] || ''
-          bVal = b[sortConfig.key] || ''
+        case 'category': aVal = a.category?.name || ''; bVal = b.category?.name || ''; break
+        case 'material': aVal = a.material?.name || ''; bVal = b.material?.name || ''; break
+        case 'price': aVal = getPrice(a); bVal = getPrice(b); break
+        default: aVal = a[sortConfig.key] || ''; bVal = b[sortConfig.key] || ''
       }
-      
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
+      return aVal < bVal ? (sortConfig.direction === 'asc' ? -1 : 1) : 
+             aVal > bVal ? (sortConfig.direction === 'asc' ? 1 : -1) : 0
     })
   }, [filteredData, sortConfig, getPrice])
 
@@ -94,9 +72,8 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
     { label: 'Premium', value: data.filter(p => p.quality === 'Premium').length, icon: Layers, color: '#8b5cf6', filter: 'premium' }
   ], [data])
 
-  const toggleStatus = useCallback((id, status) => {
-    apiCall(() => adminService.updateProductStatus(id, !status))
-  }, [apiCall])
+  const toggleStatus = useCallback((id, status) => 
+    apiCall(() => adminService.updateProductStatus(id, !status)), [apiCall])
 
   const deleteItem = useCallback((id) => {
     if (!confirm('Delete this product?')) return
@@ -143,12 +120,11 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
           className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#c79e73' }}
         >
-          <Plus className="w-5 h-5" />
-          Add Product
+          <Plus className="w-5 h-5" />Add Product
         </button>
       </div>
 
-      {/* Search */}
+      {/* Search & Stats */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
@@ -160,7 +136,6 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
         />
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {stats.map((stat, i) => {
           const Icon = stat.icon
@@ -169,18 +144,14 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
               key={i}
               onClick={() => setFilter(stat.filter)}
               className={`border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow ${theme.card} ${
-                filter === stat.filter ? 'ring-2 ring-amber-400' : ''
-              }`}
+                filter === stat.filter ? 'ring-2 ring-amber-400' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm ${theme.muted}`}>{stat.label}</p>
                   <p className={`text-2xl font-bold ${theme.text}`}>{stat.value}</p>
                 </div>
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: stat.color }}
-                >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: stat.color }}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -194,32 +165,22 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
         <table className="w-full">
           <thead className={`${theme.isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
             <tr>
-              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                Image
-              </th>
+              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Image</th>
               {tableColumns.map(({ key, label, sortable }) => (
                 <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                   {sortable ? (
-                    <button
-                      onClick={() => handleSort(key)}
-                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
-                    >
-                      {label}
-                      <SortIcon column={key} />
+                    <button onClick={() => handleSort(key)} className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                      {label}<SortIcon column={key} />
                     </button>
                   ) : label}
                 </th>
               ))}
-              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                Actions
-              </th>
+              <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {paginatedData.map((item) => {
-              const primaryInventory = getPrimaryInventory(item)
               const price = getPrice(item)
-              
               return (
                 <tr key={item.id} className={`${theme.tableRow || 'hover:bg-gray-50'} transition-colors`}>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>
@@ -246,48 +207,30 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                       item.quality === 'Premium' 
                         ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
-                    }`}>
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
                       {item.quality}
                     </span>
                   </td>
                   <td className={`px-4 py-3 text-sm font-semibold ${theme.text}`}>
                     ₹{price || '-'}
                     {item.inventories?.length > 1 && (
-                      <div className={`text-xs ${theme.muted}`}>
-                        +{item.inventories.length - 1} more
-                      </div>
+                      <div className={`text-xs ${theme.muted}`}>+{item.inventories.length - 1} more</div>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                       item.is_active 
                         ? 'bg-green-100 text-green-700 border border-green-200' 
-                        : 'bg-red-100 text-red-700 border border-red-200'
-                    }`}>
+                        : 'bg-red-100 text-red-700 border border-red-200'}`}>
                       {item.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <ActionButton
-                        onClick={() => { setSelected(item); setModal('view') }}
-                        color="#6b7280" icon={Eye} title="View"
-                      />
-                      <ActionButton
-                        onClick={() => navigate('/product', { state: { editData: item } })}
-                        color="#c79e73" icon={Edit} title="Edit"
-                      />
-                      <ActionButton
-                        onClick={() => toggleStatus(item.id, item.is_active)}
-                        color={item.is_active ? '#ef4444' : '#10b981'}
-                        icon={Power}
-                        title={item.is_active ? 'Deactivate' : 'Activate'}
-                      />
-                      <ActionButton
-                        onClick={() => deleteItem(item.id)}
-                        color="#ef4444" icon={Trash2} title="Delete"
-                      />
+                      <ActionButton onClick={() => { setSelected(item); setModal('view') }} color="#6b7280" icon={Eye} title="View" />
+                      <ActionButton onClick={() => navigate('/product', { state: { editData: item } })} color="#c79e73" icon={Edit} title="Edit" />
+                      <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
+                      <ActionButton onClick={() => deleteItem(item.id)} color="#ef4444" icon={Trash2} title="Delete" />
                     </div>
                   </td>
                 </tr>
@@ -302,15 +245,10 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
             <span className={`text-sm ${theme.muted}`}>Rows per page:</span>
             <select
               value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value))
-                setCurrentPage(1)
-              }}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }}
               className={`px-2 py-1 border rounded text-sm ${theme.input || 'border-gray-200'}`}
             >
-              {[5, 10, 20, 50].map(size => (
-                <option key={size} value={size}>{size}</option>
-              ))}
+              {[5, 10, 20, 50].map(size => <option key={size} value={size}>{size}</option>)}
             </select>
           </div>
           
@@ -339,34 +277,23 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
       </div>
 
       {/* Modal */}
-      <Modal
-        isOpen={modal === 'view'}
-        onClose={() => setModal('')}
-        title={selected?.name}
-        theme={theme}
-      >
+      <Modal isOpen={modal === 'view'} onClose={() => setModal('')} title={selected?.name} theme={theme}>
         {selected && (
           <div className="p-6 max-h-96 overflow-y-auto">
             <div className="grid grid-cols-4 gap-4 mb-6">
               {[
                 ['Image', selected.images?.[0]?.image_url, 'image'],
-                ['Name', selected.name],
-                ['Category', selected.category?.name || 'N/A'],
-                ['Material', selected.material?.name || 'N/A'],
-                ['HSN Code', selected.hsn_code || 'N/A'],
-                ['Shape', selected.shape || 'N/A'],
-                ['Colour', selected.colour || 'N/A'],
-                ['Quality', selected.quality],
-                ['Status', selected.is_active ? 'Active' : 'Inactive']
+                ['Name', selected.name], ['Category', selected.category?.name || 'N/A'],
+                ['Material', selected.material?.name || 'N/A'], ['HSN Code', selected.hsn_code || 'N/A'],
+                ['Shape', selected.shape || 'N/A'], ['Colour', selected.colour || 'N/A'],
+                ['Quality', selected.quality], ['Status', selected.is_active ? 'Active' : 'Inactive']
               ].map(([label, value, type], i) => (
                 <div key={i}>
                   <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
                   <p className={`mt-1 ${theme.text}`}>
                     {type === 'image' && value ? (
                       <img src={value} alt="Selected" className="w-26 h-20 object-cover rounded" />
-                    ) : (
-                      value || '-'
-                    )}
+                    ) : (value || '-')}
                   </p>
                 </div>
               ))}
@@ -386,30 +313,16 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                   {selected.inventories.map((inventory, index) => (
                     <div key={inventory.id || index} className={`border rounded-lg p-4 ${theme.card}`}>
                       <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>Size</p>
-                          <p className={`mt-1 ${theme.text}`}>{inventory.size}</p>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>Code</p>
-                          <p className={`mt-1 ${theme.text}`}>{inventory.inventory_code}</p>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>Cost Price</p>
-                          <p className={`mt-1 ${theme.text}`}>₹{inventory.costPrice}</p>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>Sell Price</p>
-                          <p className={`mt-1 ${theme.text}`}>₹{inventory.sellPrice}</p>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>Price with GST</p>
-                          <p className={`mt-1 ${theme.text}`}>₹{inventory.priceWithGst}</p>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${theme.muted}`}>GST</p>
-                          <p className={`mt-1 ${theme.text}`}>{inventory.gst}%</p>
-                        </div>
+                        {[
+                          ['Size', inventory.size], ['Code', inventory.inventory_code],
+                          ['Cost Price', `₹${inventory.costPrice}`], ['Sell Price', `₹${inventory.sellPrice}`],
+                          ['Price with GST', `₹${inventory.priceWithGst}`], ['GST', `${inventory.gst}%`]
+                        ].map(([label, value], i) => (
+                          <div key={i}>
+                            <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
+                            <p className={`mt-1 ${theme.text}`}>{value}</p>
+                          </div>
+                        ))}
                       </div>
                       
                       {/* Price Slabs */}
