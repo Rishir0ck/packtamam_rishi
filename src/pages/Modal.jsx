@@ -35,11 +35,11 @@ export default function Modal({
 
   // Size variants
   const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-7xl'
+    sm: 'max-w-lg',// sm: 'max-w-md',
+    md: 'max-w-3xl',// md: 'max-w-lg',
+    lg: 'max-w-3xl',// lg: 'max-w-2xl',
+    xl: 'max-w-5xl',// xl: 'max-w-4xl',
+    full: 'max-w-full',// full: 'max-w-7xl'
   }
 
   return (
