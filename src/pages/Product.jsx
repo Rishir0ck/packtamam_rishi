@@ -3,7 +3,7 @@ import { Upload, Plus, Trash2, Package, X, Image, ArrowRight, ArrowLeft, CheckCi
 import { useNavigate } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
 import AdminService from '../Firebase/services/adminApiService';
-import { message } from 'antd';
+import { message, Select } from 'antd';
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -45,31 +45,32 @@ export default function ProductForm() {
     ['Color', 'color'], ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
   ];
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [categoriesRes, materialsRes] = await Promise.all([
-          AdminService.getCategories(),
-          AdminService.getMaterials()
-        ]);
-        
-        const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : [];
-        const materialsData = Array.isArray(materialsRes) ? materialsRes : [];
-        
-        console.log('Categories loaded:', categoriesData);
-        console.log('Materials loaded:', materialsData);
-        
-        setCategories(categoriesData);
-        setMaterials(materialsData);
-      } catch (error) {
-        console.error('Failed to load data:', error);
-        message.error('Failed to load categories and materials');
-        setCategories([]);
-        setMaterials([]);
-      }
-    };
-    loadData();
-  }, []);
+    useEffect(() => {
+      const loadData = async () => {
+        try {
+          const [categoriesRes, materialsRes] = await Promise.all([
+            AdminService.getCategories(),
+            AdminService.getMaterials()
+          ]);
+          
+          // Extract the actual array from the nested data structure
+          const categoriesData = categoriesRes?.success ? categoriesRes.data.data || [] : [];
+          const materialsData = materialsRes?.success ? materialsRes.data.data || [] : [];
+
+          console.log('Categories loaded:', categoriesData);
+          console.log('Materials loaded:', materialsData);
+          
+          setCategories(categoriesData);
+          setMaterials(materialsData);
+        } catch (error) {
+          console.error('Failed to load data:', error);
+          message.error('Failed to load categories and materials');
+          setCategories([]);
+          setMaterials([]);
+        }
+      };
+      loadData();
+    }, []);
 
   const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
     <div className={className}>
@@ -309,15 +310,15 @@ export default function ProductForm() {
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Category</option>
-              {categories.map(cat => (
+              {Array.isArray(categories) && categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {categories.length === 0 && (
+            {(!categories || categories.length === 0) && (
               <p className="text-xs text-red-500 mt-1">No categories available</p>
             )}
           </div>
-          
+
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
             <select 
@@ -326,11 +327,11 @@ export default function ProductForm() {
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Material</option>
-              {materials.map(mat => (
+              {Array.isArray(materials) && materials.map((mat) => (
                 <option key={mat.id} value={mat.id}>{mat.name}</option>
               ))}
             </select>
-            {materials.length === 0 && (
+            {(!materials || materials.length === 0) && (
               <p className="text-xs text-red-500 mt-1">No materials available</p>
             )}
           </div>
