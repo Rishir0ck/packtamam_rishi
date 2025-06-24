@@ -13,7 +13,7 @@ export default function ProductForm() {
   const [materials, setMaterials] = useState([]);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
-    name: '', category: '', material: '', hsn_code: '', shape: '', colour: '',
+    name: '', category_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
     specs: '', quality: '', inventory_code: '', in_stock: 'Yes'
   });
   const [sizes, setSizes] = useState([{
@@ -41,8 +41,8 @@ export default function ProductForm() {
   ];
 
   const basicFields = [
-    ['Product Name', 'productName'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
-    ['Color', 'color'], ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
+    ['Product Name', 'name'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
+    ['Color', 'colour'], ['Quality', 'quality'], ['Inventory Code', 'inventory_code']
   ];
 
     useEffect(() => {
@@ -169,7 +169,7 @@ export default function ProductForm() {
   const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   
   const validateForm = () => {
-    if (!formData.productName?.trim()) {
+    if (!formData.name?.trim()) {
       message.error('Product name is required');
       return false;
     }
@@ -190,16 +190,16 @@ export default function ProductForm() {
     setLoading(true);
     try {
       const productData = {
-        productName: formData.productName,
-        category: formData.category,
-        material: formData.material,
+        name: formData.name,
+        category_id: formData.category_id,
+        material_id: formData.material_id,
         hsn_code: formData.hsn_code,
         shape: formData.shape,
-        color: formData.color,
-        specification: formData.specification,
+        color: formData.colour,
+        specification: formData.specs,
         quality: formData.quality,
-        inventoryCode: formData.inventoryCode,
-        inStock: formData.inStock,
+        inventory_code: formData.inventory_code,
+        in_stock: formData.in_stock,
         size: sizes.map(size => ({
           size: size.size,
           costPrice: parseFloat(size.costPrice) || 0,
@@ -305,8 +305,8 @@ export default function ProductForm() {
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Category</label>
             <select 
-              value={formData.category} 
-              onChange={(e) => handleInputChange('category', e.target.value)}
+              value={formData.category_id} 
+              onChange={(e) => handleInputChange('category_id', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Category</option>
@@ -322,8 +322,8 @@ export default function ProductForm() {
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
             <select 
-              value={formData.material} 
-              onChange={(e) => handleInputChange('material', e.target.value)}
+              value={formData.material_id} 
+              onChange={(e) => handleInputChange('material_id', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Material</option>
@@ -340,14 +340,14 @@ export default function ProductForm() {
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
           <textarea
-            value={formData.specification} onChange={(e) => handleInputChange('specification', e.target.value)}
+            value={formData.specs} onChange={(e) => handleInputChange('specs', e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
           />
         </div>
         
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>In Stock</label>
-          <select value={formData.inStock} onChange={(e) => handleInputChange('inStock', e.target.value)}
+          <select value={formData.in_stock} onChange={(e) => handleInputChange('in_stock', e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
@@ -466,12 +466,12 @@ export default function ProductForm() {
               <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['Category', 'category'], ['Material', 'material'], ['In Stock', 'inStock'], ['Specification', 'specification']].map(([field, key]) => (
+              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], ['In Stock', 'in_stock'], ['Specification', 'specs']].map(([field, key]) => (
                 <tr key={field} className={theme.hover}>
                   <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
                   <td className={`px-4 py-2 ${theme.text}`}>
-                    {key === 'category' ? categories.find(c => c.id == formData[key])?.name || '-' :
-                     key === 'material' ? materials.find(m => m.id == formData[key])?.name || '-' :
+                    {key === 'category_id' ? categories.find(c => c.id == formData[key])?.name || '-' :
+                     key === 'material_id' ? materials.find(m => m.id == formData[key])?.name || '-' :
                      formData[key] || '-'}
                   </td>
                 </tr>

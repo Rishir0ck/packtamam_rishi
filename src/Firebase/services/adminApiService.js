@@ -255,7 +255,7 @@ class AdminService {
     fields.forEach(field => formData.append(field, productData[field]));
     
      // ✅ Handle size array as JSON string
-      if (Array.isArray(productData.size)) {
+      if (Array.isArray(productData.sizes)) {
         formData.append('sizes', JSON.stringify(productData.sizes));
       } else {
         formData.append('sizes', '[]'); // or '' if you prefer
