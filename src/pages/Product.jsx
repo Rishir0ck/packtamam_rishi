@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
-import { Upload, Plus, Trash2, Package, X, Image, DollarSign, Layers, ArrowRight, ArrowLeft, CheckCircle, IndianRupee } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Upload, Plus, Trash2, Package, X, Image, ArrowRight, ArrowLeft, CheckCircle, IndianRupee, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
+import AdminService from '../Firebase/services/adminApiService';
+import { message } from 'antd';
 
 export default function ProductForm() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
-    productName: '', category: '', material: '', hsnCode: '', shape: '', color: '',
+    productName: '', category: '', material: '', hsn_code: '', shape: '', color: '',
     specification: '', quality: '', inventoryCode: '', inStock: 'Yes'
   });
   const [sizes, setSizes] = useState([{
@@ -18,7 +23,6 @@ export default function ProductForm() {
   }]);
 
   const { isDark } = useTheme();
-
   const theme = isDark ? {
     bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white',
     muted: 'text-gray-300', border: 'border-gray-700',
@@ -37,10 +41,43 @@ export default function ProductForm() {
   ];
 
   const basicFields = [
-    ['Product Name', 'productName'], ['Category', 'category'], ['Material', 'material'],
-    ['HSN Code', 'hsnCode'], ['Shape', 'shape'], ['Color', 'color'],
-    ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
+    ['Product Name', 'productName'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
+    ['Color', 'color'], ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
   ];
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      const [categoriesRes, materialsRes] = await Promise.all([
+        AdminService.getCategories(),
+        AdminService.getMaterials()
+      ]);
+      
+      // Ensure categories is always an array
+      const categoriesData = categoriesRes?.success ?  categoriesRes.name.map(cat => ({label: cat.name})) : [];
+
+        // const categoryOptions = categoriesRes?.success ? 
+        // (Array.isArray(categoriesRes.data) ? categoriesRes.data.map(cat => ({label: cat.name,value: cat.id})): []): [];
+
+
+
+      
+      // Ensure materials is always an array
+      const materialsData = materialsRes?.success ? 
+        (Array.isArray(materialsRes.data) ? materialsRes.data : []) : [];
+      
+      setCategories(categoriesData);
+      setMaterials(materialsData);
+    } catch (error) {
+      message.error('Failed to load initial data');
+      setCategories([]);
+      setMaterials([]);
+    }
+  };
 
   const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
     <div className={className}>
@@ -102,7 +139,12 @@ export default function ProductForm() {
     const files = Array.from(e.target.files);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (e) => setImages(prev => [...prev, { id: Date.now() + Math.random(), url: e.target.result, name: file.name }]);
+      reader.onload = (e) => setImages(prev => [...prev, { 
+        id: Date.now() + Math.random(), 
+        url: e.target.result, 
+        name: file.name,
+        originFileObj: file 
+      }]);
       reader.readAsDataURL(file);
     });
   };
@@ -130,16 +172,70 @@ export default function ProductForm() {
   const nextStep = () => currentStep < 4 && setCurrentStep(currentStep + 1);
   const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
 
-  const handleSubmit = () => {
-    const productData = { ...formData, images, sizes };
-    console.log('Product Data:', productData);
-    
-    // Save product data
-    const savedProducts = JSON.parse(localStorage.getItem('savedProducts') || '[]');
-    savedProducts.push({ ...productData, id: Date.now(), createdAt: new Date().toISOString() });
-    localStorage.setItem('savedProducts', JSON.stringify(savedProducts));
-    
-    navigate('/inventory-management');
+  const validateForm = () => {
+    if (!formData.productName?.trim()) {
+      message.error('Product name is required');
+      return false;
+    }
+    if (!formData.category) {
+      message.error('Category is required');
+      return false;
+    }
+    if (sizes.length === 0 || !sizes[0].size?.trim()) {
+      message.error('At least one size is required');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      // Prepare product data for API
+      const productData = {
+        productName: formData.productName,
+        category: formData.category,
+        material: formData.material,
+        hsn_code: formData.hsn_code,
+        shape: formData.shape,
+        color: formData.color,
+        specification: formData.specification,
+        quality: formData.quality,
+        inventoryCode: formData.inventoryCode,
+        inStock: formData.inStock,
+        size: sizes.map(size => ({
+          size: size.size,
+          costPrice: parseFloat(size.costPrice) || 0,
+          markupPrice: parseFloat(size.markupPrice) || 0,
+          sellPrice: parseFloat(size.sellPrice) || 0,
+          gst: parseFloat(size.gst) || 0,
+          packOff: size.packOff,
+          priceSlabs: size.priceSlabs.filter(slab => slab.quantity && slab.price).map(slab => ({
+            quantity: parseInt(slab.quantity),
+            price: parseFloat(slab.price),
+            gst: parseFloat(slab.gst) || 0,
+            finalPrice: parseFloat(slab.finalPrice) || 0
+          }))
+        })),
+        images: images
+      };
+
+      const response = await AdminService.addProduct(productData);
+      
+      if (response.success) {
+        message.success('Product added successfully!');
+        navigate('/inventory-management');
+      } else {
+        message.error(response.error || 'Failed to add product');
+      }
+    } catch (error) {
+      message.error('An error occurred while saving the product');
+      console.error('Product save error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const StepProgress = () => (
@@ -209,6 +305,26 @@ export default function ProductForm() {
               />
             </div>
           ))}
+          <div>
+            <label className={`block text-sm font-medium ${theme.text} mb-1`}>Category</label>
+            <select value={formData.category} onChange={(e) => handleInputChange('category', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
+              <option value="">Select Category</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
+            <select value={formData.material} onChange={(e) => handleInputChange('material', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
+              <option value="">Select Material</option>
+              {materials.map(mat => (
+                <option key={mat.id} value={mat.id}>{mat.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
@@ -233,7 +349,7 @@ export default function ProductForm() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
-        <button onClick={addSize} className=" text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
+        <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
           <Plus className="w-4 h-4" />Add Size
         </button>
       </div>
@@ -279,7 +395,7 @@ export default function ProductForm() {
             <div className="flex justify-between items-center mb-4">
               <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
               <button onClick={() => addPriceSlab(size.id)}
-                className=" text-white px-3 py-1 rounded text-sm  transition-colors flex items-center gap-1" style={{ backgroundColor: '#c79e73' }}>
+                className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1">
                 <Plus className="w-3 h-3" />Add Slab
               </button>
             </div>
@@ -328,10 +444,9 @@ export default function ProductForm() {
     <div className="space-y-6">
       <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Review Product Details</h3>
       
-      {/* Basic Info Table */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
-          <h4 className="font-semibold">Basic Information</h4>
+        <div className={`px-6 py-4 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} border-b ${theme.border}`}>
+          <h4 className={`font-semibold ${theme.text}`}>Basic Information</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -339,18 +454,28 @@ export default function ProductForm() {
               <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['In Stock', 'inStock'], ['Specification', 'specification'], ['Images', `${images.length} uploaded`]].map(([field, key]) => (
-                <tr key={field} className={theme.hover}><td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td><td className={`px-4 py-2 ${theme.text}`}>{key === 'Images' ? `${images.length} uploaded` : formData[key] || '-'}</td></tr>
+              {[...basicFields, ['Category', 'category'], ['Material', 'material'], ['In Stock', 'inStock'], ['Specification', 'specification']].map(([field, key]) => (
+                <tr key={field} className={theme.hover}>
+                  <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
+                  <td className={`px-4 py-2 ${theme.text}`}>
+                    {key === 'category' ? categories.find(c => c.id == formData[key])?.name || '-' :
+                     key === 'material' ? materials.find(m => m.id == formData[key])?.name || '-' :
+                     formData[key] || '-'}
+                  </td>
+                </tr>
               ))}
+              <tr className={theme.hover}>
+                <td className={`px-4 py-2 font-medium ${theme.text}`}>Images</td>
+                <td className={`px-4 py-2 ${theme.text}`}>{images.length} uploaded</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Pricing Summary */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-        <div className={`text-lg font-semibold mb-6 ${theme.text}`} style={{ backgroundColor: isDark ? '#4a5568' : '#edf2f7', padding: '1rem' }}>
-          <h4 className="font-semibold">Sizes & Pricing Summary</h4>
+        <div className={`px-6 py-4 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} border-b ${theme.border}`}>
+          <h4 className={`font-semibold ${theme.text}`}>Sizes & Pricing Summary</h4>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -373,53 +498,12 @@ export default function ProductForm() {
           </table>
         </div>
       </div>
-
-      {/* Bulk Pricing Details */}
-      {sizes.some(size => size.priceSlabs.some(slab => slab.quantity || slab.price)) && (
-        <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3">
-            <h4 className="font-semibold">Bulk Pricing Details</h4>
-          </div>
-          <div className="p-6 space-y-4">
-            {sizes.map((size, sizeIndex) => {
-              const validSlabs = size.priceSlabs.filter(slab => slab.quantity || slab.price);
-              if (!validSlabs.length) return null;
-              return (
-                <div key={size.id}>
-                  <h5 className={`font-medium ${theme.text} mb-2`}>
-                    <span className={`px-3 py-1 rounded-lg text-sm ${isDark ? 'bg-gray-600' : 'bg-gray-100'}`}>{size.size || `Size ${sizeIndex + 1}`}</span>
-                  </h5>
-                  <div className="overflow-x-auto">
-                    <table className={`w-full text-sm border ${theme.border} rounded-lg`}>
-                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-                        <tr>{['Slab', 'Min Qty', 'Price/Pack (₹)', 'GST (%)', 'Final (₹)'].map(h => <th key={h} className={`px-4 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme.border}`}>
-                        {validSlabs.map((slab, slabIndex) => (
-                          <tr key={slab.id} className={theme.hover}>
-                            <td className={`px-4 py-2 font-medium ${theme.text}`}>#{slabIndex + 1}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>{slab.quantity || '-'}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>₹{slab.price || '0.00'}</td>
-                            <td className={`px-4 py-2 ${theme.text}`}>{slab.gst || '0'}%</td>
-                            <td className={`px-4 py-2 font-bold text-green-600`}>₹{slab.finalPrice || '0.00'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 
   return (
     <div className={`max-w-7xl mx-auto p-6 min-h-screen ${theme.bg}`}>
       <div className={`max-w-7xl mx-auto ${theme.card} rounded-2xl shadow-xl overflow-hidden border ${theme.border}`}>
-        {/* Header */}
         <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6 border-b ${theme.border}`}>
           <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-3`}>
             <Package className="w-7 h-7" />Product Management System

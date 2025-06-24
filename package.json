@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "antd": "^5.26.2",
     "firebase": "^11.9.1",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.263.1",
