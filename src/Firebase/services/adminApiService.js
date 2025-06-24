@@ -251,19 +251,19 @@ class AdminService {
   // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();
-    const fields = ['productName', 'category', 'material', 'hsn_code', 'shape', 'color', 'specification', 'quality','inventoryCode','inStock','size'];
+    const fields = ['name', 'category_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'quality','inventory_code','in_stock'];
     fields.forEach(field => formData.append(field, productData[field]));
     
      // ✅ Handle size array as JSON string
       if (Array.isArray(productData.size)) {
-        formData.append('size', JSON.stringify(productData.size));
+        formData.append('sizes', JSON.stringify(productData.sizes));
       } else {
-        formData.append('size', '[]'); // or '' if you prefer
+        formData.append('sizes', '[]'); // or '' if you prefer
       }
 
     if (productData.images?.length > 0) {
       productData.images.forEach(image => {
-        if (image.originFileObj) formData.append('images', image.originFileObj);
+        if (image.originFileObj) formData.append('document', image.originFileObj);
       });
     }
     

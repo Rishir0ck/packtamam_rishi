@@ -13,8 +13,8 @@ export default function ProductForm() {
   const [materials, setMaterials] = useState([]);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
-    productName: '', category: '', material: '', hsn_code: '', shape: '', color: '',
-    specification: '', quality: '', inventoryCode: '', inStock: 'Yes'
+    name: '', category: '', material: '', hsn_code: '', shape: '', colour: '',
+    specs: '', quality: '', inventory_code: '', in_stock: 'Yes'
   });
   const [sizes, setSizes] = useState([{
     id: 1, size: '', costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',
@@ -45,39 +45,31 @@ export default function ProductForm() {
     ['Color', 'color'], ['Quality', 'quality'], ['Inventory Code', 'inventoryCode']
   ];
 
-  // Load initial data
   useEffect(() => {
-    loadInitialData();
+    const loadData = async () => {
+      try {
+        const [categoriesRes, materialsRes] = await Promise.all([
+          AdminService.getCategories(),
+          AdminService.getMaterials()
+        ]);
+        
+        const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : [];
+        const materialsData = Array.isArray(materialsRes) ? materialsRes : [];
+        
+        console.log('Categories loaded:', categoriesData);
+        console.log('Materials loaded:', materialsData);
+        
+        setCategories(categoriesData);
+        setMaterials(materialsData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        message.error('Failed to load categories and materials');
+        setCategories([]);
+        setMaterials([]);
+      }
+    };
+    loadData();
   }, []);
-
-  const loadInitialData = async () => {
-    try {
-      const [categoriesRes, materialsRes] = await Promise.all([
-        AdminService.getCategories(),
-        AdminService.getMaterials()
-      ]);
-      
-      // Ensure categories is always an array
-      const categoriesData = categoriesRes?.success ?  categoriesRes.name.map(cat => ({label: cat.name})) : [];
-
-        // const categoryOptions = categoriesRes?.success ? 
-        // (Array.isArray(categoriesRes.data) ? categoriesRes.data.map(cat => ({label: cat.name,value: cat.id})): []): [];
-
-
-
-      
-      // Ensure materials is always an array
-      const materialsData = materialsRes?.success ? 
-        (Array.isArray(materialsRes.data) ? materialsRes.data : []) : [];
-      
-      setCategories(categoriesData);
-      setMaterials(materialsData);
-    } catch (error) {
-      message.error('Failed to load initial data');
-      setCategories([]);
-      setMaterials([]);
-    }
-  };
 
   const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
     <div className={className}>
@@ -96,17 +88,20 @@ export default function ProductForm() {
     setSizes(prev => prev.map(size => {
       if (size.id !== sizeId) return size;
       const updated = { ...size, [field]: value };
+      
       if (field === 'costPrice' || field === 'markupPrice') {
         const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
         const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
         updated.sellPrice = (cost + markup).toFixed(2);
         updated.grossProfit = markup.toFixed(2);
       }
+      
       if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
         const sellPrice = parseFloat(updated.sellPrice) || 0;
         const gstRate = parseFloat(field === 'gst' ? value : size.gst) || 0;
         const gstAmount = (sellPrice * gstRate) / 100;
         const costPrice = parseFloat(updated.costPrice) || 0;
+        
         updated.gstAmount = gstAmount.toFixed(2);
         updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
         updated.payableGst = gstAmount.toFixed(2);
@@ -171,16 +166,16 @@ export default function ProductForm() {
 
   const nextStep = () => currentStep < 4 && setCurrentStep(currentStep + 1);
   const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
-
+  
   const validateForm = () => {
     if (!formData.productName?.trim()) {
       message.error('Product name is required');
       return false;
     }
-    if (!formData.category) {
-      message.error('Category is required');
-      return false;
-    }
+    // if (!formData.category) {
+    //   message.error('Category is required');
+    //   return false;
+    // }
     if (sizes.length === 0 || !sizes[0].size?.trim()) {
       message.error('At least one size is required');
       return false;
@@ -193,7 +188,6 @@ export default function ProductForm() {
 
     setLoading(true);
     try {
-      // Prepare product data for API
       const productData = {
         productName: formData.productName,
         category: formData.category,
@@ -293,6 +287,7 @@ export default function ProductForm() {
           ))}
         </div>
       </div>
+      
       <div className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
         <h3 className={`text-lg font-semibold mb-4 ${theme.text}`}>Product Details</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -300,32 +295,47 @@ export default function ProductForm() {
             <div key={field}>
               <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
               <input
-                type="text" value={formData[field] || ''} onChange={(e) => handleInputChange(field, e.target.value)}
+                type="text" value={formData[field]} onChange={(e) => handleInputChange(field, e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
               />
             </div>
           ))}
+          
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Category</label>
-            <select value={formData.category} onChange={(e) => handleInputChange('category', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
+            <select 
+              value={formData.category} 
+              onChange={(e) => handleInputChange('category', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+            >
               <option value="">Select Category</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
+            {categories.length === 0 && (
+              <p className="text-xs text-red-500 mt-1">No categories available</p>
+            )}
           </div>
+          
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
-            <select value={formData.material} onChange={(e) => handleInputChange('material', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
+            <select 
+              value={formData.material} 
+              onChange={(e) => handleInputChange('material', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+            >
               <option value="">Select Material</option>
               {materials.map(mat => (
                 <option key={mat.id} value={mat.id}>{mat.name}</option>
               ))}
             </select>
+            {materials.length === 0 && (
+              <p className="text-xs text-red-500 mt-1">No materials available</p>
+            )}
           </div>
         </div>
+        
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
           <textarea
@@ -333,6 +343,7 @@ export default function ProductForm() {
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
           />
         </div>
+        
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>In Stock</label>
           <select value={formData.inStock} onChange={(e) => handleInputChange('inStock', e.target.value)}
