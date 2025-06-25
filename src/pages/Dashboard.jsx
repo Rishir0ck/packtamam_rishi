@@ -156,7 +156,7 @@ export default function Dashboard() {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="text-center space-y-4">
-          <RefreshCw className="w-12 h-12 animate-spin mx-auto text-amber-600" />
+          <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard data...</p>
         </div>
       </div>

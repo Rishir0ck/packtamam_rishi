@@ -17,7 +17,11 @@ export default function RestaurantOnboarding() {
   const [queryTarget, setQueryTarget] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState(null)
+  const [uploadType, setUploadType] = useState('')
   
+  // Document types for dynamic upload
+  const documentTypes = ['fssai_certificate', 'gst_certificate', 'pan_card']
+
   // Table state
   const [sortBy, setSortBy] = useState('name')
   const [sortOrder, setSortOrder] = useState('asc')
@@ -120,19 +124,16 @@ export default function RestaurantOnboarding() {
   }
 
   const uploadDocument = async () => {
-    if (!uploadFile || !selected) return
+    if (!uploadFile || !selected || !uploadType) return
     
     setLoading(true)
     setError('')
     try {
-      const formData = new FormData()
-      formData.append('document', uploadFile)
-      formData.append('restaurantId', selected.id)
-      
-      const result = await AdminService.uploadDocument(selected.id, formData)
+      const result = await AdminService.updloadDocumentation(selected.id, uploadType, uploadFile)
       if (result.success) {
         await loadRestaurants()
         setUploadFile(null)
+        setUploadType('')
         setModal('')
       } else throw new Error(result.error || 'Failed to upload document')
     } catch (err) {
@@ -141,6 +142,7 @@ export default function RestaurantOnboarding() {
       setLoading(false)
     }
   }
+
 
   const downloadDocument = async (url, fileName) => {
     if (!url || url === '#') return

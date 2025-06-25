@@ -150,6 +150,10 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business', payload);
   }
 
+  async updloadDocumentation(id, type, document) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/upload-document', { id, type, document });
+  }
+
   // Outlet Management
   async getOutlets() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/outlets');
