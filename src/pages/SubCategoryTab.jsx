@@ -1,6 +1,6 @@
 // SubCategoriesTab.jsx
 import React, { useState, useCallback, useMemo } from 'react'
-import { Plus, Package, Edit, Upload, X, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Package, Edit, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from './Modal'
 import ActionButton from './ActionButton'
 import adminService from '../Firebase/services/adminApiService'
@@ -47,11 +47,7 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
     
     const operation = editData.id
       ? () => adminService.updateSubCategory(editData.id, editData.is_active)
-      : () => adminService.addSubCategory({
-          subcategory_id: editData.subcategory_id,
-          is_active: editData.is_active ?? true,
-          product_id: editData.product_id
-        })
+      : () => adminService.addSubCategory(editData.subcategory_id, editData.product_id)
 
     apiCall(operation, () => {
       setModal('')
@@ -60,7 +56,7 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
   }, [editData, apiCall])
 
   const openModal = useCallback((item = null) => {
-    setEditData(item ? { ...item, images: [] } : { name: '', is_active: true, images: [] })
+    setEditData(item ? { ...item } : { name: '', is_active: true, subcategory_id: '', product_id: '' })
     setModal('editSubCategory')
   }, [])
 
@@ -70,48 +66,6 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
       ? <ChevronUp className="w-4 h-4 text-blue-500" />
       : <ChevronDown className="w-4 h-4 text-blue-500" />
   }
-
-  const Pagination = () => (
-    <div className="flex items-center justify-between px-4 py-3 border-t">
-      <div className="flex items-center gap-2">
-        <span className={`text-sm ${theme.muted}`}>Rows per page:</span>
-        <select
-          value={itemsPerPage}
-          onChange={(e) => {
-            setItemsPerPage(Number(e.target.value))
-            setCurrentPage(1)
-          }}
-          className={`px-2 py-1 border rounded text-sm ${theme.input || 'border-gray-200'}`}
-        >
-          {[5, 10, 20, 50].map(size => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <span className={`text-sm ${theme.muted}`}>
-          {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length}
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className={`p-1 rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className={`p-1 rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 
   if (!data.length) {
     return (
@@ -146,7 +100,8 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
             <tr>
               {[
                 { key: 'name', label: 'Name' },
-                { key: 'is_active', label: 'Status' }
+                { key: 'is_active', label: 'Status' },
+                { key: 'sub_category_products', label: 'Products Count' }
               ].map(({ key, label }) => (
                 <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                   <button
@@ -176,6 +131,9 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
                     {item.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
+                <td className={`px-4 py-3 ${theme.text}`}>
+                  {item.sub_category_products?.length || 0} products
+                </td>
                 <td className="px-4 py-3">
                   <ActionButton
                     onClick={() => openModal(item)}
@@ -188,7 +146,47 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
             ))}
           </tbody>
         </table>
-        <Pagination />
+        
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${theme.muted}`}>Rows per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className={`px-2 py-1 border rounded text-sm ${theme.input || 'border-gray-200'}`}
+            >
+              {[5, 10, 20, 50].map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <span className={`text-sm ${theme.muted}`}>
+              {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`p-1 rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-1 rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Modal
@@ -197,34 +195,60 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
         title={editData?.id ? 'Edit Sub Category' : 'Add Sub Category'}
         theme={theme}
       >
-        <div className="p-4 max-h-96 overflow-y-auto">
+        <div className="p-4 max-h-96 overflow-y-auto space-y-4">
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
+              Sub Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={editData?.name || ''}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
+              placeholder="Enter sub category name"
+            />
+          </div>
           
-
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
-                Sub Category Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={editData?.name || ''}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-                className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
-                placeholder="Enter sub category name"
-              />
-            </div>
-            
-            <div>
-              <label className="flex items-center gap-3">
+          {!editData?.id && (
+            <>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
+                  Subcategory ID <span className="text-red-500">*</span>
+                </label>
                 <input
-                  type="checkbox"
-                  checked={editData?.is_active ?? true}
-                  onChange={(e) => handleFieldChange('is_active', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  type="text"
+                  value={editData?.subcategory_id || ''}
+                  onChange={(e) => handleFieldChange('subcategory_id', e.target.value)}
+                  className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
+                  placeholder="Enter subcategory ID"
                 />
-                <span className={`text-sm font-medium ${theme.text}`}>Active Status</span>
-              </label>
-            </div>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
+                  Product ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editData?.product_id || ''}
+                  onChange={(e) => handleFieldChange('product_id', e.target.value)}
+                  className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
+                  placeholder="Enter product ID"
+                />
+              </div>
+            </>
+          )}
+          
+          <div>
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={editData?.is_active ?? true}
+                onChange={(e) => handleFieldChange('is_active', e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className={`text-sm font-medium ${theme.text}`}>Active Status</span>
+            </label>
           </div>
         </div>
 
