@@ -21,13 +21,39 @@ export default function RestaurantManagement() {
   const [state, setState] = useState({
     restaurants: [], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
     newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' },
-    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10
+    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10,
+    outletTypes: [], loadingOutlets: false
   })
 
   const theme = useCallback((light, dark = '') => isDark ? `${dark} dark` : light, [isDark])
   const inputClass = `w-full p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`
 
-  useEffect(() => { fetchRestaurants() }, [])
+  useEffect(() => { fetchRestaurants() 
+    fetchOutletTypes()}, [])
+
+  const fetchOutletTypes = async () => {
+    try {
+      setState(prev => ({ ...prev, loadingOutlets: true }))
+      const result = await AdminService.getOutlets()
+      
+      if (result.success && result.data) {
+        // Assuming the API returns an array of outlet types
+        // Adjust this based on your actual API response structure
+        const outletTypes = Array.isArray(result.data) ? result.data : result.data.outlets || []
+        setState(prev => ({ ...prev, outletTypes, loadingOutlets: false }))
+      } else {
+        // Fallback to static list if API fails
+        const fallbackTypes = ['N/A']
+        setState(prev => ({ ...prev, outletTypes: fallbackTypes, loadingOutlets: false }))
+        console.warn('Failed to fetch outlet types, using fallback list')
+      }
+    } catch (err) {
+      // Fallback to static list if API call fails
+      const fallbackTypes = ['N/A']
+      setState(prev => ({ ...prev, outletTypes: fallbackTypes, loadingOutlets: false }))
+      console.warn('Error fetching outlet types, using fallback list:', err)
+    }
+  }
 
   const fetchRestaurants = async () => {
     try {
@@ -40,7 +66,7 @@ export default function RestaurantManagement() {
           legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
           address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
           city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
-          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'Restaurant', 
+          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'N/A', 
           lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
           joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
           status: r.status === 'Approved' ? 'active' : 'inactive',
@@ -218,11 +244,13 @@ export default function RestaurantManagement() {
         </select>
       ) : type === 'outlet_select' ? (
         <select 
-          value={state.editData[field] || 'Restaurant'} 
+          value={state.editData[field] || 'N/A'} 
           onChange={(e) => handleInputChange(field, e.target.value)}
           className={inputClass}
+          disabled={state.loadingOutlets}
         >
-          {OUTLET_TYPES.map(type => (
+         <option value="">Select Outlet Type</option>
+          {state.outletTypes.map(type => (
             <option key={type} value={type}>{type}</option>
           ))}
         </select>
@@ -533,8 +561,8 @@ export default function RestaurantManagement() {
                         onChange={(e) => handleNewFranchiseChange(field, e.target.value)}
                         className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
                       >
-                        <option value="">{placeholder}</option>
-                        {OUTLET_TYPES.map(type => (
+                        <option value="">Select Outlet Type</option>
+                        {state.outletTypes.map(type => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
