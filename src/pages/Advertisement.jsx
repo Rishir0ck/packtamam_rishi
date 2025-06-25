@@ -12,6 +12,7 @@ export default function AdvertisementModule() {
   const [sliderIndex, setSliderIndex] = useState({ Header: 0, Middle: 0 });
   const { isDark } = useTheme();
   const hasFetched = useRef(false);
+  const [showView, setShowView] = useState(null);
 
   const [form, setForm] = useState({title: '', images: [], placement: 'Header', is_active: true, priority: 1});
 
@@ -38,8 +39,7 @@ export default function AdvertisementModule() {
         hasFetched.current = true;
         const result = await AdminService.getBanners();
         if (result.success) {
-          const banners = Array.isArray(result.data) ? result.data :
-                         result.data?.banners || result.data?.data || [];
+          const banners = Array.isArray(result.data) ? result.data : result.data?.banners || result.data?.data || [];
           setAds(banners);
         } else {
           setError(result.error || 'Failed to load advertisements');
@@ -86,7 +86,8 @@ export default function AdvertisementModule() {
       if (result.success) {
         if (editing) {
           setAds(prev => prev.map(ad => ad.id === editing.id 
-            ? { ...ad, ...form, image_url: ad.image_url } : ad));
+            // ? { ...ad, ...form, image_url: ad.image_url } : ad));
+            ? { ...ad, ...form, image_url: getImageUrl(ad) } : ad));
         } else {
           const newAd = result.data || { ...form, id: Date.now(), image_url: form.images[0]?.url };
           setAds(prev => [...prev, newAd]);
@@ -107,6 +108,7 @@ export default function AdvertisementModule() {
     });
     setEditing(ad);
     setShowForm(true);
+    setShowView(null); // Close view if open
   };
 
   const handleDelete = async (id) => {
@@ -115,6 +117,7 @@ export default function AdvertisementModule() {
       const result = await AdminService.deleteBanner(id);
       if (result.success) {
         setAds(prev => prev.filter(ad => ad.id !== id));
+        setShowView(null); // Close view if deleted item was being viewed
       } else {
         setError(result.error || 'Delete failed');
       }
@@ -129,6 +132,9 @@ export default function AdvertisementModule() {
       const result = await AdminService.updateBanner(ad.id, { ...ad, is_active: newStatus });
       if (result.success) {
         setAds(prev => prev.map(a => a.id === ad.id ? { ...a, is_active: newStatus } : a));
+         if (showView && showView.id === ad.id) {
+          setShowView({ ...showView, is_active: newStatus });
+        }
       } else {
         setError(result.error || 'Status update failed');
       }
@@ -176,7 +182,7 @@ export default function AdvertisementModule() {
             <h1 className={`text-3xl font-bold ${theme.text}`}>Advertisement Management</h1>
             <p className={`${theme.muted} mt-2`}>Configure and manage mobile app advertisements</p>
           </div>
-          <Btn onClick={() => setShowForm(true)}
+          <Btn onClick={() => {setShowForm(true); setShowView(null); }}
                className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium" style={{ backgroundColor: '#c79e73' }}>
             <Plus className="w-4 h-4" />Add Advertisement
           </Btn>
@@ -244,7 +250,8 @@ export default function AdvertisementModule() {
               {editing && (
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Current Image</label>
-                  <img src={getImageUrl(editing.images[0])} alt=""
+                  {/* <img src={getImageUrl(editing.images[0])} alt="" */}
+                  <img src={getImageUrl(editing)} alt=""
                        className="max-w-full h-32 object-cover rounded-lg border"
                        onError={(e) => { e.target.src = '' }} />
                 </div>
@@ -279,8 +286,67 @@ export default function AdvertisementModule() {
           </div>
         )}
 
+        {/* View Section */}
+        {showView && (
+          <div className={`${theme.card} rounded-lg shadow-sm p-6`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className={`text-xl font-semibold ${theme.text}`}>Advertisement Details</h2>
+              <Btn onClick={() => setShowView(null)} className={`${theme.muted} hover:text-gray-700`}>
+                <X className="w-5 h-5" />
+              </Btn>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <img src={getImageUrl(showView.images[0])} alt={''}
+                  className="w-full h-150 object-cover rounded-lg border"
+                  onError={(e) => { e.target.src = '' }} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${theme.muted}`}>Title</label>
+                  <p className={`${theme.text} font-medium`}>{showView.title || 'Untitled'}</p>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${theme.muted}`}>Placement</label>
+                  <Badge color={showView.placement === 'Header' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                    {showView.placement || 'Header'}
+                  </Badge>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${theme.muted}`}>Status</label>
+                  <Badge color={showView.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                    {showView.is_active !== false ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${theme.muted}`}>Priority</label>
+                  <p className={`${theme.text} font-medium`}>{showView.priority || 1}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Btn onClick={() => handleEdit(showView)}
+                     className="flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700">
+                  <Edit className="w-4 h-4" />Edit
+                </Btn>
+                <Btn onClick={() => toggleActive(showView)}
+                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                       showView.is_active !== false 
+                         ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                         : 'bg-green-600 hover:bg-green-700 text-white'
+                     }`}>
+                  {showView.is_active !== false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showView.is_active !== false ? 'Deactivate' : 'Activate'}
+                </Btn>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Table Section */}
-        <div className={`${showForm ? '' : 'col-span-full'} ${theme.card} rounded-lg shadow-sm overflow-hidden`}>
+        <div className={`${showForm || showView ? '' : 'col-span-full'} ${theme.card} rounded-lg shadow-sm overflow-hidden`}>
           <div className={`p-6 border-b ${theme.border}`}>
             <h2 className={`text-xl font-semibold ${theme.text}`}>Advertisement List ({ads.length})</h2>
           </div>
@@ -299,24 +365,11 @@ export default function AdvertisementModule() {
               <table className="w-full">
                 <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                   <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Image
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Title
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Placement
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Status
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Priority
-                    </th>
-                    <th className={`px-6 py-3 text-right text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
-                      Actions
-                    </th>
+                    {['Image', 'Title', 'Placement', 'Status', 'Priority', 'Actions'].map(header => (
+                      <th key={header} className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider ${header === 'Actions' ? 'text-right' : ''}`}>
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme.border}`}>
@@ -325,8 +378,8 @@ export default function AdvertisementModule() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <img
                           src={getImageUrl(ad.images[0])}
-                          alt={ad.title || 'Ad'}
-                          className="w-16 h-10 object-cover rounded border"
+                          alt={''}
+                          className="w-26 h-20 object-cover rounded border"
                           onError={(e) => { e.target.src = '' }}
                         />
                       </td>
@@ -336,11 +389,8 @@ export default function AdvertisementModule() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge color={
-                          ad.placement === 'Header' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }>
-                          {ad.placement || 'Header'}
+                        <Badge color={ad.placement === 'Header' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                            {ad.placement || 'Header'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -353,12 +403,10 @@ export default function AdvertisementModule() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Btn onClick={() => toggleActive(ad)}
-                               className={`p-2 rounded-lg ${ad.is_active !== false 
-                                 ? 'text-green-600 hover:bg-green-50' 
-                                 : 'text-gray-400 hover:bg-gray-50'}`}
-                               title={ad.is_active !== false ? 'Deactivate' : 'Activate'}>
-                            {ad.is_active !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          <Btn onClick={() => { setShowView(ad); setShowForm(false); }}
+                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                               title="View Details">
+                            <Eye className="w-4 h-4" />
                           </Btn>
                           <Btn onClick={() => handleEdit(ad)}
                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
