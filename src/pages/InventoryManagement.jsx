@@ -6,7 +6,7 @@ import adminService from '../Firebase/services/adminApiService'
 import ProductsTab from './ProductsTab'
 import CategoriesTab from './CategoriesTab'
 import MaterialsTab from './MaterialsTab'
-// import PriceSlabsTab from './PriceSlabsTab'
+import SubCategoryTab from './SubCategoryTab'
 
 export default function InventoryManagement() {
   const { isDark } = useTheme()
@@ -35,17 +35,17 @@ export default function InventoryManagement() {
     setLoading(true)
     setError('')
     try {
-      const [products, categories, materials, priceSlabs] = await Promise.allSettled([
+      const [products, categories, materials, subCategories] = await Promise.allSettled([
         adminService.getProducts(),
         adminService.getCategories(),
         adminService.getMaterials(),
-        // adminService.listPriceSlabs()
+        adminService.getSubCategories()
       ])
       setData({
         products: extractData(products.value),
         categories: extractData(categories.value),
         materials: extractData(materials.value),
-        // priceSlabs: extractData(priceSlabs.value)
+        subCategories: extractData(subCategories.value)
       })
       setIsInitialized(true)
     } catch (err) {
@@ -78,7 +78,7 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },
-    // { id: 'priceSlabs', label: 'Discount', icon: TrendingUp },
+    { id: 'subCategories', label: 'Sub Categories', icon: Package },
     { id: 'categories', label: 'Categories', icon: TrendingUp },
     { id: 'materials', label: 'Materials', icon: Layers }
   ]
@@ -140,9 +140,9 @@ export default function InventoryManagement() {
       {activeTab === 'materials' && (
         <MaterialsTab data={data.materials} loading={loading} apiCall={apiCall} theme={theme} />
       )}
-      {/* {activeTab === 'priceSlabs' && (
-        <PriceSlabsTab data={data.priceSlabs} loading={loading} apiCall={apiCall} theme={theme} />
-      )} */}
+      {activeTab === 'subCategories' && (
+        <SubCategoryTab data={data.subCategories} loading={loading} apiCall={apiCall} theme={theme} />
+      )}
     </div>
   )
 }
