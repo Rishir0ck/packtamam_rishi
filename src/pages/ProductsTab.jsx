@@ -314,9 +314,9 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                     <div key={inventory.id || index} className={`border rounded-lg p-4 ${theme.card}`}>
                       <div className="grid grid-cols-3 gap-4">
                         {[
-                          ['Size', inventory.size], ['Code', inventory.inventory_code],
-                          ['Cost Price', `₹${inventory.costPrice}`], ['Sell Price', `₹${inventory.sellPrice}`],
-                          ['Price with GST', `₹${inventory.priceWithGst}`], ['GST', `${inventory.gst}%`]
+                          ['Size', inventory.size || 'N/A'], ['Code', inventory.inventory_code || 'N/A'],
+                          ['Cost Price', `₹${inventory.costPrice || 0}`], ['Sell Price', `₹${inventory.sellPrice || 0}`],
+                          ['Price with GST', `₹${inventory.priceWithGst || 0}`], ['GST', `${inventory.gst || 0}%`]
                         ].map(([label, value], i) => (
                           <div key={i}>
                             <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
