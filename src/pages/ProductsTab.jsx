@@ -230,7 +230,7 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                       <ActionButton onClick={() => { setSelected(item); setModal('view') }} color="#6b7280" icon={Eye} title="View" />
                       <ActionButton onClick={() => navigate('/product', { state: { editData: item } })} color="#c79e73" icon={Edit} title="Edit" />
                       <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
-                      <ActionButton onClick={() => deleteItem(item.id)} color="#ef4444" icon={Trash2} title="Delete" />
+                      {/* <ActionButton onClick={() => deleteItem(item.id)} color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
                   </td>
                 </tr>

@@ -14,10 +14,10 @@ export default function ProductForm() {
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
     name: '', category_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
-    specs: '', quality: '', in_stock: 'Yes'
+    specs: '', quality: '', in_stock: 'Yes', inventory_code: ''
   });
   const [sizes, setSizes] = useState([{
-    id: 1, size: '', inventory_code: '', costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',
+    id: 1, size: '', costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',
     gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
@@ -208,6 +208,11 @@ export default function ProductForm() {
           sellPrice: parseFloat(size.sellPrice) || 0,
           gst: parseFloat(size.gst) || 0,
           packOff: size.packOff,
+          priceWithGst: parseFloat(size.priceWithGst) || 0,
+          payableGst: parseFloat(size.payableGst) || 0,
+          netProfit: parseFloat(size.netProfit) || 0,
+          grossProfit: parseFloat(size.grossProfit) || 0,
+          gstAmount: parseFloat(size.gstAmount) || 0,
           priceSlabs: size.priceSlabs.filter(slab => slab.quantity && slab.price).map(slab => ({
             quantity: parseInt(slab.quantity),
             price: parseFloat(slab.price),
@@ -218,7 +223,8 @@ export default function ProductForm() {
         images: images
       };
 
-      const response = await AdminService.addProduct(productData);
+      console.log('Submitting product data:', productData);
+      // const response = await AdminService.addProduct(productData);
       
       if (response.success) {
         message.success('Product added successfully!');
