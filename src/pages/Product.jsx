@@ -223,8 +223,8 @@ export default function ProductForm() {
         images: images
       };
 
-      console.log('Submitting product data:', productData);
-      // const response = await AdminService.addProduct(productData);
+      // console.log('Submitting product data:', productData);
+      const response = await AdminService.addProduct(productData);
       
       if (response.success) {
         message.success('Product added successfully!');
