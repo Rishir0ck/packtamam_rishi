@@ -226,9 +226,9 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                    <div className="flex gap-2">
                       <ActionButton onClick={() => { setSelected(item); setModal('view') }} color="#6b7280" icon={Eye} title="View" />
-                      <ActionButton onClick={() => navigate('/product', { state: { editData: item } })} color="#c79e73" icon={Edit} title="Edit" />
+                      {/* <ActionButton onClick={() => navigate('/product', { state: { editData: item } })} color="#c79e73" icon={Edit} title="Edit" /> */}
                       <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
                       {/* <ActionButton onClick={() => deleteItem(item.id)} color="#ef4444" icon={Trash2} title="Delete" /> */}
                     </div>
@@ -301,6 +301,12 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                 <div className="col-span-3">
                   <p className={`text-sm font-medium ${theme.muted}`}>Description</p>
                   <p className={`mt-1 ${theme.text}`}>{selected.specs}</p>
+                </div>
+              )}
+              {selected.features && (
+                <div className="col-span-3">
+                  <p className={`text-sm font-medium ${theme.muted}`}>Features</p>
+                  <p className={`mt-1 ${theme.text}`}>{selected.features}</p>
                 </div>
               )}
             </div>

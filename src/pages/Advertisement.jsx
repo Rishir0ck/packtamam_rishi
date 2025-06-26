@@ -60,7 +60,11 @@ export default function AdvertisementModule() {
     setEditing(null);
   };
 
-  const getImageUrl = (ad) => ad.image_url || ad.imageUrl || ad.images?.[0]?.url || '';
+  const getImageUrl = (ad) => {
+  if (!ad) return '';
+  return ad.image_url || ad.imageUrl || 
+    (Array.isArray(ad.images) && ad.images.length > 0 && ad.images[0]?.url) || '';
+};
 
   // Event handlers
   const handleChange = (e) => {

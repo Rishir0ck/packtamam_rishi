@@ -267,7 +267,7 @@ class AdminService {
   // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();
-    const fields = ['name', 'category_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'quality', 'in_stock'];
+    const fields = ['name', 'category_id','subcategory_id', 'material_id', 'hsn_code', 'shape', 'colour', 'specs', 'features','quality', 'in_stock'];
     fields.forEach(field => formData.append(field, productData[field]));
     
      // ✅ Handle size array as JSON string

@@ -104,8 +104,10 @@ export default function ProductForm() {
     if (field === 'costPrice' || field === 'markupPrice') {
       const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
       const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
-      updated.sellPrice = (cost +(cost + markup/100).toFixed(2));
-      updated.grossProfit = markup.toFixed(2);
+      // updated.sellPrice = (cost + markup).toFixed(2);
+      updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
+      // updated.grossProfit = markup.toFixed(2);
+      updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
     }
     
     if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
@@ -134,7 +136,7 @@ export default function ProductForm() {
           if (field === 'price' || field === 'gst') {
             const price = parseFloat(field === 'price' ? value : slab.price) || 0;
             const gstRate = parseFloat(field === 'gst' ? value : slab.gst) || 0;
-            updated.finalPrice = (price + (price * gstRate) / 100).toFixed(2);
+            updated.finalPrice = (price + (price * gstRate) * 100).toFixed(2);
           }
           return updated;
         })
@@ -205,6 +207,7 @@ export default function ProductForm() {
         shape: formData.shape,
         colour: formData.colour,
         specs: formData.specs,  
+        features: formData.features,  
         quality: formData.quality,
         // inventory_code: formData.inventory_code,
         in_stock: formData.in_stock,
