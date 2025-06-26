@@ -3,8 +3,6 @@ import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, User2,
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
-const OUTLET_TYPES = ['Restaurant', 'Cafe', 'Fast Food', 'Fine Dining', 'Bakery', 'Food Truck', 'Catering', 'Bar & Grill', 'Pizzeria', 'Buffet', 'Delivery Only', 'Cloud Kitchen']
-
 const TABLE_COLUMNS = [
   { key: 'name', label: 'Restaurant', sortable: true },
   { key: 'owner', label: 'Owner', sortable: true },
@@ -21,67 +19,62 @@ export default function RestaurantManagement() {
   const [state, setState] = useState({
     restaurants: [], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
     newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' },
-    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10,
-    outletTypes: [], loadingOutlets: false
+    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10, outletTypes: [], loadingOutlets: false
   })
 
   const theme = useCallback((light, dark = '') => isDark ? `${dark} dark` : light, [isDark])
   const inputClass = `w-full p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`
 
-  useEffect(() => { fetchRestaurants() 
-    fetchOutletTypes()}, [])
-
-  const fetchOutletTypes = async () => {
+  // Combined fetch function to reduce API calls
+  const fetchData = async () => {
+    setState(prev => ({ ...prev, loading: true, loadingOutlets: true, error: '' }))
+    
     try {
-      setState(prev => ({ ...prev, loadingOutlets: true }))
-      const result = await AdminService.getOutlets()
+      const [restaurantResult, outletResult] = await Promise.all([
+        AdminService.getApprovedBusinessList(1, 100),
+        AdminService.getOutlets()
+      ])
       
-      if (result.success && result.data) {
-        // Assuming the API returns an array of outlet types
-        // Adjust this based on your actual API response structure
-        const outletTypes = Array.isArray(result.data) ? result.data : result.data.outlets || []
-        setState(prev => ({ ...prev, outletTypes, loadingOutlets: false }))
-      } else {
-        // Fallback to static list if API fails
-        const fallbackTypes = ['N/A']
-        setState(prev => ({ ...prev, outletTypes: fallbackTypes, loadingOutlets: false }))
-        console.warn('Failed to fetch outlet types, using fallback list')
-      }
+      // Process restaurants
+      const restaurants = restaurantResult.success ? restaurantResult.data.data?.map(r => ({
+        id: r.id, name: r.business_name || r.name, owner: r.owner_name || r.owner,
+        legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
+        address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
+        city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
+        gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'N/A', 
+        lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
+        joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
+        status: r.status === 'Approved' ? 'active' : 'inactive',
+        profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
+        franchises: r.franchise || []
+      })) || [] : []
+
+      // Process outlet types
+      const outletTypes = outletResult?.success ? outletResult.data.data || [] : []; 
+
+        console.log('Outlet Types:', outletTypes)
+
+      setState(prev => ({ 
+        ...prev, 
+        restaurants, 
+        outletTypes, 
+        loading: false, 
+        loadingOutlets: false,
+        error: !restaurantResult.success ? restaurantResult.error || 'Failed to fetch restaurants' : ''
+      }))
     } catch (err) {
-      // Fallback to static list if API call fails
-      const fallbackTypes = ['N/A']
-      setState(prev => ({ ...prev, outletTypes: fallbackTypes, loadingOutlets: false }))
-      console.warn('Error fetching outlet types, using fallback list:', err)
+      setState(prev => ({ 
+        ...prev, 
+        error: 'Failed to load data', 
+        loading: false, 
+        loadingOutlets: false,
+        outletTypes: ['N/A']
+      }))
     }
   }
 
-  const fetchRestaurants = async () => {
-    try {
-      setState(prev => ({ ...prev, loading: true, error: '' }))
-      const result = await AdminService.getApprovedBusinessList(1, 100)
-      
-      if (result.success) {
-        const restaurants = result.data.data?.map(r => ({
-          id: r.id, name: r.business_name || r.name, owner: r.owner_name || r.owner,
-          legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
-          address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
-          city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
-          gst_no: r.gst_no || 'N/A', outlet_type: r.outlet_type || 'N/A', 
-          lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
-          joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
-          status: r.status === 'Approved' ? 'active' : 'inactive',
-          profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-          restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
-          franchises: r.franchise || []
-        })) || []
-        setState(prev => ({ ...prev, restaurants, loading: false }))
-      } else {
-        setState(prev => ({ ...prev, error: result.error || 'Failed to fetch restaurants', loading: false }))
-      }
-    } catch (err) {
-      setState(prev => ({ ...prev, error: 'Failed to load restaurants', loading: false }))
-    }
-  }
+  useEffect(() => { fetchData() }, [])
 
   const handleInputChange = useCallback((field, value) => {
     setState(prev => ({ ...prev, editData: { ...prev.editData, [field]: value } }))
@@ -145,39 +138,44 @@ export default function RestaurantManagement() {
     }))
   }
 
-  const filtered = state.restaurants.filter(r => {
-    const matchSearch = [r.name, r.owner, r.outlet_type].some(field => 
-      field.toLowerCase().includes(state.search.toLowerCase())
-    )
-    const matchFilter = state.filter === 'all' || 
-      (state.filter === 'active' && r.status === 'active') ||
-      (state.filter === 'inactive' && r.status === 'inactive') ||
-      (state.filter === 'with-franchises' && r.franchises?.length > 0)
-    return matchSearch && matchFilter
-  })
+  // Filtered and sorted data
+  const processedData = (() => {
+    const filtered = state.restaurants.filter(r => {
+      const matchSearch = [r.name, r.owner, r.outlet_type].some(field => 
+        field.toLowerCase().includes(state.search.toLowerCase())
+      )
+      const matchFilter = state.filter === 'all' || 
+        (state.filter === 'active' && r.status === 'active') ||
+        (state.filter === 'inactive' && r.status === 'inactive') ||
+        (state.filter === 'with-franchises' && r.franchises?.length > 0)
+      return matchSearch && matchFilter
+    })
 
-  const sortedData = [...filtered].sort((a, b) => {
-    if (!state.sortBy) return 0
-    let aVal = a[state.sortBy], bVal = b[state.sortBy]
-    
-    if (state.sortBy === 'franchises') {
-      aVal = a.franchises?.length || 0
-      bVal = b.franchises?.length || 0
-    }
-    
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase()
-      bVal = bVal.toLowerCase()
-    }
-    
-    if (aVal < bVal) return state.sortOrder === 'asc' ? -1 : 1
-    if (aVal > bVal) return state.sortOrder === 'asc' ? 1 : -1
-    return 0
-  })
+    const sorted = [...filtered].sort((a, b) => {
+      if (!state.sortBy) return 0
+      let aVal = a[state.sortBy], bVal = b[state.sortBy]
+      
+      if (state.sortBy === 'franchises') {
+        aVal = a.franchises?.length || 0
+        bVal = b.franchises?.length || 0
+      }
+      
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase()
+        bVal = bVal.toLowerCase()
+      }
+      
+      if (aVal < bVal) return state.sortOrder === 'asc' ? -1 : 1
+      if (aVal > bVal) return state.sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
 
-  const totalPages = Math.ceil(sortedData.length / state.itemsPerPage)
-  const startIndex = (state.currentPage - 1) * state.itemsPerPage
-  const paginatedData = sortedData.slice(startIndex, startIndex + state.itemsPerPage)
+    const totalPages = Math.ceil(sorted.length / state.itemsPerPage)
+    const startIndex = (state.currentPage - 1) * state.itemsPerPage
+    const paginated = sorted.slice(startIndex, startIndex + state.itemsPerPage)
+
+    return { filtered: sorted, paginated, totalPages, startIndex }
+  })()
 
   const stats = [
     { label: 'Total', value: state.restaurants.length, icon: Store, color: '#c79e73', filter: 'all' },
@@ -213,11 +211,18 @@ export default function RestaurantManagement() {
     <div className={`rounded-lg p-3 text-sm ${theme('bg-gray-100', 'bg-gray-700')}`}>
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><User2 className="w-4 h-4" /><strong>Owner:</strong> {f.owner_name}</div></div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Briefcase className="w-4 h-4" /><strong>Business:</strong> {f.business_name}</div></div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Store className="w-4 h-4" /><strong>Outlet:</strong> {f.outlet_type}</div></div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Mail className="w-4 h-4" /><strong>Email:</strong> {f.email}</div></div>
-          <div className={theme('text-gray-600', 'text-gray-300')}><div className="flex items-center gap-2"><Phone className="w-4 h-4" /><strong>Phone:</strong> {f.mobile_number}</div></div>
+          {[
+            [User2, 'Owner', f.owner_name],
+            [Briefcase, 'Business', f.business_name],
+            [Store, 'Outlet', f.outlet_type],
+            [Mail, 'Email', f.email],
+            [Phone, 'Phone', f.mobile_number]
+          ].map(([Icon, label, value], i) => (
+            <div key={i} className={`flex items-center gap-2 ${theme('text-gray-600', 'text-gray-300')}`}>
+              <Icon className="w-4 h-4" />
+              <strong>{label}:</strong> {value}
+            </div>
+          ))}
         </div>
         {showActions && (
           <button onClick={() => onRemove(f.id)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded">
@@ -244,16 +249,18 @@ export default function RestaurantManagement() {
         </select>
       ) : type === 'outlet_select' ? (
         <select 
-          value={state.editData[field] || 'N/A'} 
-          onChange={(e) => handleInputChange(field, e.target.value)}
-          className={inputClass}
-          disabled={state.loadingOutlets}
-        >
+        value={state.editData[field] || ''} // Changed from state.outletTypes
+        onChange={(e) => handleInputChange(field, e.target.value)} // Changed to update the field
+        className={inputClass}
+        disabled={state.loadingOutlets}
+      >
          <option value="">Select Outlet Type</option>
-          {state.outletTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
-          ))}
-        </select>
+        {Array.isArray(state.outletTypes) && state.outletTypes
+        .filter(type => type.is_active === true) // Only show active outlet types
+        .map((cat) => (
+          <option key={cat.id} value={cat.name}>{cat.name}</option> // Use cat.name as value
+        ))}
+      </select>
       ) : (
         <input 
           type="text"
@@ -273,7 +280,7 @@ export default function RestaurantManagement() {
   const Pagination = () => (
     <div className={`flex items-center justify-between px-4 py-3 border-t ${theme('border-gray-200 bg-gray-50', 'border-gray-700 bg-gray-800')}`}>
       <div className={`text-sm ${theme('text-gray-700', 'text-gray-300')}`}>
-        Showing {startIndex + 1} to {Math.min(startIndex + state.itemsPerPage, sortedData.length)} of {sortedData.length} results
+        Showing {processedData.startIndex + 1} to {Math.min(processedData.startIndex + state.itemsPerPage, processedData.filtered.length)} of {processedData.filtered.length} results
       </div>
       <div className="flex items-center gap-2">
         <select
@@ -293,7 +300,7 @@ export default function RestaurantManagement() {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          {Array.from({ length: Math.min(5, processedData.totalPages) }, (_, i) => {
             const page = i + 1
             return (
               <button
@@ -310,8 +317,8 @@ export default function RestaurantManagement() {
             )
           })}
           <button
-            onClick={() => setState(prev => ({ ...prev, currentPage: Math.min(totalPages, prev.currentPage + 1) }))}
-            disabled={state.currentPage === totalPages}
+            onClick={() => setState(prev => ({ ...prev, currentPage: Math.min(processedData.totalPages, prev.currentPage + 1) }))}
+            disabled={state.currentPage === processedData.totalPages}
             className={`p-1 rounded ${theme('bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50', 'bg-gray-700 border-gray-600 hover:bg-gray-600 disabled:opacity-50')}`}
           >
             <ChevronRight className="w-4 h-4" />
@@ -393,7 +400,7 @@ export default function RestaurantManagement() {
               </tr>
             </thead>
             <tbody className={`divide-y ${theme('divide-gray-200', 'divide-gray-700')}`}>
-              {paginatedData.length === 0 ? (
+              {processedData.paginated.length === 0 ? (
                 <tr>
                   <td colSpan={TABLE_COLUMNS.length} className="px-4 py-12 text-center">
                     <Store className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-400" />
@@ -401,7 +408,7 @@ export default function RestaurantManagement() {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((r) => (
+                processedData.paginated.map((r) => (
                   <tr key={r.id} className={`${theme('hover:bg-gray-50', 'hover:bg-gray-750')}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -476,30 +483,32 @@ export default function RestaurantManagement() {
               <div className="space-y-2">
                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact</h3>
                 {[
-                  [<><User2 className="w-4 h-4 inline-block mr-1" /> <strong>Owner:</strong></>, state.selected.owner],
-                  [<><Mail className="w-4 h-4 inline-block mr-1" /> <strong>Email:</strong></>, state.selected.email],
-                  [<><Phone className="w-4 h-4 inline-block mr-1" /> <strong>Phone:</strong></>, state.selected.phone],
-                  [<><Building2 className="w-4 h-4 inline-block mr-1" /> <strong>Legal Entity:</strong></>, state.selected.legal_entity_name],
-                  [<><FileText className="w-4 h-4 inline-block mr-1" /> <strong>FSSAI:</strong></>, state.selected.fssai_no],
-                  [<><MapPin className="w-4 h-4 inline-block mr-1" /> <strong>City:</strong></>, state.selected.city],
-                ].map(([label, value], i) => (
-                  <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                    <strong>{label}</strong> {value}
+                  [User2, 'Owner', state.selected.owner],
+                  [Mail, 'Email', state.selected.email],
+                  [Phone, 'Phone', state.selected.phone],
+                  [Building2, 'Legal Entity', state.selected.legal_entity_name],
+                  [FileText, 'FSSAI', state.selected.fssai_no],
+                  [MapPin, 'City', state.selected.city],
+                ].map(([Icon, label, value], i) => (
+                  <div key={i} className={`flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <Icon className="w-4 h-4" />
+                    <strong>{label}:</strong> {value}
                   </div>
                 ))}
               </div>
               <div className="space-y-2">
                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Details</h3>
                 {[
-                  [<><Briefcase className="w-4 h-4 inline-block mr-1" /><strong>Business Type:</strong></>, state.selected.businessType],
-                  [<><Store className="w-4 h-4 inline-block mr-1" /><strong>Outlet Type:</strong></>, state.selected.outlet_type],
-                  [<><Key className="w-4 h-4 inline-block mr-1" /><strong>Franchise Code:</strong></>, state.selected.franchise_code],
-                  [<><CalendarDays className="w-4 h-4 inline-block mr-1" /><strong>Applied Date:</strong></>, state.selected.joinedDate],
-                  [<><FileText className="w-4 h-4 inline-block mr-1" /> <strong>GST:</strong></>, state.selected.gst_no],
-                  [<><MoveUpRight className="w-4 h-4 inline-block mr-1" /><strong>Lift Available:</strong></>, state.selected.lift]
-                ].map(([label, value], i) => (
-                  <div key={i} className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                    <strong>{label}</strong> {value}
+                  [Briefcase, 'Business Type', state.selected.businessType],
+                  [Store, 'Outlet Type', state.selected.outlet_type],
+                  [Key, 'Franchise Code', state.selected.franchise_code],
+                  [CalendarDays, 'Applied Date', state.selected.joinedDate],
+                  [FileText, 'GST', state.selected.gst_no],
+                  [MoveUpRight, 'Lift Available', state.selected.lift]
+                ].map(([Icon, label, value], i) => (
+                  <div key={i} className={`flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <Icon className="w-4 h-4" />
+                    <strong>{label}:</strong> {value}
                   </div>
                 ))}
               </div>
@@ -524,6 +533,12 @@ export default function RestaurantManagement() {
       {/* Edit Modal */}
       {state.modal === 'edit' && state.editData && (
         <Modal title={`Edit ${state.editData.name}`} onClose={() => setState(prev => ({ ...prev, modal: '' }))}>
+          {/* Add error handling */}
+          {!state.editData ? (
+            <div className="p-4 text-center">
+              <p className={`${theme('text-gray-600', 'text-gray-400')}`}>Loading...</p>
+            </div>
+          ) : (
           <div className="space-y-4">
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
@@ -562,8 +577,10 @@ export default function RestaurantManagement() {
                         className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
                       >
                         <option value="">Select Outlet Type</option>
-                        {state.outletTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                        {Array.isArray(state.outletTypes) && state.outletTypes
+                        .filter(type => type.is_active === true) // Only show active outlet types
+                        .map(type => (
+                          <option key={type.id} value={type.name}>{type.name}</option> // Fixed: use type.id as key and type.name as value
                         ))}
                       </select>
                     ) : (
@@ -617,6 +634,7 @@ export default function RestaurantManagement() {
               </button>
             </div>
           </div>
+          )}
         </Modal>
       )}
     </div>
