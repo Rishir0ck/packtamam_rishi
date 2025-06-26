@@ -10,14 +10,15 @@ export default function ProductForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubCategories] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
-    name: '', category_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
-    specs: '', quality: '', in_stock: 'Yes', inventory_code: ''
+    name: '', category_id: '', subcategory_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
+    specs: '', quality: '', in_stock: 'Yes'
   });
   const [sizes, setSizes] = useState([{
-    id: 1, size: '', costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',
+    id: 1, size: '', costPrice: '', inventory_code:'', markupPrice: '', sellPrice: '', grossProfit: '',
     gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
@@ -42,30 +43,36 @@ export default function ProductForm() {
 
   const basicFields = [
     ['Product Name', 'name'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
-    ['Color', 'colour'], ['Quality', 'quality'], ['Inventory Code', 'inventory_code']
+    ['Color', 'colour'], ['Quality', 'quality'],// ['Inventory Code', 'inventory_code']
   ];
 
     useEffect(() => {
       const loadData = async () => {
         try {
-          const [categoriesRes, materialsRes] = await Promise.all([
-            AdminService.getCategories(),
-            AdminService.getMaterials()
-          ]);
+          const [categoriesRes, materialsRes, subcategoriesRes] =
+            await Promise.all([
+              AdminService.getCategories(),
+              AdminService.getMaterials(),
+              AdminService.getSubCategories(),
+            ]);
           
           // Extract the actual array from the nested data structure
           const categoriesData = categoriesRes?.success ? categoriesRes.data.data || [] : [];
+          const subcategoriesData = subcategoriesRes?.success ? subcategoriesRes.data.data || [] : [];
           const materialsData = materialsRes?.success ? materialsRes.data.data || [] : [];
 
           console.log('Categories loaded:', categoriesData);
+          console.log('Subcategories loaded:', subcategoriesData);
           console.log('Materials loaded:', materialsData);
           
           setCategories(categoriesData);
+          setSubCategories(subcategoriesData);
           setMaterials(materialsData);
         } catch (error) {
           console.error('Failed to load data:', error);
           message.error('Failed to load categories and materials');
           setCategories([]);
+          setSubCategories([]);
           setMaterials([]);
         }
       };
@@ -97,7 +104,7 @@ export default function ProductForm() {
     if (field === 'costPrice' || field === 'markupPrice') {
       const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
       const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
-      updated.sellPrice = (cost + markup).toFixed(2);
+      updated.sellPrice = (cost + markup/100).toFixed(2);
       updated.grossProfit = markup.toFixed(2);
     }
     
@@ -192,6 +199,7 @@ export default function ProductForm() {
       const productData = {
         name: formData.name,
         category_id: formData.category_id,
+        subcategory_id: formData.subcategory_id,
         material_id: formData.material_id,
         hsn_code: formData.hsn_code,
         shape: formData.shape,
@@ -202,7 +210,7 @@ export default function ProductForm() {
         in_stock: formData.in_stock,
         sizes: sizes.map(size => ({
           size: size.size,
-          inventory_code: formData.inventory_code,
+          inventory_code: size.inventory_code,
           costPrice: parseFloat(size.costPrice) || 0,
           markupPrice: parseFloat(size.markupPrice) || 0,
           sellPrice: parseFloat(size.sellPrice) || 0,
@@ -223,7 +231,7 @@ export default function ProductForm() {
         images: images
       };
 
-      // console.log('Submitting product data:', productData);
+      console.log('Submitting product data:', productData);
       const response = await AdminService.addProduct(productData);
       
       if (response.success) {
@@ -325,6 +333,22 @@ export default function ProductForm() {
               <p className="text-xs text-red-500 mt-1">No categories available</p>
             )}
           </div>
+          <div>
+            <label className={`block text-sm font-medium ${theme.text} mb-1`}>Sub Category</label>
+            <select 
+              value={formData.subcategory_id} 
+              onChange={(e) => handleInputChange('subcategory_id', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+            >
+              <option value="">Select Sub Category</option>
+              {Array.isArray(subcategories) && subcategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            {(!categories || categories.length === 0) && (
+              <p className="text-xs text-red-500 mt-1">No Sub categories available</p>
+            )}
+          </div>
 
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
@@ -348,6 +372,14 @@ export default function ProductForm() {
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
           <textarea
             value={formData.specs} onChange={(e) => handleInputChange('specs', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
+          />
+        </div>
+
+        <div className="mt-3">
+          <label className={`block text-sm font-medium ${theme.text} mb-1`}>Features</label>
+          <textarea
+            value={formData.features} onChange={(e) => handleInputChange('features', e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
           />
         </div>
@@ -385,10 +417,10 @@ export default function ProductForm() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
-              { title: 'Size Details', color: 'blue', fields: [['Size', 'size'], ['Pack Off', 'packOff']] },
-              { title: 'Cost & Markup', color: 'orange', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup Price (₹)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
+              { title: 'Size Details', color: 'blue', fields: [['Size', 'size'], ['Pack Off', 'packOff'],['Inventory Code', 'inventory_code']] },
+              { title: 'Cost & Markup', color: 'orange', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup Price (%)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
               { title: 'Selling Price', color: 'green', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number'], ['GST Amount (₹)', 'gstAmount', 'number', true]] },
-              { title: 'Final Price', color: 'purple', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true], ['Net Profit (₹)', 'netProfit', 'number', true]] }
+              { title: 'Final Price', color: 'purple', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true]] }
             ].map(section => (
               <div key={section.title} className="space-y-3">
                 <h5 className={`font-medium text-center py-2 rounded-lg text-sm ${isDark ? 'bg-gray-600 text-gray-200' : `bg-${section.color}-100 text-${section.color}-800`}`}>{section.title}</h5>
