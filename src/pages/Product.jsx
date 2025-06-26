@@ -104,7 +104,7 @@ export default function ProductForm() {
     if (field === 'costPrice' || field === 'markupPrice') {
       const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
       const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
-      updated.sellPrice = (cost + markup/100).toFixed(2);
+      updated.sellPrice = (cost +(cost + markup/100).toFixed(2));
       updated.grossProfit = markup.toFixed(2);
     }
     

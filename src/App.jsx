@@ -14,6 +14,7 @@ import Product from './pages/Product'
 import Advertisement from './pages/Advertisement'
 import Profile from './pages/Profile'
 import Policy from './pages/Policy'
+import DeliveryPartner from './pages/DeliveryPartner'
 import LoadingScreen from './components/common/LoadingScreen'
 import ResponsiveWarning from './components/common/ResponsiveWarning'
 import useResponsive from './hooks/useResponsive'
@@ -45,6 +46,7 @@ function AppContent() {
         <Route path="inventory-management" element={<InventoryManagement />} />
         <Route path="product" element={<Product />} />
         <Route path="advertisement" element={<Advertisement />} />
+        <Route path="delivery-partner" element={<DeliveryPartner />} />
         <Route path="order-list" element={<AddToCart />} />
         <Route path="profile" element={<Profile />} />
         <Route path="policy" element={<Policy />} />

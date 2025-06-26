@@ -22,7 +22,12 @@ const menuItems = [
       { path: '/inventory-management', label: 'Management' },
       { path: '/advertisement', label: 'Banner' }
     ] },
-  { path: '/order-list', icon: ShoppingCart, label: 'Order List' },
+  { path: '/order-list', icon: ShoppingCart, label: 'Order List' ,hasSubmenu: true,
+    submenu: [
+      { path: '/order-list', icon: Users, label: 'Orders' },
+      { path: '/delivery-partner', icon: Users, label: 'Delivery Partner' }
+    ]} ,
+  
   { path: '/profile', icon: User, label: 'Profile' },
   { path: '/policy', icon: Shield , label: 'Policy' },
 ]
