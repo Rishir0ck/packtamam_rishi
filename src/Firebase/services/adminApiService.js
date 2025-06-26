@@ -243,11 +243,11 @@ class AdminService {
     const query = categoryId ? `?category_id=${categoryId}` : '';
     return this.makeAuthenticatedRequest('GET', `/api/admin/sub-categories/list${query}`);
   }
-  async addSubCategory(subcategory_id, product_id) {
-    return this.makeFormDataRequest('POST', '/api/admin/sub-categories/add-product', {subcategory_id, product_id});
+  async addSubCategory(Name) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/sub-categories/add', {name: Name});
   }
-  async updateSubCategory(id, is_active) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/sub-categories/update', {id, is_active});
+  async updateSubCategory(id, name, is_active) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/sub-categories/update', {id, name, is_active});
   }
 
   // Material Management

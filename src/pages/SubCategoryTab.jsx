@@ -46,8 +46,8 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
     if (!editData?.name?.trim()) return alert('Sub Category name is required')
     
     const operation = editData.id
-      ? () => adminService.updateSubCategory(editData.id, editData.is_active)
-      : () => adminService.addSubCategory(editData.subcategory_id, editData.product_id)
+      ? () => adminService.updateSubCategory(editData.id, editData.name, editData.is_active)
+      : () => adminService.addSubCategory(editData.name)
 
     apiCall(operation, () => {
       setModal('')
@@ -56,7 +56,7 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
   }, [editData, apiCall])
 
   const openModal = useCallback((item = null) => {
-    setEditData(item ? { ...item } : { name: '', is_active: true, subcategory_id: '', product_id: '' })
+    setEditData(item ? { ...item } : { name: '', is_active: true})
     setModal('editSubCategory')
   }, [])
 
@@ -101,7 +101,6 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
               {[
                 { key: 'name', label: 'Name' },
                 { key: 'is_active', label: 'Status' },
-                { key: 'sub_category_products', label: 'Products Count' }
               ].map(({ key, label }) => (
                 <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                   <button
@@ -130,9 +129,6 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
                   }`}>
                     {item.is_active ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-                <td className={`px-4 py-3 ${theme.text}`}>
-                  {item.sub_category_products?.length || 0} products
                 </td>
                 <td className="px-4 py-3">
                   <ActionButton
@@ -208,36 +204,6 @@ export default function SubCategoriesTab({ data, loading, apiCall, theme }) {
               placeholder="Enter sub category name"
             />
           </div>
-          
-          {!editData?.id && (
-            <>
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
-                  Subcategory ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editData?.subcategory_id || ''}
-                  onChange={(e) => handleFieldChange('subcategory_id', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
-                  placeholder="Enter subcategory ID"
-                />
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.muted}`}>
-                  Product ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editData?.product_id || ''}
-                  onChange={(e) => handleFieldChange('product_id', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input || 'border-gray-200'}`}
-                  placeholder="Enter product ID"
-                />
-              </div>
-            </>
-          )}
           
           <div>
             <label className="flex items-center gap-3">
