@@ -327,7 +327,7 @@ class AdminService {
   }
 
   async updateBanner(id, placement, priority, image_url, title) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/update', {id, placement, priority, title, images:[image_url]});
+    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/update', {id, placement, priority, title, images:[{image_url}]});
   }
 
   async deleteBanner(bannerId) {
