@@ -255,7 +255,7 @@ export default function AdvertisementModule() {
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Current Image</label>
                   {/* <img src={getImageUrl(editing.images[0])} alt="" */}
-                  <img src={getImageUrl(editing)} alt=""
+                  <img src={getImageUrl(editing.images[0])} alt=""
                        className="max-w-full h-32 object-cover rounded-lg border"
                        onError={(e) => { e.target.src = '' }} />
                 </div>
