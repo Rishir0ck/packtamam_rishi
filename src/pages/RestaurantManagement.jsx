@@ -224,11 +224,6 @@ export default function RestaurantManagement() {
             </div>
           ))}
         </div>
-        {showActions && (
-          <button onClick={() => onRemove(f.id)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded">
-            <X className="w-4 h-4" />
-          </button>
-        )}
       </div>
     </div>
   )
