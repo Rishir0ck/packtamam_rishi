@@ -326,11 +326,8 @@ class AdminService {
     return this.makeFormDataRequest('POST', '/api/admin/banners/add', formData);
   }
 
-  async updateBanner(bannerId, bannerData) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/update', {
-      id: bannerId,
-      ...bannerData
-    });
+  async updateBanner(id, placement, priority, image_url, title) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/banners/update', {id, placement, priority, title, images:[image_url]});
   }
 
   async deleteBanner(bannerId) {

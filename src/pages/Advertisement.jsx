@@ -84,7 +84,7 @@ export default function AdvertisementModule() {
     setError('');
     try {
       const result = editing
-        ? await AdminService.updateBanner(editing.id, { ...form, id: editing.id })
+        ? await AdminService.updateBanner(editing.id, editing.placement, editing.image_url, editing.priority, form.title)
         : await AdminService.addBanner(form);
 
       if (result.success) {
@@ -107,7 +107,7 @@ export default function AdvertisementModule() {
 
   const handleEdit = (ad) => {
     setForm({
-      title: ad.title || '', images: [], placement: ad.placement || 'Header',
+      title: ad.title || '', images: ad.image_url || [], placement: ad.placement || 'Header', 
       is_active: ad.is_active !== false, priority: ad.priority || 1
     });
     setEditing(ad);
