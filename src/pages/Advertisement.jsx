@@ -61,10 +61,17 @@ export default function AdvertisementModule() {
   };
 
   const getImageUrl = (ad) => {
-  if (!ad) return '';
-  return ad.image_url || ad.imageUrl || 
-    (Array.isArray(ad.images) && ad.images.length > 0 && ad.images[0]?.url) || '';
-};
+    if (!ad) return '';
+    // Handle both single image and array formats
+    if (typeof ad === 'string') return ad;
+    if (ad.image_url) return ad.image_url;
+    if (ad.imageUrl) return ad.imageUrl;
+    if (ad.images && Array.isArray(ad.images) && ad.images.length > 0) {
+      const firstImage = ad.images[0];
+      return firstImage.url || firstImage.image_url || firstImage;
+    }
+    return '';
+  };
 
   // Event handlers
   const handleChange = (e) => {
@@ -82,6 +89,12 @@ export default function AdvertisementModule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    if (!editing && (!form.images || form.images.length === 0)) {
+      setError('Please select an image');
+      return;
+    }
+    
     try {
       const result = editing
         ? await AdminService.updateBanner(editing.id, editing.placement, editing.image_url, editing.priority, form.title)
@@ -90,10 +103,14 @@ export default function AdvertisementModule() {
       if (result.success) {
         if (editing) {
           setAds(prev => prev.map(ad => ad.id === editing.id 
-            // ? { ...ad, ...form, image_url: ad.image_url } : ad));
             ? { ...ad, ...form, image_url: getImageUrl(ad) } : ad));
         } else {
-          const newAd = result.data || { ...form, id: Date.now(), image_url: form.images[0]?.url };
+          const newAd = result.data || { 
+            ...form, 
+            id: Date.now(), 
+            image_url: form.images[0]?.url || '',
+            images: form.images 
+          };
           setAds(prev => [...prev, newAd]);
         }
         resetForm();
@@ -107,12 +124,15 @@ export default function AdvertisementModule() {
 
   const handleEdit = (ad) => {
     setForm({
-      title: ad.title || '', images: ad.image_url || [], placement: ad.placement || 'Header', 
-      is_active: ad.is_active !== false, priority: ad.priority || 1
+      title: ad.title || '', 
+      images: [], // Keep empty for editing mode
+      placement: ad.placement || 'Header', 
+      is_active: ad.is_active !== false, 
+      priority: ad.priority || 1
     });
     setEditing(ad);
     setShowForm(true);
-    setShowView(null); // Close view if open
+    setShowView(null);
   };
 
   const handleDelete = async (id) => {
@@ -254,10 +274,15 @@ export default function AdvertisementModule() {
               {editing && (
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Current Image</label>
-                  {/* <img src={getImageUrl(editing.images[0])} alt="" */}
-                  <img src={getImageUrl(editing.images[0])} alt=""
-                       className="max-w-full h-32 object-cover rounded-lg border"
-                       onError={(e) => { e.target.src = '' }} />
+                  {getImageUrl(editing) ? (
+                    <img src={getImageUrl(editing)} alt=""
+                        className="max-w-full h-32 object-cover rounded-lg border"
+                        onError={(e) => { e.target.style.display = 'none' }} />
+                  ) : (
+                    <div className="max-w-full h-32 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500">
+                      No Image Available
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -302,9 +327,15 @@ export default function AdvertisementModule() {
 
             <div className="space-y-4">
               <div>
-                <img src={getImageUrl(showView.images[0])} alt={''}
-                  className="w-full h-150 object-cover rounded-lg border"
-                  onError={(e) => { e.target.src = '' }} />
+                {getImageUrl(showView) ? (
+                  <img src={getImageUrl(showView)} alt=""
+                    className="w-full h-48 object-cover rounded-lg border"
+                    onError={(e) => { e.target.style.display = 'none' }} />
+                ) : (
+                  <div className="w-full h-48 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500">
+                    No Image Available
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -380,12 +411,18 @@ export default function AdvertisementModule() {
                   {ads.map((ad, index) => (
                     <tr key={ad.id || index} className={theme.hover}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <img
-                          src={getImageUrl(ad.images[0])}
-                          alt={''}
-                          className="w-26 h-20 object-cover rounded border"
-                          onError={(e) => { e.target.src = '' }}
-                        />
+                        {getImageUrl(ad) ? (
+                          <img
+                            src={getImageUrl(ad)}
+                            alt=""
+                            className="w-16 h-12 object-cover rounded border"
+                            onError={(e) => { e.target.style.display = 'none' }}
+                          />
+                        ) : (
+                          <div className="w-16 h-12 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-500">
+                            No Img
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm font-medium ${theme.text}`}>
