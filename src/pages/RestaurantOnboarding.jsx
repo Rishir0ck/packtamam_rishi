@@ -18,6 +18,7 @@ export default function RestaurantOnboarding() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadType, setUploadType] = useState('')
+  const [uploadPreview, setUploadPreview] = useState(null)
   
   // Document types for dynamic upload
   const documentTypes = ['fssai_certificate', 'gst_certificate', 'pan_card']
@@ -124,24 +125,25 @@ export default function RestaurantOnboarding() {
   }
 
   const uploadDocument = async () => {
-    if (!uploadFile || !selected || !uploadType) return
-    
-    setLoading(true)
-    setError('')
-    try {
-      const result = await AdminService.updloadDocumentation(selected.id, uploadType, uploadFile)
-      if (result.success) {
-        await loadRestaurants()
-        setUploadFile(null)
-        setUploadType('')
-        setModal('')
-      } else throw new Error(result.error || 'Failed to upload document')
-    } catch (err) {
-      setError(err.message || 'Failed to upload document')
-    } finally {
-      setLoading(false)
-    }
+  if (!uploadFile || !selected || !uploadType) return;
+  
+  setLoading(true)
+  setError('')
+  try {
+    const result = await AdminService.updloadDocumentation(selected.id, uploadType, uploadFile)
+    if (result.success) {
+      await loadRestaurants()
+      setUploadFile(null)
+      setUploadType('')
+      setUploadPreview(null)
+      setModal('')
+    } else throw new Error(result.error || 'Failed to upload document')
+  } catch (err) {
+    setError(err.message || 'Failed to upload document')
+  } finally {
+    setLoading(false)
   }
+}
 
 
   const downloadDocument = async (url, fileName) => {
@@ -461,40 +463,110 @@ export default function RestaurantOnboarding() {
                 </div>
               </div>
 
-              {(selected.status === 'pending' || selected.status === 'query') && (
-                <div className={`flex gap-2 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <button onClick={() => { handleAction(selected.id, 'approved'); setModal('') }} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm">Approve</button>
-                  <button onClick={() => { handleAction(selected.id, 'rejected'); setModal('') }} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">Reject</button>
-                  <button onClick={() => { setQueryTarget(selected); setModal('query') }} className="px-4 py-2 text-white rounded-lg text-sm" style={{ backgroundColor: '#c79e73' }}>Send Query</button>
-                  
-                  {/* Upload Document Button */}
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="upload-doc"
-                      onChange={(e) => setUploadFile(e.target.files[0])}
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    />
-                    <label htmlFor="upload-doc" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm cursor-pointer flex items-center gap-2">
-                      <Upload className="w-4 h-4" /> Upload Doc
-                    </label>
+                {/* Upload Document Button */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="upload-doc"
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        setUploadFile(file)
+                        // Create preview
+                        const reader = new FileReader()
+                        reader.onload = (e) => setUploadPreview(e.target.result)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  />
+                  {(selected.status === 'pending' || selected.status === 'query') && (
+                  <div className={`flex gap-2 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <button onClick={() => { handleAction(selected.id, 'approved'); setModal('') }} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm">Approve</button>
+                    <button onClick={() => { handleAction(selected.id, 'rejected'); setModal('') }} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">Reject</button>
+                    <button onClick={() => { setQueryTarget(selected); setModal('query') }} className="px-4 py-2 text-white rounded-lg text-sm" style={{ backgroundColor: '#c79e73' }}>Send Query</button>
+                    
+                    {/* Upload Document Section */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        id="upload-doc"
+                        onChange={(e) => {
+                          const file = e.target.files[0]
+                          if (file) {
+                            setUploadFile(file)
+                            const reader = new FileReader()
+                            reader.onload = (e) => setUploadPreview(e.target.result)
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      />
+                      <label htmlFor="upload-doc" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm cursor-pointer flex items-center gap-2">
+                        <Upload className="w-4 h-4" /> Upload Doc
+                      </label>
+                      
+                      {uploadFile && (
+                        <>
+                          <select
+                            value={uploadType}
+                            onChange={(e) => setUploadType(e.target.value)}
+                            className={`px-3 py-2 text-sm rounded-lg border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                          >
+                            <option value="">Select Type</option>
+                            {documentTypes.map(type => (
+                              <option key={type} value={type}>
+                                {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </option>
+                            ))}
+                          </select>
+                          <button 
+                            onClick={uploadDocument}
+                            disabled={loading || !uploadType}
+                            className={`px-4 py-2 text-sm rounded-lg ${loading || !uploadType ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'} text-white`}
+                          >
+                            {loading ? 'Uploading...' : 'Save'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  
-                  {uploadFile && (
-                    <button 
-                      onClick={uploadDocument}
-                      disabled={loading}
-                      className={`px-4 py-2 text-sm rounded-lg ${loading ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'} text-white`}
-                    >
-                      {loading ? 'Uploading...' : 'Save'}
-                    </button>
-                  )}
+                )}
+                {/* Document Preview Modal - Add this right after the upload section */}
+                  {uploadPreview && (
+                    <div className={`mt-4 p-4 border rounded-lg ${isDark ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+                      <h4 className={`font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Preview: {uploadFile?.name}</h4>
+                      <div className="max-h-40 overflow-hidden rounded">
+                        {uploadFile?.type.startsWith('image/') ? (
+                          <img src={uploadPreview} alt="Preview" className="max-w-full h-auto" />
+                        ) : (
+                          <div className={`p-4 text-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded`}>
+                            <FileText className={`w-12 h-12 mx-auto mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{uploadFile?.name}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {(uploadFile?.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setUploadFile(null)
+                          setUploadPreview(null)
+                          setUploadType('')
+                        }}
+                        className={`mt-2 px-3 py-1 text-xs rounded ${isDark ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}     
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
       )}
 
       {/* Franchise Modal */}
