@@ -150,8 +150,17 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/update-business', payload);
   }
 
-  async updloadDocumentation(id, type, document) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/upload-document', { id, type, document });
+  async uploadDocumentation(uploadDocData) {
+    const formData = this.createUploadDocFormData(uploadDocData);
+    return this.makeFormDataRequest('POST', '/api/admin/upload-document', formData);
+  }
+
+  createUploadDocFormData(uploadDocData) {
+    const formData = new FormData();
+    const fields = ['id','type', 'document'];
+    fields.forEach(field => formData.append(field, uploadDocData[field]));
+
+    return formData;
   }
 
   // Outlet Management

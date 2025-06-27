@@ -125,12 +125,20 @@ export default function RestaurantOnboarding() {
   }
 
   const uploadDocument = async () => {
-  if (!uploadFile || !selected || !uploadType) return;
+  if ( !selected || !uploadType || !uploadFile) return;
   
   setLoading(true)
   setError('')
   try {
-    const result = await AdminService.updloadDocumentation(selected.id, uploadType, uploadFile)
+    // Convert file to FormData for proper binary upload
+    const formData = { id: selected.id, type: uploadType, document: uploadFile }
+    // new FormData()
+    // formData.append('id', selected.id)
+    // formData.append('type', uploadType)
+    // formData.append('document', uploadFile) // File object will be properly serialized
+    
+    const result = await AdminService.uploadDocumentation(formData)
+    console.log(result)
     if (result.success) {
       await loadRestaurants()
       setUploadFile(null)
