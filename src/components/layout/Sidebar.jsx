@@ -25,7 +25,8 @@ const menuItems = [
   { path: '/order-list', icon: ShoppingCart, label: 'Order List' ,hasSubmenu: true,
     submenu: [
       { path: '/order-list', icon: Users, label: 'Orders' },
-      { path: '/delivery-partner', icon: Users, label: 'Delivery Partner' }
+      { path: '/delivery-partner', icon: Users, label: 'Delivery Partner' },
+      { path: '/delivery-charges', icon: Users, label: 'Delivery Charges' }
     ]} ,
   
   { path: '/profile', icon: User, label: 'Profile' },
