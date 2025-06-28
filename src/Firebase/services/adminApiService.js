@@ -273,6 +273,25 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/get-data');
   }
 
+   // CMS Policy APIs
+ async getPolicies() {
+  return this.makeAuthenticatedRequest('GET', `/api/admin/cms/list`);
+  }
+
+  async createPolicy(policyData) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/cms/add', policyData);
+  }
+
+  async updatePolicy(policyId, policyData) {
+    return this.makeAuthenticatedRequest('PUT', '/api/admin/cms/update', { id: policyId, ...policyData });
+  }
+
+  async deletePolicy(policyId) {
+    return this.makeAuthenticatedRequest('DELETE', '/api/admin/cms/delete', { id: policyId });
+  }
+
+
+
   // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();
