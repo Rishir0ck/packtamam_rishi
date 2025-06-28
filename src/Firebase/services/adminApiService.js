@@ -177,8 +177,8 @@ class AdminService {
   }
 
   // Sub Admin Management
-  async addSubAdmin(email, name) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name });
+  async addSubAdmin(email, name, role, modules, is_active) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name, role, modules, is_active });
   }
 
   async deleteSubAdmin(id) {
@@ -187,6 +187,9 @@ class AdminService {
 
   async listSubAdmins() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/list-sub-admin');
+  }
+  async listModules() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/list-permissions');
   }
 
   // Pricing Management

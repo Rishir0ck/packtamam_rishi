@@ -29,7 +29,7 @@ const menuItems = [
     ]} ,
   
   { path: '/profile', icon: User, label: 'Profile' },
-  { path: '/policy', icon: Shield , label: 'Policy' },
+  { path: '/policy', icon: Shield , label: 'CMS' },
 ]
 
 export default function Sidebar() {

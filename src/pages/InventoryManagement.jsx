@@ -1,6 +1,6 @@
 // InventoryManagement.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { AlertCircle, X, Package, TrendingUp, Layers } from 'lucide-react'
+import { AlertCircle, X, Package, TrendingUp, Layers, BadgePercent  } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import adminService from '../Firebase/services/adminApiService'
 import ProductsTab from './ProductsTab'
@@ -79,7 +79,7 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },
-    { id: 'discount', label: 'Discount', icon: TrendingUp },
+    { id: 'discount', label: 'Discount', icon: BadgePercent },
     { id: 'subCategories', label: 'Sub Categories', icon: Package },
     { id: 'categories', label: 'Categories', icon: TrendingUp },
     { id: 'materials', label: 'Materials', icon: Layers }
