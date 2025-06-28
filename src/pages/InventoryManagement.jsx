@@ -4,6 +4,7 @@ import { AlertCircle, X, Package, TrendingUp, Layers } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import adminService from '../Firebase/services/adminApiService'
 import ProductsTab from './ProductsTab'
+import Discount from './Discount'
 import CategoriesTab from './CategoriesTab'
 import MaterialsTab from './MaterialsTab'
 import SubCategoryTab from './SubCategoryTab'
@@ -78,6 +79,7 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },
+    { id: 'discount', label: 'Discount', icon: TrendingUp },
     { id: 'subCategories', label: 'Sub Categories', icon: Package },
     { id: 'categories', label: 'Categories', icon: TrendingUp },
     { id: 'materials', label: 'Materials', icon: Layers }
@@ -142,6 +144,9 @@ export default function InventoryManagement() {
       )}
       {activeTab === 'subCategories' && (
         <SubCategoryTab data={data.subCategories} loading={loading} apiCall={apiCall} theme={theme} />
+      )}
+      {activeTab === 'discount' && (
+        <Discount data={data.discount} loading={loading} apiCall={apiCall} theme={theme} />
       )}
     </div>
   )
