@@ -15,11 +15,11 @@ export default function ProductForm() {
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
     name: '', category_id: '', subcategory_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
-    specs: '', quality: '', in_stock: 'Yes'
+    specs: '', quality: ''
   });
   const [sizes, setSizes] = useState([{
     id: 1, size: '', costPrice: '', inventory_code:'', markupPrice: '', sellPrice: '', grossProfit: '',
-    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '',
+    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
 
@@ -43,88 +43,87 @@ export default function ProductForm() {
 
   const basicFields = [
     ['Product Name', 'name'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
-    ['Color', 'colour'], ['Quality', 'quality'],// ['Inventory Code', 'inventory_code']
+    ['Color', 'colour'], ['Quality', 'quality']
   ];
 
-    useEffect(() => {
-      const loadData = async () => {
-        try {
-          const [categoriesRes, materialsRes, subcategoriesRes] =
-            await Promise.all([
-              AdminService.getCategories(),
-              AdminService.getMaterials(),
-              AdminService.getSubCategories(),
-            ]);
-          
-          // Extract the actual array from the nested data structure
-          const categoriesData = categoriesRes?.success ? categoriesRes.data.data || [] : [];
-          const subcategoriesData = subcategoriesRes?.success ? subcategoriesRes.data.data || [] : [];
-          const materialsData = materialsRes?.success ? materialsRes.data.data || [] : [];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesRes, materialsRes, subcategoriesRes] =
+          await Promise.all([
+            AdminService.getCategories(),
+            AdminService.getMaterials(),
+            AdminService.getSubCategories(),
+          ]);
+        
+        const categoriesData = categoriesRes?.success ? categoriesRes.data.data || [] : [];
+        const subcategoriesData = subcategoriesRes?.success ? subcategoriesRes.data.data || [] : [];
+        const materialsData = materialsRes?.success ? materialsRes.data.data || [] : [];
 
-          console.log('Categories loaded:', categoriesData);
-          console.log('Subcategories loaded:', subcategoriesData);
-          console.log('Materials loaded:', materialsData);
-          
-          setCategories(categoriesData);
-          setSubCategories(subcategoriesData);
-          setMaterials(materialsData);
-        } catch (error) {
-          console.error('Failed to load data:', error);
-          message.error('Failed to load categories and materials');
-          setCategories([]);
-          setSubCategories([]);
-          setMaterials([]);
-        }
-      };
-      loadData();
-    }, []);
+        console.log('Categories loaded:', categoriesData);
+        console.log('Subcategories loaded:', subcategoriesData);
+        console.log('Materials loaded:', materialsData);
+        
+        setCategories(categoriesData);
+        setSubCategories(subcategoriesData);
+        setMaterials(materialsData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        message.error('Failed to load categories and materials');
+        setCategories([]);
+        setSubCategories([]);
+        setMaterials([]);
+      }
+    };
+    loadData();
+  }, []);
 
   const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
-  <div className={className}>
-    <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
-    <input
-      type={type} 
-      value={value || ''} 
-      onChange={(e) => onChange(e.target.value)} // Fixed: pass value directly
-      placeholder={placeholder} 
-      readOnly={readOnly}
-      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
-      step={type === 'number' ? '0.01' : undefined}
-    />
-  </div>
-);
+    <div className={className}>
+      <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
+      <input
+        type={type} 
+        value={value || ''} 
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} 
+        readOnly={readOnly}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
+        step={type === 'number' ? '0.01' : undefined}
+      />
+    </div>
+  );
 
   const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
+  // FIXED: Updated calculation function for size pricing
   const calculateSizePrice = useCallback((sizeId, field, value) => {
-  setSizes(prev => prev.map(size => {
-    if (size.id !== sizeId) return size;
-    const updated = { ...size, [field]: value };
-    
-    if (field === 'costPrice' || field === 'markupPrice') {
-      const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
-      const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
-      // updated.sellPrice = (cost + markup).toFixed(2);
-      updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
-      // updated.grossProfit = markup.toFixed(2);
-      updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
-    }
-    
-    if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
-      const sellPrice = parseFloat(updated.sellPrice) || 0;
-      const gstRate = parseFloat(field === 'gst' ? value : size.gst) || 0;
-      const gstAmount = (sellPrice * gstRate) / 100;
-      const costPrice = parseFloat(updated.costPrice) || 0;
+    setSizes(prev => prev.map(size => {
+      if (size.id !== sizeId) return size;
+      const updated = { ...size, [field]: value };
       
-      updated.gstAmount = gstAmount.toFixed(2);
-      updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
-      updated.payableGst = gstAmount.toFixed(2);
-      updated.netProfit = (sellPrice - costPrice).toFixed(2);
-    }
-    return updated;
+      if (field === 'costPrice' || field === 'markupPrice') {
+        const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
+        const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
+        updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
+        updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
+      }
+      
+      if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
+        const sellPrice = parseFloat(updated.sellPrice) || 0;
+        const gstRate = parseFloat(field === 'gst' ? value : size.gst) || 0;
+        const gstAmount = (sellPrice * gstRate) / 100;
+        const costPrice = parseFloat(updated.costPrice) || 0;
+        
+        updated.gstAmount = gstAmount.toFixed(2);
+        updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
+        updated.payableGst = gstAmount.toFixed(2);
+        updated.netProfit = (sellPrice - costPrice).toFixed(2);
+      }
+      return updated;
     }));
   }, []);
 
+  // FIXED: Updated slab price calculation
   const calculateSlabPrice = (sizeId, slabId, field, value) => {
     setSizes(prev => prev.map(size => {
       if (size.id !== sizeId) return size;
@@ -136,7 +135,7 @@ export default function ProductForm() {
           if (field === 'price' || field === 'gst') {
             const price = parseFloat(field === 'price' ? value : slab.price) || 0;
             const gstRate = parseFloat(field === 'gst' ? value : slab.gst) || 0;
-            updated.finalPrice = (price + (price * gstRate) * 100).toFixed(2);
+            updated.finalPrice = (price + (price * gstRate) / 100).toFixed(2);
           }
           return updated;
         })
@@ -162,7 +161,7 @@ export default function ProductForm() {
   
   const addSize = () => setSizes(prev => [...prev, {
     id: Date.now(), size: '', inventory_code: '', costPrice: '', markupPrice: '', grossProfit: '', sellPrice: '',
-    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '',
+    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
 
@@ -209,8 +208,6 @@ export default function ProductForm() {
         specs: formData.specs,  
         features: formData.features,  
         quality: formData.quality,
-        // inventory_code: formData.inventory_code,
-        in_stock: formData.in_stock,
         sizes: sizes.map(size => ({
           size: size.size,
           inventory_code: size.inventory_code,
@@ -219,6 +216,7 @@ export default function ProductForm() {
           sellPrice: parseFloat(size.sellPrice) || 0,
           gst: parseFloat(size.gst) || 0,
           packOff: size.packOff,
+          quantity: parseInt(size.quantity) || 0,
           priceWithGst: parseFloat(size.priceWithGst) || 0,
           payableGst: parseFloat(size.payableGst) || 0,
           netProfit: parseFloat(size.netProfit) || 0,
@@ -386,124 +384,121 @@ export default function ProductForm() {
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
           />
         </div>
-        
-        <div className="mt-3">
-          <label className={`block text-sm font-medium ${theme.text} mb-1`}>In Stock</label>
-          <select value={formData.in_stock} onChange={(e) => handleInputChange('in_stock', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
       </div>
     </div>
   );
 
+  // FIXED: Updated SizePricingStep with proper field handling
   const SizePricingStep = () => (
-  <div>
-    <div className="flex justify-between items-center mb-6">
-      <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
-      <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-        <Plus className="w-4 h-4" />Add Size
-      </button>
-    </div>
-    <div className="space-y-6">
-      {sizes.map((size, index) => (
-        <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
-            {sizes.length > 1 && (
-              <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
-                <Trash2 className="w-4 h-4" />Remove
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { title: 'Size Details', color: 'blue', fields: [['Size', 'size'], ['Pack Off', 'packOff'],['Inventory Code', 'inventory_code']] },
-              { title: 'Cost & Markup', color: 'orange', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup Price (%)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
-              { title: 'Selling Price', color: 'green', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number'], ['GST Amount (₹)', 'gstAmount', 'number', true]] },
-              { title: 'Final Price', color: 'purple', fields: [['Price with GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true]] }
-            ].map(section => (
-              <div key={section.title} className="space-y-3">
-                <h5 className={`font-medium text-center py-2 rounded-lg text-sm ${isDark ? 'bg-gray-600 text-gray-200' : `bg-${section.color}-100 text-${section.color}-800`}`}>{section.title}</h5>
-                {section.fields.map(([label, field, type = 'text', readOnly = false]) => (
-                  <Input 
-                    key={field} 
-                    label={label} 
-                    type={type} 
-                    value={size[field]} 
-                    readOnly={readOnly}
-                    onChange={(value) => calculateSizePrice(size.id, field, value)} // Fixed: direct value passing
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-  const BulkPricingStep = () => (
-  <div>
-    <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
-    <div className="space-y-6">
-      {sizes.map((size, sizeIndex) => (
-        <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
-            <button onClick={() => addPriceSlab(size.id)}
-              className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1">
-              <Plus className="w-3 h-3" />Add Slab
-            </button>
-          </div>
-          <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
-            <div className={`grid grid-cols-12 gap-4 mb-3 text-sm font-medium ${theme.text} min-w-[700px]`}>
-              {['#', 'Min Quantity', 'Price/Pack (₹)', 'GST (%)', 'Final Price (₹)', 'Action'].map((header, i) => (
-                <div key={header} className={`col-span-${[1, 2, 2, 2, 2, 1][i]}`}>{header}</div>
-              ))}
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
+        <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+          <Plus className="w-4 h-4" />Add Size
+        </button>
+      </div>
+      <div className="space-y-6">
+        {sizes.map((size, index) => (
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
+              {sizes.length > 1 && (
+                <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
+                  <Trash2 className="w-4 h-4" />Remove
+                </button>
+              )}
             </div>
-            <div className="space-y-3 min-w-[700px]">
-              {size.priceSlabs.map((slab, index) => (
-                <div key={slab.id} className="grid grid-cols-12 gap-4 items-center">
-                  <div className={`col-span-1 text-sm ${theme.muted}`}>#{index + 1}</div>
-                  {[
-                    ['quantity', 2, 'Min packs'],
-                    ['price', 2, 'Price'],
-                    ['gst', 2, 'GST%'],
-                  ].map(([field, span, placeholder]) => (
-                    <div key={field} className={`col-span-${span}`}>
-                      <input 
-                        type="number" 
-                        value={slab[field]} 
-                        onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
-                        className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
-                        placeholder={placeholder} 
-                        step={field === 'price' || field === 'gst' ? '0.01' : undefined} 
-                      />
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { fields: [['Specs', 'size']]},
+                { fields: [['Cost Price (₹)', 'costPrice', 'number']]},
+                { fields: [['Inventory Code', 'inventory_code']]},
+                { fields: [['Quantity', 'quantity', 'number']]}
+              ].map((section, sectionIndex) => (
+                <div key={sectionIndex} className="space-y-3">
+                  {section.fields.map(([label, field, type = 'text', readOnly = false]) => (
+                    <Input 
+                      key={field} 
+                      label={label} 
+                      type={type} 
+                      value={size[field]} 
+                      readOnly={readOnly}
+                      onChange={(value) => calculateSizePrice(size.id, field, value)}
+                    />
                   ))}
-                  <div className="col-span-2">
-                    <input type="number" value={slab.finalPrice} className={`w-full p-2 border rounded opacity-60 ${theme.input}`} readOnly />
-                  </div>
-                  <div className="col-span-1 text-center">
-                    {size.priceSlabs.length > 1 && (
-                      <button onClick={() => removePriceSlab(size.id, slab.id)} className="text-red-500 hover:text-red-700">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+
+  // FIXED: Updated BulkPricingStep with proper calculation calls
+  const BulkPricingStep = () => (
+    <div>
+      <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
+      <div className="space-y-6">
+        {sizes.map((size, sizeIndex) => (
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
+              <button
+                onClick={() => addPriceSlab(size.id)}
+                className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" /> Add Slab
+              </button>
+            </div>
+            <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
+              <div className="space-y-3 min-w-[900px]">
+                {size.priceSlabs.map((slab, index) => (
+                  <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
+                    <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      {[
+                        { title: 'Size Details', fields: [['Size', 'size']] },
+                        { title: 'Cost & Markup', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup (%)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
+                        { title: 'Selling Price', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number']] },
+                        { title: 'Final Price', fields: [['With GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true]] }
+                      ].map((group) => (
+                        <div key={group.title} className="flex flex-col gap-1">
+                          <div className="text-xs font-semibold text-center">{group.title}</div>
+                          {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
+                            <input
+                              key={field}
+                              type={type}
+                              value={size[field] || ''}
+                              onChange={(e) => !readOnly && calculateSizePrice(size.id, field, e.target.value)}
+                              className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
+                              placeholder={label}
+                              readOnly={readOnly}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col justify-center">
+                      {size.priceSlabs.length > 1 && (
+                        <button
+                          onClick={() => removePriceSlab(size.id, slab.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const ReviewStep = () => (
     <div className="space-y-6">
@@ -519,7 +514,8 @@ export default function ProductForm() {
               <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], ['In Stock', 'in_stock'], ['Specification', 'specs']].map(([field, key]) => (
+              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], //['Quantity', 'quantity'],
+               ['Specification', 'specs']].map(([field, key]) => (
                 <tr key={field} className={theme.hover}>
                   <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
                   <td className={`px-4 py-2 ${theme.text}`}>
