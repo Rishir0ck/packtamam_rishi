@@ -15,8 +15,8 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const navigate = useNavigate()
-  const imageSliderSettings = {dots: true,infinite: true,speed: 500,slidesToShow: 1,slidesToScroll: 1,arrows: true};
-
+  // const imageSliderSettings = {dots: true,infinite: true,speed: 500,slidesToShow: 1,slidesToScroll: 1,arrows: true};
+  const imageSliderSettings = {dots: true,infinite: true,speed: 500,slidesToShow: 1,slidesToScroll: 1,autoplay: true,autoplaySpeed: 1500,arrows: false};
 
   const getPrimaryInventory = useCallback((product) => product.inventories?.[0] || {}, [])
   const getPrice = useCallback((product) => {
@@ -284,53 +284,64 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
         {selected && (
           <div className="p-6 max-h-96 overflow-y-auto">
             <div className="grid grid-cols-3 gap-4 mb-6">
-              {/* Full-width slider */}
+              {/* Full-width image or slider */}
               <div className="col-span-3">
                 <p className={`text-sm font-medium ${theme.muted}`}>Images</p>
-                {selected.images?.length ? (
+                {selected.images?.length > 1 ? (
                   <Slider {...imageSliderSettings} className="mt-2 w-full max-w-xl">
                     {selected.images.map((img, idx) => (
                       <div key={idx}>
                         <img
                           src={img.image_url}
                           alt={`Image ${idx + 1}`}
-                          className="w-full-flex h-60 object-cover rounded"
+                          className="w-full h-60 object-cover rounded"
                         />
                       </div>
                     ))}
                   </Slider>
+                ) : selected.images?.length === 1 ? (
+                  <div className="mt-2 w-full max-w-xl">
+                    <img
+                      src={selected.images[0].image_url}
+                      alt="Product"
+                      className="w-full h-60 object-cover rounded"
+                    />
+                  </div>
                 ) : (
                   <p className={`${theme.text} mt-2`}>No images available</p>
                 )}
               </div>
 
               {/* Fields in grid */}
-              {[['Name', selected.name],['Category', selected.category?.name || 'N/A'],
-                ['Material', selected.material?.name || 'N/A'],['HSN Code', selected.hsn_code || 'N/A'],
-                ['Shape', selected.shape || 'N/A'],['Colour', selected.colour || 'N/A'],
+              {[
+                ['Name', selected.name],
+                ['Category', selected.category?.name || 'N/A'],
+                ['Material', selected.material?.name || 'N/A'],
+                ['HSN Code', selected.hsn_code || 'N/A'],
+                ['Shape', selected.shape || 'N/A'],
+                ['Colour', selected.colour || 'N/A'],
                 ['Quality', selected.quality],
                 ['Status', selected.is_active ? 'Active' : 'Inactive']
               ].map(([label, value], i) => (
                 <div key={i}>
                   <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
                   <p className={`mt-1 ${theme.text}`}>{value || '-'}</p>
-              </div>
+                </div>
               ))}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {/* Description & Features */}
-                {selected.specs && (
-                  <div className="col-span-3">
-                    <p className={`text-sm font-medium ${theme.muted}`}>Description</p>
-                    <p className={`mt-1 ${theme.text}`}>{selected.specs}</p>
-                  </div>
-                )}
-              </div>
-                {selected.features && (
-                  <div className="col-span-3">
-                    <p className={`text-sm font-medium ${theme.muted}`}>Features</p>
-                    <p className={`mt-1 ${theme.text}`}>{selected.features}</p>
-                  </div>
-                )}
+
+              {/* Description & Features */}
+              {selected.specs && (
+                <div className="col-span-3">
+                  <p className={`text-sm font-medium ${theme.muted}`}>Description</p>
+                  <p className={`mt-1 ${theme.text}`}>{selected.specs}</p>
+                </div>
+              )}
+              {selected.features && (
+                <div className="col-span-3">
+                  <p className={`text-sm font-medium ${theme.muted}`}>Features</p>
+                  <p className={`mt-1 ${theme.text}`}>{selected.features}</p>
+                </div>
+              )}
             </div>
 
             {/* Inventory Details */}
@@ -342,9 +353,12 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                     <div key={inventory.id || index} className={`border rounded-lg p-4 ${theme.card}`}>
                       <div className="grid grid-cols-3 gap-4">
                         {[
-                          ['Size', inventory.size || 'N/A'], [' Inventory Code', inventory.inventory_code || 'N/A'],
-                          ['Cost Price', `₹${inventory.costPrice || 0}`], ['Sell Price', `₹${inventory.sellPrice || 0}`],
-                          ['Price with GST', `₹${inventory.priceWithGst || 0}`], ['GST', `${inventory.gst || 0}%`]
+                          ['Size', inventory.size || 'N/A'],
+                          ['Inventory Code', inventory.inventory_code || 'N/A'],
+                          ['Cost Price', `₹${inventory.costPrice || 0}`],
+                          ['Sell Price', `₹${inventory.sellPrice || 0}`],
+                          ['Price with GST', `₹${inventory.priceWithGst || 0}`],
+                          ['GST', `${inventory.gst || 0}%`]
                         ].map(([label, value], i) => (
                           <div key={i}>
                             <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
@@ -352,7 +366,7 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
                           </div>
                         ))}
                       </div>
-                      
+
                       {/* Price Slabs */}
                       {inventory.price_slabs?.length > 0 && (
                         <div className="mt-4">
@@ -376,6 +390,7 @@ export default function ProductsTab({ data = [], loading, apiCall, theme }) {
           </div>
         )}
       </Modal>
+
     </>
   )
 }
