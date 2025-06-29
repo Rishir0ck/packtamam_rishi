@@ -13,6 +13,7 @@ import InventoryManagement from './pages/InventoryManagement'
 import Product from './pages/Product'
 import Discount from './pages/Discount'
 import Advertisement from './pages/Advertisement'
+import Chat from './pages/Chat'
 import Profile from './pages/Profile'
 import Policy from './pages/Policy'
 import DeliveryPartner from './pages/DeliveryPartner'
@@ -62,6 +63,7 @@ function AppContent() {
         <Route path="delivery-partner" element={<DeliveryPartner />} />
         <Route path="delivery-charges" element={<DeliveryCharges />} />
         <Route path="order-list" element={<AddToCart />} />
+        <Route path="chat" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
         <Route path="policy" element={<Policy />} />
       </Route>
