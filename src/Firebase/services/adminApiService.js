@@ -278,7 +278,7 @@ class AdminService {
 
    // CMS Policy APIs
  async getPolicies() {
-  return this.makeAuthenticatedRequest('GET', `/api/admin/cms/list`);
+    return this.makeAuthenticatedRequest('GET', `/api/admin/cms/list`);
   }
 
   async createPolicy(policyData) {

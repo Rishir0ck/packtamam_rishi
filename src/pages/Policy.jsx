@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Search, RefreshCw, Copy, Download } from 'lucide-react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
+import { Plus, Edit2, Trash2, Save, X, Search, RefreshCw, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import AdminApiService from '../Firebase/services/adminApiService';
 
@@ -12,26 +12,23 @@ export default function PolicyAdmin() {
   const [editingPolicy, setEditingPolicy] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentForm, setCurrentForm] = useState({ title: '', content: '' });
+  
+  // Pagination & Sorting
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortField, setSortField] = useState('title');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   const themeClass = (light, dark = '') => isDark ? `${dark} dark` : light;
 
-  // Fixed fetch function - removed useCallback to prevent dependency issues
   const fetchPolicies = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await AdminApiService.getPolicies();
-      
-      // Extract data array from the response
-      const data = response?.data || [];
-      console.log('Extracted data:', data); // Only this debug log
-      
-      // Ensure data is array
-      const policiesArray = Array.isArray(data) ? data : [];
-      
-      setPolicies(policiesArray);
+      const data = response?.data?.data || response?.data || response || [];
+      setPolicies(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Fetch policies error:', err);
       setError(err.message || 'Failed to fetch policies');
       setPolicies([]);
     } finally {
@@ -39,36 +36,57 @@ export default function PolicyAdmin() {
     }
   };
 
-  // Load policies on mount - removed dependency array to prevent re-creation
   useEffect(() => {
     fetchPolicies();
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
-  // Filter policies based on title and content
-  const filteredPolicies = policies.filter(policy => {
-    if (!policy) return false;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      (policy.title || '')?.toLowerCase().includes(searchLower) ||
-      (policy.content || '')?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Sorting and filtering logic
+  const processedPolicies = useMemo(() => {
+    let filtered = policies.filter(policy => {
+      if (!policy) return false;
+      const search = searchTerm.toLowerCase();
+      return (policy.title || '').toLowerCase().includes(search) ||
+             (policy.content || '').toLowerCase().includes(search);
+    });
 
-  const resetForm = () => ({ title: '', content: '' });
+    // Sort
+    filtered.sort((a, b) => {
+      const aVal = (a[sortField] || '').toString().toLowerCase();
+      const bVal = (b[sortField] || '').toString().toLowerCase();
+      const result = aVal.localeCompare(bVal);
+      return sortDirection === 'asc' ? result : -result;
+    });
+
+    return filtered;
+  }, [policies, searchTerm, sortField, sortDirection]);
+
+  // Pagination
+  const totalPages = Math.ceil(processedPolicies.length / itemsPerPage);
+  const paginatedPolicies = processedPolicies.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
 
   const openModal = (policy = null) => {
     setEditingPolicy(policy);
-    setCurrentForm(policy ? {
-      title: policy.title || '',
-      content: policy.content || '',
-    } : resetForm());
+    setCurrentForm(policy ? { title: policy.title || '', content: policy.content || '' } : { title: '', content: '' });
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingPolicy(null);
-    setCurrentForm(resetForm());
+    setCurrentForm({ title: '', content: '' });
   };
 
   const handleSave = async () => {
@@ -83,28 +101,25 @@ export default function PolicyAdmin() {
       const policyData = {
         title: currentForm.title.trim(),
         content: currentForm.content.trim(),
+        created_at: new Date().toISOString().split('T')[0] // Add timestamp
       };
 
       if (editingPolicy) {
-        const updatedPolicy = await AdminApiService.updatePolicy(editingPolicy.id, policyData);
-        // Update local state with response data or fallback to form data
-        const updatedData = updatedPolicy?.data || updatedPolicy || { ...editingPolicy, ...policyData };
-        setPolicies(prev => prev.map(p => 
-          p.id === editingPolicy.id ? updatedData : p
-        ));
+        const response = await AdminApiService.updatePolicy(editingPolicy.id, policyData);
+        const updatedPolicy = response?.data || { ...editingPolicy, ...policyData };
+        setPolicies(prev => prev.map(p => p.id === editingPolicy.id ? updatedPolicy : p));
       } else {
-        const newPolicy = await AdminApiService.createPolicy(policyData);
-        // Handle different response structures
-        const newPolicyData = newPolicy?.data || newPolicy || { 
+        const response = await AdminApiService.createPolicy(policyData);
+        // Handle different possible response structures
+        const newPolicy = response?.data?.data || response?.data || { 
           ...policyData, 
-          id: Date.now().toString() // Fallback ID if not provided
+          id: response?.id || Date.now().toString() 
         };
-        setPolicies(prev => [...prev, newPolicyData]);
+        setPolicies(prev => [newPolicy, ...prev]); // Add to beginning
       }
       
       closeModal();
     } catch (err) {
-      console.error('Save error:', err);
       setError(err.message || `Failed to ${editingPolicy ? 'update' : 'create'} policy`);
     } finally {
       setLoading(false);
@@ -115,69 +130,88 @@ export default function PolicyAdmin() {
     if (!confirm('Are you sure you want to delete this policy?')) return;
     
     setLoading(true);
-    setError(null);
     try {
       await AdminApiService.deletePolicy(id);
       setPolicies(prev => prev.filter(p => p.id !== id));
     } catch (err) {
-      console.error('Delete error:', err);
       setError(err.message || 'Failed to delete policy');
     } finally {
       setLoading(false);
     }
   };
 
-  const duplicatePolicy = async (policy) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { id, created_at, updated_at, slug, ...newPolicyData } = policy;
-      const duplicated = await AdminApiService.createPolicy({ 
-        ...newPolicyData, 
-        title: `${policy.title || 'Policy'} (Copy)`,
-      });
-      const duplicatedData = duplicated?.data || duplicated || { 
-        ...newPolicyData, 
-        id: Date.now().toString(),
-        title: `${policy.title || 'Policy'} (Copy)`
-      };
-      setPolicies(prev => [...prev, duplicatedData]);
-    } catch (err) {
-      console.error('Duplicate error:', err);
-      setError(err.message || 'Failed to duplicate policy');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportPolicy = (policy) => {
-    const policyData = {
-      title: policy.title,
-      content: policy.content,
-      created_at: policy.created_at,
-      id: policy.id
-    };
-    
-    const blob = new Blob([JSON.stringify(policyData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${policy.title || 'policy'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const Button = ({ onClick, disabled, className, children, icon: Icon, ...props }) => (
-    <button 
-      onClick={onClick} 
-      disabled={disabled} 
-      className={`${className} disabled:opacity-50`} 
-      {...props}
-    >
+    <button onClick={onClick} disabled={disabled} className={`${className} disabled:opacity-50`} {...props}>
       {Icon && <Icon size={16} />}
       {children}
     </button>
   );
+
+  const SortHeader = ({ field, children }) => {
+    const getSortIcon = () => {
+      if (sortField !== field) return <ArrowUpDown className="w-4 h-4" />;
+      return sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
+    };
+
+    return (
+      <th 
+        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-opacity-75 ${themeClass('text-gray-500 hover:bg-gray-100', 'text-gray-300 hover:bg-gray-600')}`}
+        onClick={() => handleSort(field)}
+      >
+        <div className="flex items-center gap-1">
+          {children}
+          {getSortIcon()}
+        </div>
+      </th>
+    );
+  };
+
+  const Pagination = () => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className={`px-6 py-3 flex items-center justify-between border-t ${themeClass('border-gray-200', 'border-gray-600')}`}>
+        <div className={`text-sm ${themeClass('text-gray-700', 'text-gray-300')}`}>
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, processedPolicies.length)} of {processedPolicies.length} results
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded flex items-center gap-1 ${themeClass('text-gray-600 hover:bg-gray-100', 'text-gray-300 hover:bg-gray-700')}`}
+            icon={ChevronLeft}
+          >
+            Previous
+          </Button>
+          
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            const pageNum = i + 1;
+            return (
+              <Button
+                key={pageNum}
+                onClick={() => setCurrentPage(pageNum)}
+                className={`px-3 py-1 rounded ${currentPage === pageNum 
+                  ? 'bg-blue-500 text-white' 
+                  : themeClass('text-gray-600 hover:bg-gray-100', 'text-gray-300 hover:bg-gray-700')
+                }`}
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+          
+          <Button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded flex items-center gap-1 ${themeClass('text-gray-600 hover:bg-gray-100', 'text-gray-300 hover:bg-gray-700')}`}
+            icon={ChevronRight}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`min-h-screen p-6 ${themeClass('bg-gray-50', 'bg-gray-900')}`}>
@@ -194,7 +228,7 @@ export default function PolicyAdmin() {
         {/* Header */}
         <div className={`rounded-lg shadow-sm p-6 mb-6 ${themeClass('bg-white', 'bg-gray-800 border border-gray-700')}`}>
           <h1 className={`text-3xl font-bold mb-4 ${themeClass('text-gray-900', 'text-white')}`}>
-            Policy Management
+            Policy Management ({processedPolicies.length})
           </h1>
           
           <div className="flex gap-4 items-center">
@@ -204,14 +238,14 @@ export default function PolicyAdmin() {
                 type="text"
                 placeholder="Search policies..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${themeClass('border-gray-300 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
               />
             </div>
             <Button 
               onClick={() => openModal()} 
               disabled={loading}
-              className=" text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              className="text-white px-4 py-2 rounded-lg flex items-center gap-2"
               style={{ backgroundColor: '#c79e73' }}
               icon={Plus}
             >
@@ -232,32 +266,30 @@ export default function PolicyAdmin() {
               <table className="w-full">
                 <thead className={themeClass('bg-gray-50', 'bg-gray-700')}>
                   <tr>
-                    {['Title', 'Content', 'Created', 'Actions'].map(header => (
-                      <th key={header} className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${themeClass('text-gray-500', 'text-gray-300')}`}>
-                        {header}
-                      </th>
-                    ))}
+                    <SortHeader field="title">Title</SortHeader>
+                    <SortHeader field="content">Content</SortHeader>
+                    <SortHeader field="created_at">Created</SortHeader>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${themeClass('text-gray-500', 'text-gray-300')}`}>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${themeClass('bg-white divide-gray-200', 'bg-gray-800 divide-gray-600')}`}>
-                  {filteredPolicies.length === 0 ? (
+                  {paginatedPolicies.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                        <div>
-                          {searchTerm ? `No policies match your search "${searchTerm}"` : 
-                           policies.length === 0 ? 'No policies found. Click "Add Policy" to create one.' : 
-                           'No policies match your search criteria.'}
-                        </div>
+                        {searchTerm ? `No policies match "${searchTerm}"` : 
+                         policies.length === 0 ? 'No policies found. Click "Add Policy" to create one.' : 
+                         'No policies match your search.'}
                       </td>
                     </tr>
                   ) : (
-                    filteredPolicies.map((policy, index) => (
-                      <tr key={policy.id || index} className={themeClass('hover:bg-gray-50', 'hover:bg-gray-700')}>
+                    paginatedPolicies.map((policy) => (
+                      <tr key={policy.id} className={themeClass('hover:bg-gray-50', 'hover:bg-gray-700')}>
                         <td className="px-6 py-4">
                           <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>
                             {policy.title || 'Untitled'}
                           </div>
-                          <div className="text-xs text-gray-400">ID: {policy.id}</div>
                         </td>
                         <td className="px-6 py-4">
                           <div className={`text-sm max-w-xs truncate ${themeClass('text-gray-500', 'text-gray-400')}`}>
@@ -269,10 +301,19 @@ export default function PolicyAdmin() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <Button onClick={() => openModal(policy)} className="text-blue-600 hover:text-blue-900" icon={Edit2} title="Edit" />
-                            {/* <Button onClick={() => duplicatePolicy(policy)} className="text-green-600 hover:text-green-900" icon={Copy} title="Duplicate" disabled={loading} />
-                            <Button onClick={() => exportPolicy(policy)} className="text-purple-600 hover:text-purple-900" icon={Download} title="Export" /> */}
-                            <Button onClick={() => handleDelete(policy.id)} className="text-red-600 hover:text-red-900" icon={Trash2} title="Delete" disabled={loading} />
+                            <Button 
+                              onClick={() => openModal(policy)} 
+                              className="text-blue-600 hover:text-blue-900" 
+                              icon={Edit2} 
+                              title="Edit" 
+                            />
+                            <Button 
+                              onClick={() => handleDelete(policy.id)} 
+                              className="text-red-600 hover:text-red-900" 
+                              icon={Trash2} 
+                              title="Delete" 
+                              disabled={loading} 
+                            />
                           </div>
                         </td>
                       </tr>
@@ -280,6 +321,7 @@ export default function PolicyAdmin() {
                   )}
                 </tbody>
               </table>
+              <Pagination />
             </div>
           )}
         </div>
@@ -297,9 +339,7 @@ export default function PolicyAdmin() {
 
               <div className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>
-                    Title *
-                  </label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Title *</label>
                   <input
                     type="text"
                     value={currentForm.title}
@@ -310,9 +350,7 @@ export default function PolicyAdmin() {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>
-                    Content *
-                  </label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Content *</label>
                   <textarea
                     value={currentForm.content}
                     onChange={(e) => setCurrentForm(prev => ({ ...prev, content: e.target.value }))}
