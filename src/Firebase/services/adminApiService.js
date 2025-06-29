@@ -293,6 +293,14 @@ class AdminService {
     return this.makeAuthenticatedRequest('DELETE', '/api/admin/cms/delete', { id: policyId });
   }
 
+  //Notification APIs
+  async getNotifications() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/notifications');
+  }
+
+  async getNotificationCount() {
+    return this.makeAuthenticatedRequest('GET', `/api/admin/notifications/count`);
+  }
 
 
   // Helper Methods
