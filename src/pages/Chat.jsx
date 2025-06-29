@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import { MessageSquare, Settings, Edit3, Check, X, AlertCircle, Save, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MessageSquare, AlertCircle, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import useTheme from '../hooks/useTheme';
 
 export default function ChatModule(){
-  const [activeTab, setActiveTab] = useState('prompts');
-  const [botPrompts, setBotPrompts] = useState([
-    { id: 1, name: 'Customer Support Bot', prompt: 'You are a helpful customer support assistant. Always be polite and professional when helping customers with their inquiries.', active: true },
-    { id: 2, name: 'Sales Assistant Bot', prompt: 'You are a knowledgeable sales assistant. Help customers find the right products and answer questions about features and pricing.', active: false }
-  ]);
   const [problems, setProblems] = useState([
     { id: 1, title: 'Bot not responding to greetings', status: 'open', priority: 'high', date: '2024-01-15' },
     { id: 2, title: 'Incorrect product recommendations', status: 'in-progress', priority: 'medium', date: '2024-01-14' },
     { id: 3, title: 'Response timeout issues', status: 'resolved', priority: 'low', date: '2024-01-13' },
     { id: 4, title: 'Language detection failing', status: 'open', priority: 'high', date: '2024-01-12' }
   ]);
-  const [editingPrompt, setEditingPrompt] = useState(null);
-  const [newPrompt, setNewPrompt] = useState({ name: '', prompt: '' });
+  
+  // New state for sorting, pagination, and filtering
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState('title');
+  const [sortDir, setSortDir] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3); // Reduced for demonstration
+  const [filterStatus, setFilterStatus] = useState('all');
+  
   const { isDark } = useTheme();
 
   // Theme configuration
@@ -25,8 +27,6 @@ export default function ChatModule(){
     text: 'text-white',
     muted: 'text-gray-300',
     border: 'border-gray-700',
-    input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
-    hover: 'hover:bg-gray-700',
     tableHeader: 'bg-gray-700',
     tableRow: 'hover:bg-gray-750'
   } : {
@@ -35,8 +35,6 @@ export default function ChatModule(){
     text: 'text-gray-900',
     muted: 'text-gray-600',
     border: 'border-gray-200',
-    input: 'bg-white border-gray-300 placeholder-gray-500',
-    hover: 'hover:bg-gray-50',
     tableHeader: 'bg-gray-50',
     tableRow: 'hover:bg-gray-50'
   };
@@ -53,204 +51,161 @@ export default function ChatModule(){
     'low': isDark ? 'text-gray-400' : 'text-gray-600'
   };
 
-  const updatePrompt = (id, updates) => {
-    setBotPrompts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-    setEditingPrompt(null);
+  // Filter problems based on search and status filter
+  const filteredProblems = useMemo(() => {
+    return problems.filter(problem => {
+      const matchesSearch = problem.title.toLowerCase().includes(search.toLowerCase()) ||
+                           problem.status.toLowerCase().includes(search.toLowerCase()) ||
+                           problem.priority.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = filterStatus === 'all' || problem.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [problems, search, filterStatus]);
+
+  // Sort filtered problems
+  const sortedProblems = useMemo(() => {
+    return [...filteredProblems].sort((a, b) => {
+      let aVal = a[sortField];
+      let bVal = b[sortField];
+      
+      // Handle different data types
+      if (sortField === 'date') {
+        aVal = new Date(aVal);
+        bVal = new Date(bVal);
+      } else {
+        aVal = String(aVal).toLowerCase();
+        bVal = String(bVal).toLowerCase();
+      }
+      
+      if (sortDir === 'asc') {
+        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      } else {
+        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+      }
+    });
+  }, [filteredProblems, sortField, sortDir]);
+
+  // Paginate sorted problems
+  const paginatedProblems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedProblems.slice(start, start + itemsPerPage);
+  }, [sortedProblems, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(sortedProblems.length / itemsPerPage);
+
+  // Sorting handler
+  const handleSort = (field) => {
+    setSortField(field);
+    setSortDir(sortField === field && sortDir === 'asc' ? 'desc' : 'asc');
   };
 
-  const addPrompt = () => {
-    if (newPrompt.name && newPrompt.prompt) {
-      setBotPrompts(prev => [...prev, { ...newPrompt, id: Date.now(), active: false }]);
-      setNewPrompt({ name: '', prompt: '' });
-    }
+  // Status filter handler
+  const handleStatusFilter = (status) => {
+    setFilterStatus(status);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
-  const deletePrompt = (id) => {
-    setBotPrompts(prev => prev.filter(p => p.id !== id));
-  };
-
+  // Update problem status
   const updateProblemStatus = (id, status) => {
     setProblems(prev => prev.map(p => p.id === id ? { ...p, status } : p));
   };
 
+  // Sortable header component
+  const SortHeader = ({ field, children }) => (
+    <th 
+      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition-colors ${
+        isDark ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-500 hover:bg-gray-100'
+      }`} 
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center space-x-1">
+        <span>{children}</span>
+        {sortField === field && (
+          sortDir === 'asc' ? 
+            <ChevronUp className="w-4 h-4" /> : 
+            <ChevronDown className="w-4 h-4" />
+        )}
+      </div>
+    </th>
+  );
+
   return (
     <div className={`max-w-6xl mx-auto p-6 min-h-screen ${theme.bg}`}>
-      {/* Header with theme toggle */}
+      {/* Header */}
       <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6`}>
         <div className="flex justify-between items-center">
           <div>
             <h1 className={`text-3xl font-bold ${theme.text} flex items-center gap-3`}>
-              <MessageSquare className="text-blue-600" />
+              <MessageSquare className="text-amber-600" />
               Chat Module Management
             </h1>
-            <p className={`${theme.muted} mt-2`}>Manage bot prompts and monitor chat system issues</p>
+            <p className={`${theme.muted} mt-2`}>Monitor and manage chat system issues</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className={`${theme.card} rounded-lg shadow-sm mb-6`}>
-        <div className={`border-b ${theme.border}`}>
-          <nav className="flex space-x-8 px-6">
-            {[
-              { id: 'prompts', label: 'Bot Prompts', icon: Settings },
-              { id: 'problems', label: 'Problem List', icon: AlertCircle }
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                  activeTab === id
-                    ? 'border-blue-500 text-blue-600'
-                    : `border-transparent ${theme.muted} hover:text-blue-600 hover:border-gray-300`
-                }`}
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {activeTab === 'prompts' && (
-        <div className="space-y-6">
-          {/* Add New Prompt Form */}
-          <div className={`${theme.card} rounded-lg shadow-sm p-6 border ${theme.border}`}>
-            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${theme.text}`}>
-              <Plus size={20} />
-              Add New Bot Prompt
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input
-                type="text"
-                placeholder="Bot Name"
-                value={newPrompt.name}
-                onChange={(e) => setNewPrompt(prev => ({ ...prev, name: e.target.value }))}
-                className={`px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
-              />
-              <textarea
-                placeholder="Bot Prompt"
-                value={newPrompt.prompt}
-                onChange={(e) => setNewPrompt(prev => ({ ...prev, prompt: e.target.value }))}
-                className={`md:col-span-2 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${theme.input}`}
-                rows="2"
-              />
-            </div>
-            <button
-              onClick={addPrompt}
-              disabled={!newPrompt.name || !newPrompt.prompt}
-              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-            >
-              <Plus size={16} />
-              Add Prompt
-            </button>
-          </div>
-
-          {/* Prompts List */}
-          <div className="grid gap-4">
-            {botPrompts.map(prompt => (
-              <div key={prompt.id} className={`${theme.card} border ${theme.border} rounded-lg p-6 shadow-sm`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <h3 className={`text-xl font-semibold ${theme.text}`}>{prompt.name}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      prompt.active 
-                        ? (isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800')
-                        : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600')
-                    }`}>
-                      {prompt.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditingPrompt(editingPrompt === prompt.id ? null : prompt.id)}
-                      className={`p-2 ${theme.muted} hover:text-blue-600 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-blue-50'} rounded-md transition-colors`}
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => deletePrompt(prompt.id)}
-                      className={`p-2 ${theme.muted} hover:text-red-600 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-red-50'} rounded-md transition-colors`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                {editingPrompt === prompt.id ? (
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={prompt.name}
-                      onChange={(e) => setBotPrompts(prev => prev.map(p => p.id === prompt.id ? { ...p, name: e.target.value } : p))}
-                      className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
-                    />
-                    <textarea
-                      value={prompt.prompt}
-                      onChange={(e) => setBotPrompts(prev => prev.map(p => p.id === prompt.id ? { ...p, prompt: e.target.value } : p))}
-                      rows="4"
-                      className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${theme.input}`}
-                    />
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={prompt.active}
-                          onChange={(e) => setBotPrompts(prev => prev.map(p => p.id === prompt.id ? { ...p, active: e.target.checked } : p))}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className={`text-sm ${theme.text}`}>Active</span>
-                      </label>
-                      <button
-                        onClick={() => setEditingPrompt(null)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors"
-                      >
-                        <Save size={16} />
-                        Save Changes
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className={`${theme.text} leading-relaxed`}>{prompt.prompt}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'problems' && (
-        <div className={`${theme.card} rounded-lg shadow-sm overflow-hidden`}>
-          <div className={`p-6 border-b ${theme.border}`}>
-            <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${theme.text}`}>Problem Management</h2>
-              <div className="flex gap-2">
-                {['all', 'open', 'in-progress', 'resolved'].map(filter => (
-                  <button
-                    key={filter}
-                    className={`px-3 py-1 text-sm rounded-md ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} ${theme.text} capitalize transition-colors`}
-                  >
-                    {filter === 'all' ? 'All' : filter.replace('-', ' ')}
-                  </button>
-                ))}
-              </div>
+      {/* Problems Section */}
+      <div className={`${theme.card} rounded-lg shadow-sm overflow-hidden`}>
+        <div className={`p-6 border-b ${theme.border}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className={`text-2xl font-bold ${theme.text} flex items-center gap-2`}>
+              <AlertCircle className="text-amber-600" />
+              Problem Management ({sortedProblems.length})
+            </h2>
+            <div className="flex gap-2">
+              {['all', 'open', 'in-progress', 'resolved'].map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => handleStatusFilter(filter)}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors capitalize ${
+                    filterStatus === filter
+                      ? isDark ? 'bg-blue-700 text-blue-200' : 'bg-blue-100 text-blue-800'
+                      : isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {filter === 'all' ? 'All' : filter.replace('-', ' ')}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className={theme.tableHeader}>
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search problems..."
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isDark ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+              }`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+            <thead className={theme.tableHeader}>
+              <tr>
+                <SortHeader field="title">Problem</SortHeader>
+                <SortHeader field="priority">Priority</SortHeader>
+                <SortHeader field="status">Status</SortHeader>
+                <SortHeader field="date">Date</SortHeader>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className={`${theme.card} divide-y ${theme.border}`}>
+              {paginatedProblems.length === 0 ? (
                 <tr>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Problem</th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Priority</th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Status</th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Date</th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Actions</th>
+                  <td colSpan="5" className={`px-6 py-8 text-center ${theme.muted}`}>
+                    {problems.length === 0 ? 'No problems found' : 'No problems match your search'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={`${theme.card} divide-y ${theme.border}`}>
-                {problems.map(problem => (
+              ) : (
+                paginatedProblems.map(problem => (
                   <tr key={problem.id} className={theme.tableRow}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`text-sm font-medium ${theme.text}`}>{problem.title}</div>
@@ -285,13 +240,44 @@ export default function ChatModule(){
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className={`px-6 py-4 border-t flex items-center justify-between ${theme.border}`}>
+            <div className={`text-sm ${theme.muted}`}>
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedProblems.length)} of {sortedProblems.length} results
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded disabled:opacity-50 transition-colors ${
+                  isDark ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className={`px-3 py-1 text-sm ${theme.muted}`}>
+                {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded disabled:opacity-50 transition-colors ${
+                  isDark ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
