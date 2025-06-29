@@ -19,7 +19,6 @@ import DeliveryCharges from './pages/DeliveryCharges'
 import LoadingScreen from './components/common/LoadingScreen'
 import ResponsiveWarning from './components/common/ResponsiveWarning'
 import useResponsive from './hooks/useResponsive'
-import DeliveryCharges from './pages/DeliveryCharges'
 
 function AppContent() {
   // Use the auth context instead of calling useAuthGuard directly

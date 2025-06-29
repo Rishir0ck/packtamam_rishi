@@ -79,7 +79,7 @@ export default function InventoryManagement() {
 
   const tabs = [
     { id: 'products', label: 'Products', icon: Package },
-    { id: 'discount', label: 'Discount', icon: BadgePercent },
+    // { id: 'discount', label: 'Discount', icon: BadgePercent },
     { id: 'subCategories', label: 'Sub Categories', icon: Package },
     { id: 'categories', label: 'Categories', icon: TrendingUp },
     { id: 'materials', label: 'Materials', icon: Layers }
@@ -145,9 +145,9 @@ export default function InventoryManagement() {
       {activeTab === 'subCategories' && (
         <SubCategoryTab data={data.subCategories} loading={loading} apiCall={apiCall} theme={theme} />
       )}
-      {activeTab === 'discount' && (
+      {/* {activeTab === 'discount' && (
         <Discount data={data.discount} loading={loading} apiCall={apiCall} theme={theme} />
-      )}
+      )} */}
     </div>
   )
 }

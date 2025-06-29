@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, AlertCircle } from 'lucide-react';
 import useTheme from '../hooks/useTheme';
 import AdminService from '../Firebase/services/adminApiService';
 
@@ -9,12 +9,20 @@ export default function AdvertisementModule() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [sliderIndex, setSliderIndex] = useState({ Header: 0, Middle: 0 });
   const { isDark } = useTheme();
   const hasFetched = useRef(false);
   const [showView, setShowView] = useState(null);
 
-  const [form, setForm] = useState({title: '', images: [], placement: 'Header', is_active: true, priority: 1});
+  // Initial form state
+  const initialFormState = {
+    title: '',
+    images: [],
+    placement: 'Header',
+    is_active: true,
+    priority: 1
+  };
+
+  const [formState, setFormState] = useState(initialFormState);
 
   const placements = [
     { value: 'Header', label: 'Header - Top of screen' },
@@ -31,7 +39,6 @@ export default function AdvertisementModule() {
     input: 'bg-white border-gray-300', hover: 'hover:bg-gray-50'
   };
 
-  // Load data
   useEffect(() => {
     if (hasFetched.current) return;
     const load = async () => {
@@ -53,16 +60,14 @@ export default function AdvertisementModule() {
     load();
   }, []);
 
-  // Helper functions
-  const resetForm = () => {
-    setForm({ title: '', images: [], placement: 'Header', is_active: true, priority: 1 });
+  const resetForm = useCallback(() => {
+    setFormState(initialFormState);
     setShowForm(false);
     setEditing(null);
-  };
+  }, []);
 
   const getImageUrl = (ad) => {
     if (!ad) return '';
-    // Handle both single image and array formats
     if (typeof ad === 'string') return ad;
     if (ad.image_url) return ad.image_url;
     if (ad.imageUrl) return ad.imageUrl;
@@ -73,43 +78,59 @@ export default function AdvertisementModule() {
     return '';
   };
 
-  // Event handlers
-  const handleChange = (e) => {
+  // Fixed handleChange function with proper state updates
+  const handleChange = useCallback((e) => {
+    e.persist(); // Ensure event persists for async operations
     const { name, value, type, checked, files } = e.target;
-    if (type === 'file') {
-      const imageObjs = Array.from(files).map(file => ({
-        originFileObj: file, url: URL.createObjectURL(file)
-      }));
-      setForm(prev => ({ ...prev, images: imageObjs }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    }
-  };
+    
+    setFormState(prev => {
+      if (type === 'file') {
+        const imageObjs = Array.from(files).map(file => ({
+          originFileObj: file, 
+          url: URL.createObjectURL(file)
+        }));
+        return { 
+          ...prev, 
+          images: imageObjs 
+        };
+      } else if (type === 'checkbox') {
+        return { 
+          ...prev, 
+          [name]: checked 
+        };
+      } else {
+        return { 
+          ...prev, 
+          [name]: value 
+        };
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    if (!editing && (!form.images || form.images.length === 0)) {
+    if (!editing && (!formState.images || formState.images.length === 0)) {
       setError('Please select an image');
       return;
     }
     
     try {
       const result = editing
-        ? await AdminService.updateBanner(editing.id, editing.placement, editing.image_url, editing.priority, form.title)
-        : await AdminService.addBanner(form);
+        ? await AdminService.updateBanner(editing.id, editing.placement, editing.image_url, editing.priority, formState.title)
+        : await AdminService.addBanner(formState);
 
       if (result.success) {
         if (editing) {
           setAds(prev => prev.map(ad => ad.id === editing.id 
-            ? { ...ad, ...form, image_url: getImageUrl(ad) } : ad));
+            ? { ...ad, ...formState, image_url: getImageUrl(ad) } : ad));
         } else {
           const newAd = result.data || { 
-            ...form, 
+            ...formState, 
             id: Date.now(), 
-            image_url: form.images[0]?.url || '',
-            images: form.images 
+            image_url: formState.images[0]?.url || '',
+            images: formState.images 
           };
           setAds(prev => [...prev, newAd]);
         }
@@ -122,10 +143,10 @@ export default function AdvertisementModule() {
     }
   };
 
-  const handleEdit = (ad) => {
-    setForm({
+  const handleEdit = useCallback((ad) => {
+    setFormState({
       title: ad.title || '', 
-      images: [], // Keep empty for editing mode
+      images: [],
       placement: ad.placement || 'Header', 
       is_active: ad.is_active !== false, 
       priority: ad.priority || 1
@@ -133,7 +154,7 @@ export default function AdvertisementModule() {
     setEditing(ad);
     setShowForm(true);
     setShowView(null);
-  };
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this advertisement?')) return;
@@ -141,7 +162,7 @@ export default function AdvertisementModule() {
       const result = await AdminService.deleteBanner(id);
       if (result.success) {
         setAds(prev => prev.filter(ad => ad.id !== id));
-        setShowView(null); // Close view if deleted item was being viewed
+        setShowView(null);
       } else {
         setError(result.error || 'Delete failed');
       }
@@ -167,22 +188,22 @@ export default function AdvertisementModule() {
     }
   };
 
-  // Components
-  const Btn = ({ onClick, className = '', children, ...props }) => (
+  // Move component definitions outside render to prevent re-creation
+  const Btn = useCallback(({ onClick, className = '', children, ...props }) => (
     <button onClick={onClick} className={`transition-colors ${className}`} {...props}>
       {children}
     </button>
-  );
+  ), []);
 
-  const Input = ({ className = '', ...props }) => (
+  const Input = useCallback(({ className = '', ...props }) => (
     <input className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input} ${className}`} {...props} />
-  );
+  ), [theme.input]);
 
-  const Badge = ({ color, children }) => (
+  const Badge = useCallback(({ color, children }) => (
     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${color}`}>
       {children}
     </span>
-  );
+  ), []);
 
   if (loading) {
     return (
@@ -199,7 +220,6 @@ export default function AdvertisementModule() {
 
   return (
     <div className={`max-w-7xl mx-auto p-6 min-h-screen ${theme.bg}`}>
-      {/* Header */}
       <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6`}>
         <div className="flex justify-between items-center">
           <div>
@@ -213,7 +233,6 @@ export default function AdvertisementModule() {
         </div>
       </div>
 
-      {/* Error Display */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -226,9 +245,7 @@ export default function AdvertisementModule() {
         </div>
       )}
 
-      {/* Management Interface */}
       <div className={showForm ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
-        {/* Form Section */}
         {showForm && (
           <div className={`${theme.card} rounded-lg shadow-sm p-6`}>
             <div className="flex justify-between items-center mb-6">
@@ -243,14 +260,25 @@ export default function AdvertisementModule() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium ${theme.text} mb-2`}>Title</label>
-                <Input type="text" name="title" value={form.title}
-                       onChange={handleChange} required placeholder="Enter advertisement title" />
+                <input
+                  type="text" 
+                  name="title" 
+                  value={formState.title}
+                  onChange={handleChange} 
+                  required 
+                  placeholder="Enter advertisement title"
+                  className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                />
               </div>
 
               <div>
                 <label className={`block text-sm font-medium ${theme.text} mb-2`}>Placement</label>
-                <select name="placement" value={form.placement} onChange={handleChange}
-                        className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}>
+                <select 
+                  name="placement" 
+                  value={formState.placement} 
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                >
                   {placements.map(p => (
                     <option key={p.value} value={p.value}>{p.label}</option>
                   ))}
@@ -260,12 +288,21 @@ export default function AdvertisementModule() {
               {!editing && (
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Upload Image</label>
-                  <input type="file" accept="image/*" onChange={handleChange} name="images"
-                         className={`w-full px-3 py-2 border ${theme.border} rounded-lg`} required />
-                  {form.images.length > 0 && (
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleChange} 
+                    name="images"
+                    className={`w-full px-3 py-2 border ${theme.border} rounded-lg`} 
+                    required 
+                  />
+                  {formState.images.length > 0 && (
                     <div className="mt-3">
-                      <img src={form.images[0].url} alt="Preview"
-                           className="max-w-full h-32 object-cover rounded-lg border" />
+                      <img 
+                        src={formState.images[0].url} 
+                        alt="Preview"
+                        className="max-w-full h-32 object-cover rounded-lg border" 
+                      />
                     </div>
                   )}
                 </div>
@@ -275,9 +312,12 @@ export default function AdvertisementModule() {
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Current Image</label>
                   {getImageUrl(editing) ? (
-                    <img src={getImageUrl(editing)} alt=""
-                        className="max-w-full h-32 object-cover rounded-lg border"
-                        onError={(e) => { e.target.style.display = 'none' }} />
+                    <img 
+                      src={getImageUrl(editing)} 
+                      alt=""
+                      className="max-w-full h-32 object-cover rounded-lg border"
+                      onError={(e) => { e.target.style.display = 'none' }} 
+                    />
                   ) : (
                     <div className="max-w-full h-32 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500">
                       No Image Available
@@ -289,25 +329,42 @@ export default function AdvertisementModule() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium ${theme.text} mb-2`}>Priority</label>
-                  <Input type="number" name="priority" value={form.priority}
-                         onChange={handleChange} min="1" />
+                  <input
+                    type="number" 
+                    name="priority" 
+                    value={formState.priority}
+                    onChange={handleChange} 
+                    min="1"
+                    className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                  />
                 </div>
                 <div className="flex items-center">
                   <label className="inline-flex items-center">
-                    <input type="checkbox" name="is_active" checked={form.is_active}
-                           onChange={handleChange} className="rounded text-blue-600" />
+                    <input 
+                      type="checkbox" 
+                      name="is_active" 
+                      checked={formState.is_active}
+                      onChange={handleChange} 
+                      className="rounded text-blue-600" 
+                    />
                     <span className={`ml-2 text-sm font-medium ${theme.text}`}>Active</span>
                   </label>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <Btn type="submit"
-                     className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium " style={{ backgroundColor: '#c79e73' }}>
+                <Btn 
+                  type="submit"
+                  className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium " 
+                  style={{ backgroundColor: '#c79e73' }}
+                >
                   <Save className="w-4 h-4" />{editing ? 'Update' : 'Save'}
                 </Btn>
-                <Btn type="button" onClick={resetForm}
-                     className={`px-6 py-2 border ${theme.border} ${theme.text} rounded-lg ${theme.hover} font-medium`}>
+                <Btn 
+                  type="button" 
+                  onClick={resetForm}
+                  className={`px-6 py-2 border ${theme.border} ${theme.text} rounded-lg ${theme.hover} font-medium`}
+                >
                   Cancel
                 </Btn>
               </div>
@@ -315,7 +372,6 @@ export default function AdvertisementModule() {
           </div>
         )}
 
-        {/* View Section */}
         {showView && (
           <div className={`${theme.card} rounded-lg shadow-sm p-6`}>
             <div className="flex justify-between items-center mb-6">
@@ -328,9 +384,12 @@ export default function AdvertisementModule() {
             <div className="space-y-4">
               <div>
                 {getImageUrl(showView) ? (
-                  <img src={getImageUrl(showView)} alt=""
+                  <img 
+                    src={getImageUrl(showView)} 
+                    alt=""
                     className="w-full h-48 object-cover rounded-lg border"
-                    onError={(e) => { e.target.style.display = 'none' }} />
+                    onError={(e) => { e.target.style.display = 'none' }} 
+                  />
                 ) : (
                   <div className="w-full h-48 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500">
                     No Image Available
@@ -362,16 +421,20 @@ export default function AdvertisementModule() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Btn onClick={() => handleEdit(showView)}
-                     className="flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700">
+                <Btn 
+                  onClick={() => handleEdit(showView)}
+                  className="flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700"
+                >
                   <Edit className="w-4 h-4" />Edit
                 </Btn>
-                <Btn onClick={() => toggleActive(showView)}
-                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-                       showView.is_active !== false 
-                         ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                         : 'bg-green-600 hover:bg-green-700 text-white'
-                     }`}>
+                <Btn 
+                  onClick={() => toggleActive(showView)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                    showView.is_active !== false 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
                   {showView.is_active !== false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   {showView.is_active !== false ? 'Deactivate' : 'Activate'}
                 </Btn>
@@ -380,7 +443,6 @@ export default function AdvertisementModule() {
           </div>
         )}
 
-        {/* Table Section */}
         <div className={`${showForm || showView ? '' : 'col-span-full'} ${theme.card} rounded-lg shadow-sm overflow-hidden`}>
           <div className={`p-6 border-b ${theme.border}`}>
             <h2 className={`text-xl font-semibold ${theme.text}`}>Advertisement List ({ads.length})</h2>
@@ -390,8 +452,10 @@ export default function AdvertisementModule() {
             <div className="p-12 text-center">
               <h3 className={`text-lg font-medium ${theme.text} mb-2`}>No advertisements found</h3>
               <p className={`${theme.muted} mb-4`}>Start by creating your first advertisement</p>
-              <Btn onClick={() => setShowForm(true)}
-                   className="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700">
+              <Btn 
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700"
+              >
                 <Plus className="w-4 h-4" />Add Advertisement
               </Btn>
             </div>
@@ -444,19 +508,25 @@ export default function AdvertisementModule() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Btn onClick={() => { setShowView(ad); setShowForm(false); }}
-                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                               title="View Details">
+                          <Btn 
+                            onClick={() => { setShowView(ad); setShowForm(false); }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="View Details"
+                          >
                             <Eye className="w-4 h-4" />
                           </Btn>
-                          <Btn onClick={() => handleEdit(ad)}
-                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                               title="Edit">
+                          <Btn 
+                            onClick={() => handleEdit(ad)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="Edit"
+                          >
                             <Edit className="w-4 h-4" />
                           </Btn>
-                          <Btn onClick={() => handleDelete(ad.id)}
-                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                               title="Delete">
+                          <Btn 
+                            onClick={() => handleDelete(ad.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            title="Delete"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Btn>
                         </div>
