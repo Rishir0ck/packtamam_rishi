@@ -173,7 +173,7 @@ export default function DeliveryCharges() {
       <div className={`rounded-lg shadow-sm border ${theme.card} ${theme.border}`}>
         <div className={`border-b px-4 py-3 ${theme.border}`}>
           <h1 className={`text-xl font-bold flex items-center gap-2 ${theme.text}`}>
-            <Truck className="w-5 h-5 text-blue-600" />
+            <Truck className="w-5 h-5 text-amber-600" />
             Delivery Charges Management
           </h1>
         </div>
@@ -254,7 +254,8 @@ export default function DeliveryCharges() {
                 <h3 className={`text-lg font-semibold ${theme.text}`}>Discount Slabs</h3>
                 <button
                   onClick={() => setShowForm(true)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1 text-sm"
+                  className="bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm"
+                  style={{ backgroundColor: '#c79e73' }}
                 >
                   <Plus className="w-4 h-4" />
                   Add Slab

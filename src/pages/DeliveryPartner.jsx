@@ -168,7 +168,7 @@ export default function DeliveryPartnerAdmin() {
             <div className="flex items-center gap-4">
               <div>
                 <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-2`}>
-                  <Truck className="w-6 h-6 text-blue-600" />
+                  <Truck className="w-6 h-6 text-amber-600" />
                   Delivery Partners
                 </h1>
                 <p className={`${theme.muted} mt-1`}>Manage your delivery partner network</p>
@@ -178,6 +178,7 @@ export default function DeliveryPartnerAdmin() {
               <button
                 onClick={() => openModal('add')}
                 className={`${theme.button} text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium`}
+                style={{ backgroundColor: '#c79e73' }}
               >
                 <Plus className="w-4 h-4" />
                 Add Partner
@@ -424,6 +425,7 @@ export default function DeliveryPartnerAdmin() {
                       type="button"
                       onClick={handleSubmit}
                       className={`flex-1 ${theme.button} text-white py-2 px-4 rounded-lg transition-colors`}
+                      style={{ backgroundColor: '#c79e73' }}
                     >
                       {modalMode === 'add' ? 'Add Partner' : 'Update Partner'}
                     </button>
@@ -443,6 +445,7 @@ export default function DeliveryPartnerAdmin() {
                   <button
                     onClick={() => openModal('edit', selectedPartner)}
                     className={`flex-1 ${theme.button} text-white py-2 px-4 rounded-lg transition-colors`}
+                    style={{ backgroundColor: '#c79e73' }}
                   >
                     Edit Partner
                   </button>
