@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
-import { Eye, Edit, Search, ShoppingCart, Package, Truck, CheckCircle, Clock, X, Save, User, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-
+import { Eye, Edit, Search, ShoppingCart, Package, Truck, CheckCircle, Clock, X, Save, User, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
+import useTheme from '../hooks/useTheme'
 
 const mockCartData = [
   {
@@ -79,8 +79,38 @@ export default function OrderTableManagement() {
   const [sortConfig, setSortConfig] = useState({ key: 'addedAt', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const { isDark } = useTheme()
 
-  const isDark = false // Simplified theme
+  // Theme configuration
+  const theme = isDark ? {
+    bg: 'bg-gray-900',
+    card: 'bg-gray-800',
+    text: 'text-white',
+    muted: 'text-gray-300',
+    border: 'border-gray-700',
+    input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
+    hover: 'hover:bg-gray-700',
+    tableHeader: 'bg-gray-700',
+    tableRow: 'hover:bg-gray-750',
+    btn: 'bg-gray-700 hover:bg-gray-600 text-white',
+    statCard: 'bg-gray-800 border-gray-700',
+    modal: 'bg-gray-800',
+    isDark: true
+  } : {
+    bg: 'bg-gray-50',
+    card: 'bg-white',
+    text: 'text-gray-900',
+    muted: 'text-gray-600',
+    border: 'border-gray-200',
+    input: 'bg-white border-gray-200 placeholder-gray-500',
+    hover: 'hover:bg-gray-50',
+    tableHeader: 'bg-gray-50',
+    tableRow: 'hover:bg-gray-50',
+    btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+    statCard: 'bg-white border-gray-200',
+    modal: 'bg-white',
+    isDark: false
+  }
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -143,7 +173,7 @@ export default function OrderTableManagement() {
   }))
 
   const SortIcon = ({ column }) => {
-    if (sortConfig.key !== column) return <ChevronUp className="w-3 h-3 text-gray-400" />
+    if (sortConfig.key !== column) return <ChevronUp className={`w-3 h-3 ${theme.muted} opacity-30`} />
     return sortConfig.direction === 'asc' ? 
       <ChevronUp className="w-3 h-3 text-blue-500" /> : 
       <ChevronDown className="w-3 h-3 text-blue-500" />
@@ -161,303 +191,309 @@ export default function OrderTableManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Order Management</h1>
-        <p className="text-sm text-gray-600">Track and manage customer orders</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
-        <div 
-          onClick={() => setFilter('all')}
-          className={`bg-white rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-            filter === 'all' ? 'ring-2 ring-blue-500' : ''
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600">Total</p>
-              <p className="text-lg font-bold text-gray-900">{carts.length}</p>
-            </div>
-            <ShoppingCart className="w-4 h-4 text-gray-500" />
+    <div className={`min-h-screen ${theme.bg} transition-colors duration-200`}>
+      <div className="p-4">
+        {/* Header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className={`text-2xl font-bold ${theme.text} mb-1`}>Order Management</h1>
+            <p className={`text-sm ${theme.muted}`}>Track and manage customer orders</p>
           </div>
         </div>
-        {stats.map((stat) => (
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-4">
           <div 
-            key={stat.key}
-            onClick={() => setFilter(filter === stat.key ? 'all' : stat.key)}
-            className={`bg-white rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-              filter === stat.key ? 'ring-2 ring-blue-500' : ''
+            onClick={() => setFilter('all')}
+            className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
+              filter === 'all' ? 'ring-2 ring-blue-500' : ''
             }`}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">{stat.label}</p>
-                <p className="text-lg font-bold text-gray-900">{stat.count}</p>
+                <p className={`text-xs ${theme.muted}`}>Total</p>
+                <p className={`text-lg font-bold ${theme.text}`}>{carts.length}</p>
               </div>
-              <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+              <ShoppingCart className={`w-4 h-4 ${theme.muted}`} />
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="flex gap-2 mb-4 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text" 
-            placeholder="Search orders..." 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          {stats.map((stat) => (
+            <div 
+              key={stat.key}
+              onClick={() => setFilter(filter === stat.key ? 'all' : stat.key)}
+              className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
+                filter === stat.key ? 'ring-2 ring-blue-500' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs ${theme.muted}`}>{stat.label}</p>
+                  <p className={`text-lg font-bold ${theme.text}`}>{stat.count}</p>
+                </div>
+                <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('trackingId')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Order ID <SortIcon column="trackingId" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('customerName')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Customer <SortIcon column="customerName" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('restaurantName')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Restaurant <SortIcon column="restaurantName" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left">Items</th>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('totalAmount')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Amount <SortIcon column="totalAmount" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('orderStatus')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Status <SortIcon column="orderStatus" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('addedAt')} className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900">
-                    Order Time <SortIcon column="addedAt" />
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((cart) => (
-                <tr key={cart.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-sm text-gray-900">{cart.trackingId}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="w-3 h-3 text-gray-500" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm text-gray-900">{cart.customerName}</div>
-                        <div className="text-xs text-gray-500">{cart.location}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900">{cart.restaurantName}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex -space-x-1">
-                      {cart.items.slice(0, 3).map((item, idx) => (
-                        <img key={idx} src={item.image} alt="" className="w-6 h-6 rounded border-2 border-white object-cover" />
-                      ))}
-                      {cart.items.length > 3 && (
-                        <div className="w-6 h-6 bg-gray-200 rounded border-2 border-white flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-600">+{cart.items.length - 3}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">{cart.items.length} items</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-sm text-gray-900">₹{cart.totalAmount}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={cart.orderStatus} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900">{formatTime(cart.addedAt)}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1 justify-center">
-                      <button 
-                        onClick={() => { setSelected(cart); setModal('view') }} 
-                        className="p-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
-                      >
-                        <Eye className="w-3 h-3" />
-                      </button>
-                      <button 
-                        onClick={() => handleEdit(cart)} 
-                        className="p-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition-colors"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </td>
+        {/* Controls */}
+        <div className="flex gap-2 mb-4 items-center">
+          <div className="relative flex-1">
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${theme.muted}`} />
+            <input
+              type="text" 
+              placeholder="Search orders..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)}
+              className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className={`${theme.card} rounded-lg border shadow-sm overflow-hidden ${theme.border}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className={`${theme.tableHeader} border-b ${theme.border}`}>
+                <tr>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('trackingId')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Order ID <SortIcon column="trackingId" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('customerName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Customer <SortIcon column="customerName" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('restaurantName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Restaurant <SortIcon column="restaurantName" />
+                    </button>
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted}`}>Items</th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('totalAmount')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Amount <SortIcon column="totalAmount" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('orderStatus')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Status <SortIcon column="orderStatus" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('addedAt')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                      Order Time <SortIcon column="addedAt" />
+                    </button>
+                  </th>
+                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.muted}`}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, sortedAndFiltered.length)} to {Math.min(currentPage * itemsPerPage, sortedAndFiltered.length)} of {sortedAndFiltered.length} results
-          </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-1 border border-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const page = i + Math.max(1, currentPage - 2)
-              return (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-2 py-1 text-sm border rounded ${
-                    currentPage === page ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  {page}
-                </button>
-              )
-            })}
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-1 border border-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* View Modal */}
-      {modal === 'view' && selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Order Details - {selected.trackingId}</h2>
-              <button onClick={() => setModal('')} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
-            </div>
-            
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <h4 className="font-medium mb-2 text-gray-900">Customer</h4>
-                  <div className="space-y-1 text-gray-600">
-                    <div>{selected.customerName}</div>
-                    <div>{selected.customerEmail}</div>
-                    <div>{selected.customerPhone}</div>
-                    <div>{selected.location}</div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2 text-gray-900">Restaurant</h4>
-                  <div className="text-gray-600">
-                    <div>{selected.restaurantName}</div>
-                    <div className="mt-2">Est. Delivery: {formatTime(selected.estimatedDelivery)}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2 text-gray-900">Items ({selected.items.length})</h4>
-                <div className="space-y-2">
-                  {selected.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
-                      <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm text-gray-900">{item.name}</div>
-                        <div className="text-xs text-gray-600">₹{item.price} × {item.quantity}</div>
+              </thead>
+              <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                {paginatedData.map((cart) => (
+                  <tr key={cart.id} className={`border-b ${theme.tableRow} transition-colors`}>
+                    <td className="px-4 py-3">
+                      <div className={`font-medium text-sm ${theme.text}`}>{cart.trackingId}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
+                          <User className={`w-3 h-3 ${theme.muted}`} />
+                        </div>
+                        <div>
+                          <div className={`font-medium text-sm ${theme.text}`}>{cart.customerName}</div>
+                          <div className={`text-xs ${theme.muted}`}>{cart.location}</div>
+                        </div>
                       </div>
-                      <div className="font-medium text-gray-900">₹{item.price * item.quantity}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 font-semibold">
-                  <span>Total</span>
-                  <span>₹{selected.totalAmount}</span>
-                </div>
-              </div>
-            </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className={`text-sm ${theme.text}`}>{cart.restaurantName}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex -space-x-1">
+                        {cart.items.slice(0, 3).map((item, idx) => (
+                          <img key={idx} src={item.image} alt="" className="w-6 h-6 rounded border-2 border-white object-cover" />
+                        ))}
+                        {cart.items.length > 3 && (
+                          <div className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded border-2 ${isDark ? 'border-gray-800' : 'border-white'} flex items-center justify-center`}>
+                            <span className={`text-xs font-medium ${theme.muted}`}>+{cart.items.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className={`text-xs ${theme.muted} mt-1`}>{cart.items.length} items</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className={`font-semibold text-sm ${theme.text}`}>₹{cart.totalAmount}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={cart.orderStatus} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className={`text-sm ${theme.text}`}>{formatTime(cart.addedAt)}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-center">
+                        <button 
+                          onClick={() => { setSelected(cart); setModal('view') }} 
+                          className={`p-1 ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded transition-colors`}
+                        >
+                          <Eye className="w-3 h-3" />
+                        </button>
+                        <button 
+                          onClick={() => handleEdit(cart)} 
+                          className="p-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition-colors"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
 
-      {/* Edit Modal */}
-      {modal === 'edit' && editData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Update Order Status</h2>
-              <button onClick={() => setModal('')} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-700" />
+          {/* Pagination */}
+          <div className={`px-4 py-3 ${theme.tableHeader} border-t ${theme.border} flex items-center justify-between`}>
+            <div className={`text-sm ${theme.muted}`}>
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, sortedAndFiltered.length)} to {Math.min(currentPage * itemsPerPage, sortedAndFiltered.length)} of {sortedAndFiltered.length} results
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed ${theme.border} ${theme.hover} transition-colors`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const page = i + Math.max(1, currentPage - 2)
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-2 py-1 text-sm border rounded transition-colors ${
+                      currentPage === page 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : `${theme.border} ${theme.hover}`
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              })}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`p-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed ${theme.border} ${theme.hover} transition-colors`}
+              >
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-600">Order Status</label>
-                <select 
-                  value={editData.orderStatus} 
-                  onChange={(e) => setEditData({...editData, orderStatus: e.target.value})}
-                  className="w-full p-3 border border-gray-200 bg-white rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {orderStatuses.map(status => (
-                    <option key={status.key} value={status.key}>{status.label}</option>
-                  ))}
-                </select>
-              </div>
+          </div>
+        </div>
 
-              <div className="flex gap-2 pt-4 border-t border-gray-200">
-                <button 
-                  onClick={handleSave}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg text-sm"
-                  style={{ backgroundColor: '#c79e73' }}
-                >
-                  <Save className="w-4 h-4" /> Update Order
+        {/* View Modal */}
+        {modal === 'view' && selected && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className={`${theme.modal} rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+              <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
+                <h2 className={`text-lg font-bold ${theme.text}`}>Order Details - {selected.trackingId}</h2>
+                <button onClick={() => setModal('')} className={`p-2 ${theme.hover} rounded-lg transition-colors`}>
+                  <X className={`w-5 h-5 ${theme.text}`} />
                 </button>
-                <button 
-                  onClick={() => setModal('')}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
-                >
-                  Cancel
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h4 className={`font-medium mb-2 ${theme.text}`}>Customer</h4>
+                    <div className={`space-y-1 ${theme.muted}`}>
+                      <div>{selected.customerName}</div>
+                      <div>{selected.customerEmail}</div>
+                      <div>{selected.customerPhone}</div>
+                      <div>{selected.location}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className={`font-medium mb-2 ${theme.text}`}>Restaurant</h4>
+                    <div className={theme.muted}>
+                      <div>{selected.restaurantName}</div>
+                      <div className="mt-2">Est. Delivery: {formatTime(selected.estimatedDelivery)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className={`font-medium mb-2 ${theme.text}`}>Items ({selected.items.length})</h4>
+                  <div className="space-y-2">
+                    {selected.items.map((item) => (
+                      <div key={item.id} className={`flex items-center gap-3 p-2 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded`}>
+                        <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
+                        <div className="flex-1">
+                          <div className={`font-medium text-sm ${theme.text}`}>{item.name}</div>
+                          <div className={`text-xs ${theme.muted}`}>₹{item.price} × {item.quantity}</div>
+                        </div>
+                        <div className={`font-medium ${theme.text}`}>₹{item.price * item.quantity}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`flex justify-between items-center mt-3 pt-3 border-t ${theme.border} font-semibold ${theme.text}`}>
+                    <span>Total</span>
+                    <span>₹{selected.totalAmount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {modal === 'edit' && editData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className={`${theme.modal} rounded-xl max-w-md w-full`}>
+              <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
+                <h2 className={`text-lg font-bold ${theme.text}`}>Update Order Status</h2>
+                <button onClick={() => setModal('')} className={`p-2 ${theme.hover} rounded-lg transition-colors`}>
+                  <X className={`w-5 h-5 ${theme.text}`} />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Order Status</label>
+                  <select 
+                    value={editData.orderStatus} 
+                    onChange={(e) => setEditData({...editData, orderStatus: e.target.value})}
+                    className={`w-full p-3 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                  >
+                    {orderStatuses.map(status => (
+                      <option key={status.key} value={status.key}>{status.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={`flex gap-2 pt-4 border-t ${theme.border}`}>
+                  <button 
+                    onClick={handleSave}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg text-sm hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#c79e73' }}
+                  >
+                    <Save className="w-4 h-4" /> Update Order
+                  </button>
+                  <button 
+                    onClick={() => setModal('')}
+                    className={`px-4 py-2 rounded-lg text-sm transition-colors ${theme.btn}`}
+                  >
+                    Cancel
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }
