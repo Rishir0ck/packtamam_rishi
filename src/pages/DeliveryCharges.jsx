@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Edit2, Trash2, Tag, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, BadgePercent } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, Tag, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
 import useTheme from '../hooks/useTheme'
 
@@ -173,7 +173,7 @@ export default function DeliveryCharges() {
       <div className={`rounded-lg shadow-sm border ${theme.card} ${theme.border}`}>
         <div className={`border-b px-4 py-3 ${theme.border}`}>
           <h1 className={`text-xl font-bold flex items-center gap-2 ${theme.text}`}>
-            <BadgePercent className="w-5 h-5 text-blue-600" />
+            <Truck className="w-5 h-5 text-blue-600" />
             Delivery Charges Management
           </h1>
         </div>

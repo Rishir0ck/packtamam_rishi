@@ -177,8 +177,8 @@ class AdminService {
   }
 
   // Sub Admin Management
-  async addSubAdmin(email, name, role, modules, is_active) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name, role, modules, is_active });
+  async addSubAdmin(email, name, role, password, modules, is_active) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add-sub-admin', { email, name, role, password, modules, is_active });
   }
 
   async deleteSubAdmin(id) {
