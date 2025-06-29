@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Edit2, Trash2, ChevronUp, ChevronDown, Eye, MapPin, Phone, Mail, Star, Truck } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, ChevronUp, ChevronDown, Eye, MapPin, Phone, Mail, Star, Truck, Moon, Sun } from 'lucide-react';
+import useTheme from '../hooks/useTheme'
 
-
-export default function DeliveryPartnerAdmin () {
+export default function DeliveryPartnerAdmin() {
+  const { isDark } = useTheme();
   const [partners, setPartners] = useState([
     { id: 1, name: 'John Smith', email: 'john@delivery.com', phone: '+1-555-0101', zone: 'North Zone', status: 'Active', rating: 4.8, deliveries: 245, vehicle: 'Bike', joinDate: '2024-01-15' },
     { id: 2, name: 'Sarah Johnson', email: 'sarah@delivery.com', phone: '+1-555-0102', zone: 'South Zone', status: 'Active', rating: 4.9, deliveries: 312, vehicle: 'Car', joinDate: '2024-02-20' },
@@ -31,6 +32,37 @@ export default function DeliveryPartnerAdmin () {
   const zones = ['North Zone', 'South Zone', 'East Zone', 'West Zone', 'Central Zone'];
   const vehicles = ['Bike', 'Scooter', 'Car', 'Van'];
   const statuses = ['Active', 'Inactive', 'Suspended'];
+
+  // Theme configuration
+  const theme = isDark ? {
+    bg: 'bg-gray-900',
+    card: 'bg-gray-800',
+    text: 'text-white',
+    muted: 'text-gray-300',
+    border: 'border-gray-700',
+    input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
+    hover: 'hover:bg-gray-700',
+    tableHeader: 'bg-gray-700',
+    tableRow: 'hover:bg-gray-750',
+    modalBg: 'bg-gray-800',
+    button: 'bg-blue-600 hover:bg-blue-700',
+    buttonSecondary: 'bg-gray-600 hover:bg-gray-500',
+    isDark: true
+  } : {
+    bg: 'bg-gray-50',
+    card: 'bg-white',
+    text: 'text-gray-900',
+    muted: 'text-gray-600',
+    border: 'border-gray-200',
+    input: 'bg-white border-gray-300 placeholder-gray-500',
+    hover: 'hover:bg-gray-50',
+    tableHeader: 'bg-gray-50',
+    tableRow: 'hover:bg-gray-50',
+    modalBg: 'bg-white',
+    button: 'bg-blue-600 hover:bg-blue-700',
+    buttonSecondary: 'bg-gray-300 hover:bg-gray-400',
+    isDark: false
+  };
 
   const filteredAndSortedPartners = useMemo(() => {
     let filtered = partners.filter(partner =>
@@ -113,142 +145,146 @@ export default function DeliveryPartnerAdmin () {
 
   const getStatusBadge = (status) => {
     const colors = {
-      Active: 'bg-green-100 text-green-800',
-      Inactive: 'bg-gray-100 text-gray-800',
-      Suspended: 'bg-red-100 text-red-800'
+      Active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+      Inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+      Suspended: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     };
     return `px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`;
   };
 
   const SortIcon = ({ field }) => (
     <span className="ml-1 inline-flex flex-col">
-      <ChevronUp className={`w-3 h-3 ${sortField === field && sortDirection === 'asc' ? 'text-blue-600' : 'text-gray-400'}`} />
-      <ChevronDown className={`w-3 h-3 -mt-1 ${sortField === field && sortDirection === 'desc' ? 'text-blue-600' : 'text-gray-400'}`} />
+      <ChevronUp className={`w-3 h-3 ${sortField === field && sortDirection === 'asc' ? 'text-blue-500' : theme.muted}`} />
+      <ChevronDown className={`w-3 h-3 -mt-1 ${sortField === field && sortDirection === 'desc' ? 'text-blue-500' : theme.muted}`} />
     </span>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className={`min-h-screen ${theme.bg} transition-colors duration-200`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className={`${theme.card} rounded-lg shadow-sm border ${theme.border} p-6 mb-6 transition-colors duration-200`}>
           <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Truck className="w-6 h-6 text-blue-600" />
-                Delivery Partners
-              </h1>
-              <p className="text-gray-600 mt-1">Manage your delivery partner network</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-2`}>
+                  <Truck className="w-6 h-6 text-blue-600" />
+                  Delivery Partners
+                </h1>
+                <p className={`${theme.muted} mt-1`}>Manage your delivery partner network</p>
+              </div>
             </div>
-            <button
-              onClick={() => openModal('add')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Add Partner
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => openModal('add')}
+                className={`${theme.button} text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium`}
+              >
+                <Plus className="w-4 h-4" />
+                Add Partner
+              </button>
+            </div>
           </div>
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme.muted} w-4 h-4`} />
             <input
               type="text"
               placeholder="Search partners by name, email, or zone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${theme.input}`}
             />
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className={`${theme.card} rounded-lg shadow-sm border ${theme.border} transition-colors duration-200`}>
           <div className="overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className={`${theme.tableHeader} border-b ${theme.border}`}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('name')}>
                     Partner <SortIcon field="name" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('zone')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('zone')}>
                     Zone <SortIcon field="zone" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('status')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('status')}>
                     Status <SortIcon field="status" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('rating')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('rating')}>
                     Rating <SortIcon field="rating" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('deliveries')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('deliveries')}>
                     Deliveries <SortIcon field="deliveries" />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('vehicle')}>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('vehicle')}>
                     Vehicle <SortIcon field="vehicle" />
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-right text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`${theme.card} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {paginatedPartners.map((partner) => (
-                  <tr key={partner.id} className="hover:bg-gray-50">
+                  <tr key={partner.id} className={`${theme.tableRow} transition-colors`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{partner.name}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className={`text-sm font-medium ${theme.text}`}>{partner.name}</div>
+                        <div className={`text-sm ${theme.muted} flex items-center gap-1`}>
                           <Mail className="w-3 h-3" />
                           {partner.email}
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className={`text-sm ${theme.muted} flex items-center gap-1`}>
                           <Phone className="w-3 h-3" />
                           {partner.phone}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1 text-sm text-gray-900">
-                        <MapPin className="w-3 h-3 text-gray-400" />
+                      <div className={`flex items-center gap-1 text-sm ${theme.text}`}>
+                        <MapPin className={`w-3 h-3 ${theme.muted}`} />
                         {partner.zone}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadge(partner.status)}>
+                      <span className={`${getStatusBadge(partner.status)} ${isDark ? 'dark' : ''}`}>
                         {partner.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium text-gray-900">{partner.rating}</span>
+                        <span className={`text-sm font-medium ${theme.text}`}>{partner.rating}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme.text} font-medium`}>
                       {partner.deliveries}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme.text}`}>
                       {partner.vehicle}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openModal('view', partner)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openModal('edit', partner)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                           title="Edit Partner"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(partner.id)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete Partner"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -262,15 +298,15 @@ export default function DeliveryPartnerAdmin () {
           </div>
 
           {/* Pagination */}
-          <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+          <div className={`${theme.card} px-6 py-3 border-t ${theme.border} flex items-center justify-between`}>
+            <div className={`text-sm ${theme.muted}`}>
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedPartners.length)} of {filteredAndSortedPartners.length} results
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-1 text-sm border ${theme.border} rounded-md ${theme.hover} disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${theme.text}`}
               >
                 Previous
               </button>
@@ -278,7 +314,11 @@ export default function DeliveryPartnerAdmin () {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-1 text-sm rounded-md ${currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}`}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    currentPage === page 
+                      ? 'bg-blue-600 text-white' 
+                      : `border ${theme.border} ${theme.hover} ${theme.text}`
+                  }`}
                 >
                   {page}
                 </button>
@@ -286,7 +326,7 @@ export default function DeliveryPartnerAdmin () {
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-1 text-sm border ${theme.border} rounded-md ${theme.hover} disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${theme.text}`}
               >
                 Next
               </button>
@@ -297,22 +337,22 @@ export default function DeliveryPartnerAdmin () {
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
-              <h2 className="text-lg font-semibold mb-4">
+            <div className={`${theme.modalBg} rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto transition-colors duration-200`}>
+              <h2 className={`text-lg font-semibold mb-4 ${theme.text}`}>
                 {modalMode === 'add' ? 'Add New Partner' : modalMode === 'edit' ? 'Edit Partner' : 'Partner Details'}
               </h2>
               
               {modalMode === 'view' ? (
                 <div className="space-y-4">
-                  <div><strong>Name:</strong> {selectedPartner?.name}</div>
-                  <div><strong>Email:</strong> {selectedPartner?.email}</div>
-                  <div><strong>Phone:</strong> {selectedPartner?.phone}</div>
-                  <div><strong>Zone:</strong> {selectedPartner?.zone}</div>
-                  <div><strong>Status:</strong> <span className={getStatusBadge(selectedPartner?.status)}>{selectedPartner?.status}</span></div>
-                  <div><strong>Rating:</strong> {selectedPartner?.rating}/5.0</div>
-                  <div><strong>Total Deliveries:</strong> {selectedPartner?.deliveries}</div>
-                  <div><strong>Vehicle:</strong> {selectedPartner?.vehicle}</div>
-                  <div><strong>Join Date:</strong> {selectedPartner?.joinDate}</div>
+                  <div className={theme.text}><strong>Name:</strong> {selectedPartner?.name}</div>
+                  <div className={theme.text}><strong>Email:</strong> {selectedPartner?.email}</div>
+                  <div className={theme.text}><strong>Phone:</strong> {selectedPartner?.phone}</div>
+                  <div className={theme.text}><strong>Zone:</strong> {selectedPartner?.zone}</div>
+                  <div className={theme.text}><strong>Status:</strong> <span className={`${getStatusBadge(selectedPartner?.status)} ${isDark ? 'dark' : ''}`}>{selectedPartner?.status}</span></div>
+                  <div className={theme.text}><strong>Rating:</strong> {selectedPartner?.rating}/5.0</div>
+                  <div className={theme.text}><strong>Total Deliveries:</strong> {selectedPartner?.deliveries}</div>
+                  <div className={theme.text}><strong>Vehicle:</strong> {selectedPartner?.vehicle}</div>
+                  <div className={theme.text}><strong>Join Date:</strong> {selectedPartner?.joinDate}</div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -321,7 +361,7 @@ export default function DeliveryPartnerAdmin () {
                     placeholder="Partner Name"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                     required
                   />
                   <input
@@ -329,7 +369,7 @@ export default function DeliveryPartnerAdmin () {
                     placeholder="Email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                     required
                   />
                   <input
@@ -337,20 +377,20 @@ export default function DeliveryPartnerAdmin () {
                     placeholder="Phone Number"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                     required
                   />
                   <select
                     value={formData.zone}
                     onChange={(e) => setFormData({...formData, zone: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                   >
                     {zones.map(zone => <option key={zone} value={zone}>{zone}</option>)}
                   </select>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                   >
                     {statuses.map(status => <option key={status} value={status}>{status}</option>)}
                   </select>
@@ -362,7 +402,7 @@ export default function DeliveryPartnerAdmin () {
                     step="0.1"
                     value={formData.rating}
                     onChange={(e) => setFormData({...formData, rating: parseFloat(e.target.value)})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                   />
                   <input
                     type="number"
@@ -370,12 +410,12 @@ export default function DeliveryPartnerAdmin () {
                     min="0"
                     value={formData.deliveries}
                     onChange={(e) => setFormData({...formData, deliveries: parseInt(e.target.value)})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                   />
                   <select
                     value={formData.vehicle}
                     onChange={(e) => setFormData({...formData, vehicle: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                   >
                     {vehicles.map(vehicle => <option key={vehicle} value={vehicle}>{vehicle}</option>)}
                   </select>
@@ -383,14 +423,14 @@ export default function DeliveryPartnerAdmin () {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      className={`flex-1 ${theme.button} text-white py-2 px-4 rounded-lg transition-colors`}
                     >
                       {modalMode === 'add' ? 'Add Partner' : 'Update Partner'}
                     </button>
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+                      className={`flex-1 ${theme.buttonSecondary} ${isDark ? 'text-white' : 'text-gray-700'} py-2 px-4 rounded-lg transition-colors`}
                     >
                       Cancel
                     </button>
@@ -402,13 +442,13 @@ export default function DeliveryPartnerAdmin () {
                 <div className="flex gap-2 pt-4">
                   <button
                     onClick={() => openModal('edit', selectedPartner)}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                    className={`flex-1 ${theme.button} text-white py-2 px-4 rounded-lg transition-colors`}
                   >
                     Edit Partner
                   </button>
                   <button
                     onClick={closeModal}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+                    className={`flex-1 ${theme.buttonSecondary} ${isDark ? 'text-white' : 'text-gray-700'} py-2 px-4 rounded-lg transition-colors`}
                   >
                     Close
                   </button>

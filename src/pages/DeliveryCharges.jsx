@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, X, Edit2, Trash2, Tag, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, BadgePercent } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
+import useTheme from '../hooks/useTheme'
 
 export default function DeliveryCharges() {
   const [countries] = useState(Country.getAllCountries());
@@ -17,6 +18,39 @@ export default function DeliveryCharges() {
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const itemsPerPage = 5;
+
+  const { isDark } = useTheme();
+
+  // Theme configuration
+  const theme = isDark ? {
+    bg: 'bg-gray-900',
+    card: 'bg-gray-800',
+    text: 'text-white',
+    muted: 'text-gray-300',
+    border: 'border-gray-700',
+    input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
+    hover: 'hover:bg-gray-700',
+    tableHeader: 'bg-gray-700',
+    tableRow: 'hover:bg-gray-750',
+    btn: 'bg-gray-700 hover:bg-gray-600 text-white',
+    formBg: 'bg-gray-700',
+    slabBg: 'bg-gray-700',
+    isDark: true
+  } : {
+    bg: 'bg-gray-50',
+    card: 'bg-white',
+    text: 'text-gray-900',
+    muted: 'text-gray-600',
+    border: 'border-gray-200',
+    input: 'bg-white border-gray-300 placeholder-gray-500',
+    hover: 'hover:bg-gray-50',
+    tableHeader: 'bg-gray-50',
+    tableRow: 'hover:bg-gray-50',
+    btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+    formBg: 'bg-gray-50',
+    slabBg: 'bg-white',
+    isDark: false
+  };
 
   const [formData, setFormData] = useState({
     minAmount: '', maxAmount: '', discountType: 'percentage', discountValue: '', description: ''
@@ -130,15 +164,15 @@ export default function DeliveryCharges() {
   };
 
   const SortIcon = ({ field }) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
+    if (sortField !== field) return <ChevronUp className="w-4 h-4 opacity-30" />;
+    return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4 text-blue-500" /> : <ChevronDown className="w-4 h-4 text-blue-500" />;
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="border-b px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+    <div className={`max-w-7xl mx-auto p-4 min-h-screen ${theme.bg}`}>
+      <div className={`rounded-lg shadow-sm border ${theme.card} ${theme.border}`}>
+        <div className={`border-b px-4 py-3 ${theme.border}`}>
+          <h1 className={`text-xl font-bold flex items-center gap-2 ${theme.text}`}>
             <BadgePercent className="w-5 h-5 text-blue-600" />
             Delivery Charges Management
           </h1>
@@ -148,13 +182,13 @@ export default function DeliveryCharges() {
           {/* Location Selection */}
           <div className="grid md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Country
               </label>
               <select
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
               >
                 {countries.map((country) => (
                   <option key={country.isoCode} value={country.isoCode}>
@@ -165,13 +199,13 @@ export default function DeliveryCharges() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 State *
               </label>
               <select
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
               >
                 <option value="">Select State</option>
                 {states.map((state) => (
@@ -183,16 +217,16 @@ export default function DeliveryCharges() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Cities * ({selectedCities.length} selected)
               </label>
-              <div className="border rounded-lg p-2 max-h-24 overflow-y-auto bg-white">
+              <div className={`border rounded-lg p-2 max-h-24 overflow-y-auto ${theme.input}`}>
                 {cities.length > 0 ? (
                   <div className="grid grid-cols-2 gap-1">
                     {cities.map((city) => (
                       <label
                         key={city.name}
-                        className="flex items-center gap-1 text-xs hover:bg-gray-50 p-1 rounded"
+                        className={`flex items-center gap-1 text-xs p-1 rounded ${theme.hover}`}
                       >
                         <input
                           type="checkbox"
@@ -200,12 +234,12 @@ export default function DeliveryCharges() {
                           onChange={() => handleCityToggle(city.name)}
                           className="w-3 h-3 text-blue-600 rounded"
                         />
-                        <span>{city.name}</span>
+                        <span className={theme.text}>{city.name}</span>
                       </label>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-gray-400 text-sm py-1">
+                  <div className={`text-sm py-1 ${theme.muted}`}>
                     Select a state first
                   </div>
                 )}
@@ -215,9 +249,9 @@ export default function DeliveryCharges() {
 
           {/* Discount Slabs */}
           {selectedCities.length > 0 && (
-            <div className="border rounded-lg p-3">
+            <div className={`border rounded-lg p-3 ${theme.border}`}>
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold">Discount Slabs</h3>
+                <h3 className={`text-lg font-semibold ${theme.text}`}>Discount Slabs</h3>
                 <button
                   onClick={() => setShowForm(true)}
                   className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1 text-sm"
@@ -228,7 +262,7 @@ export default function DeliveryCharges() {
               </div>
 
               {showForm && (
-                <div className="bg-gray-50 p-3 rounded mb-3">
+                <div className={`p-3 rounded mb-3 ${theme.formBg}`}>
                   <div className="grid md:grid-cols-6 gap-2">
                     <input
                       type="number"
@@ -239,7 +273,7 @@ export default function DeliveryCharges() {
                           minAmount: e.target.value,
                         }))
                       }
-                      className="px-2 py-1 text-sm border rounded"
+                      className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                       placeholder="Min Amount"
                     />
                     <input
@@ -251,7 +285,7 @@ export default function DeliveryCharges() {
                           maxAmount: e.target.value,
                         }))
                       }
-                      className="px-2 py-1 text-sm border rounded"
+                      className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                       placeholder="Max Amount"
                     />
                     <select
@@ -262,7 +296,7 @@ export default function DeliveryCharges() {
                           discountType: e.target.value,
                         }))
                       }
-                      className="px-2 py-1 text-sm border rounded"
+                      className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                     >
                       <option value="percentage">%</option>
                       <option value="fixed">₹</option>
@@ -277,7 +311,7 @@ export default function DeliveryCharges() {
                           discountValue: e.target.value,
                         }))
                       }
-                      className="px-2 py-1 text-sm border rounded"
+                      className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                       placeholder="Value"
                     />
                     <button
@@ -298,7 +332,7 @@ export default function DeliveryCharges() {
                           description: "",
                         });
                       }}
-                      className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded"
+                      className={`px-2 py-1 rounded ${theme.hover} ${theme.muted}`}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -310,10 +344,10 @@ export default function DeliveryCharges() {
                 {discountSlabs.map((slab, index) => (
                   <div
                     key={slab.id}
-                    className="flex items-center justify-between p-2 bg-white border rounded text-sm"
+                    className={`flex items-center justify-between p-2 border rounded text-sm ${theme.slabBg} ${theme.border}`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-medium">
+                      <span className={`font-medium ${theme.text}`}>
                         ₹{slab.minAmount}
                         {slab.maxAmount ? ` - ₹${slab.maxAmount}` : "+"}
                       </span>
@@ -353,28 +387,28 @@ export default function DeliveryCharges() {
 
           {/* Saved Discounts Table */}
           {savedDiscounts.length > 0 && (
-            <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-2 border-b">
-                <h3 className="text-lg font-semibold">Saved Configurations</h3>
+            <div className={`border rounded-lg overflow-hidden ${theme.border}`}>
+              <div className={`px-4 py-2 border-b ${theme.tableHeader} ${theme.border}`}>
+                <h3 className={`text-lg font-semibold ${theme.text}`}>Saved Configurations</h3>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className={`border-b ${theme.tableHeader} ${theme.border}`}>
                     <tr>
                       <th
-                        className="px-4 py-2 text-left text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-100"
+                        className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`}
                         onClick={() => handleSort("state")}
                       >
                         <div className="flex items-center gap-1">
                           State <SortIcon field="state" />
                         </div>
                       </th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>
                         Cities
                       </th>
                       <th
-                        className="px-4 py-2 text-left text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-100"
+                        className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`}
                         onClick={() => handleSort("slabCount")}
                       >
                         <div className="flex items-center gap-1">
@@ -382,36 +416,36 @@ export default function DeliveryCharges() {
                         </div>
                       </th>
                       <th
-                        className="px-4 py-2 text-left text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-100"
+                        className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`}
                         onClick={() => handleSort("createdAt")}
                       >
                         <div className="flex items-center gap-1">
                           Created <SortIcon field="createdAt" />
                         </div>
                       </th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>
                         Details
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                     {paginatedDiscounts.map((discount) => (
                       <tr
                         key={discount.id}
-                        className="border-b hover:bg-gray-50"
+                        className={`transition-colors ${theme.tableRow}`}
                       >
-                        <td className="px-4 py-3 text-sm font-medium">
+                        <td className={`px-4 py-3 text-sm font-medium ${theme.text}`}>
                           {discount.state}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className={`px-4 py-3 text-sm ${theme.text}`}>
                           {discount.cities.slice(0, 2).join(", ")}
                           {discount.cities.length > 2 &&
                             ` +${discount.cities.length - 2}`}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className={`px-4 py-3 text-sm ${theme.text}`}>
                           {discount.slabs.length}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className={`px-4 py-3 text-sm ${theme.text}`}>
                           {new Date(discount.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3">
@@ -438,8 +472,8 @@ export default function DeliveryCharges() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="bg-gray-50 px-4 py-2 border-t flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
+                <div className={`px-4 py-2 border-t flex items-center justify-between ${theme.tableHeader} ${theme.border}`}>
+                  <div className={`text-sm ${theme.muted}`}>
                     Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
                     {Math.min(
                       currentPage * itemsPerPage,
@@ -453,7 +487,7 @@ export default function DeliveryCharges() {
                         setCurrentPage((prev) => Math.max(prev - 1, 1))
                       }
                       disabled={currentPage === 1}
-                      className="p-1 rounded border disabled:opacity-50 hover:bg-gray-200"
+                      className={`p-1 rounded border disabled:opacity-50 transition-colors ${theme.btn} ${theme.border}`}
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -462,10 +496,10 @@ export default function DeliveryCharges() {
                         <button
                           key={page}
                           onClick={() => setCurrentPage(page)}
-                          className={`px-2 py-1 text-sm rounded border ${
+                          className={`px-2 py-1 text-sm rounded border transition-colors ${
                             currentPage === page
                               ? "bg-blue-600 text-white"
-                              : "hover:bg-gray-200"
+                              : `${theme.btn} ${theme.border}`
                           }`}
                         >
                           {page}
@@ -477,7 +511,7 @@ export default function DeliveryCharges() {
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                       }
                       disabled={currentPage === totalPages}
-                      className="p-1 rounded border disabled:opacity-50 hover:bg-gray-200"
+                      className={`p-1 rounded border disabled:opacity-50 transition-colors ${theme.btn} ${theme.border}`}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
