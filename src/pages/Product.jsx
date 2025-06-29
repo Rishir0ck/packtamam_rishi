@@ -19,8 +19,9 @@ export default function ProductForm() {
   });
   const [sizes, setSizes] = useState([{
     id: 1, size: '', costPrice: '', inventory_code:'', markupPrice: '', sellPrice: '', grossProfit: '',
-    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '',
-    priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
+    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', quantity: '', minPack:'',
+    // priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
+    priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '', packOff: '', minPack: '', costPrice: '' }]
   }]);
 
   const { isDark } = useTheme();
@@ -84,7 +85,7 @@ export default function ProductForm() {
       <input
         type={type} 
         value={value || ''} 
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         placeholder={placeholder} 
         readOnly={readOnly}
         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
@@ -161,7 +162,7 @@ export default function ProductForm() {
   
   const addSize = () => setSizes(prev => [...prev, {
     id: Date.now(), size: '', inventory_code: '', costPrice: '', markupPrice: '', grossProfit: '', sellPrice: '',
-    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '',
+    gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '', minPack:'',
     priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
   }]);
 
@@ -169,7 +170,8 @@ export default function ProductForm() {
   
   const addPriceSlab = (sizeId) => setSizes(prev => prev.map(size => 
     size.id === sizeId && size.priceSlabs.length < 10
-      ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), quantity: '', price: '', gst: '', finalPrice: '' }] }
+      // ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), quantity: '', price: '', gst: '', finalPrice: '' }] }
+      ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), quantity: '', price: '', gst: '', finalPrice: '', packOff: '', minPack: '', costPrice: '' }] }
       : size
   ));
 
@@ -216,6 +218,7 @@ export default function ProductForm() {
           sellPrice: parseFloat(size.sellPrice) || 0,
           gst: parseFloat(size.gst) || 0,
           packOff: size.packOff,
+          minPack: size.minPack,
           quantity: parseInt(size.quantity) || 0,
           priceWithGst: parseFloat(size.priceWithGst) || 0,
           payableGst: parseFloat(size.payableGst) || 0,
@@ -423,7 +426,7 @@ export default function ProductForm() {
                       type={type} 
                       value={size[field]} 
                       readOnly={readOnly}
-                      onChange={(value) => calculateSizePrice(size.id, field, value)}
+                      onChange={(e) => calculateSizePrice(size.id, field, e.target?.value || e)}
                     />
                   ))}
                 </div>
@@ -458,19 +461,35 @@ export default function ProductForm() {
                     <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       {[
-                        { title: 'Size Details', fields: [['Size', 'size']] },
+                        { title: 'Size Details', fields: [['Size', 'size'],['Pack Off','packOff','number'],['Minimum Pack','minPack','number']] },
                         { title: 'Cost & Markup', fields: [['Cost Price (₹)', 'costPrice', 'number'], ['Markup (%)', 'markupPrice', 'number'], ['Gross Profit (₹)', 'grossProfit', 'number', true]] },
                         { title: 'Selling Price', fields: [['Sell Price (₹)', 'sellPrice', 'number', true], ['GST (%)', 'gst', 'number']] },
                         { title: 'Final Price', fields: [['With GST (₹)', 'priceWithGst', 'number', true], ['Payable GST (₹)', 'payableGst', 'number', true]] }
                       ].map((group) => (
                         <div key={group.title} className="flex flex-col gap-1">
                           <div className="text-xs font-semibold text-center">{group.title}</div>
-                          {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
+                          {/* {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
                             <input
                               key={field}
                               type={type}
                               value={size[field] || ''}
                               onChange={(e) => !readOnly && calculateSizePrice(size.id, field, e.target.value)}
+                              className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
+                              placeholder={label}
+                              readOnly={readOnly}
+                            />
+                          ))} */}
+
+                          {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
+                            <input
+                              key={field}
+                              type={type}
+                              value={['packOff', 'minPack'].includes(field) ? (slab[field] || '') : (size[field] || '')}
+                              onChange={(e) => !readOnly && (
+                                ['packOff', 'minPack'].includes(field) 
+                                  ? calculateSlabPrice(size.id, slab.id, field, e.target.value)
+                                  : calculateSizePrice(size.id, field, e.target.value)
+                              )}
                               className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
                               placeholder={label}
                               readOnly={readOnly}
@@ -541,15 +560,16 @@ export default function ProductForm() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr>{['Size', 'Pack Off', 'Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
+              <tr>{['Size', 'Pack Off', 'Minimum Pack','Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
+
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
               {sizes.map((size, i) => (
                 <tr key={size.id} className={theme.hover}>
                   <td className={`px-3 py-2 font-medium ${theme.text}`}>{size.size || `Size ${i + 1}`}</td>
-                  {['packOff', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => (
+                  {['packOff', 'minPack','costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => (
                     <td key={field} className={`px-3 py-2 ${theme.text} ${field === 'priceWithGst' ? 'font-bold text-green-600' : field === 'netProfit' ? 'font-medium text-blue-600' : ''}`}>
-                      {field === 'gst' ? `${size[field] || '0'}%` : field === 'packOff' ? size[field] || '-' : `₹${size[field] || '0.00'}`}
+                      {field === 'gst' ? `${size[field] || '0'}%` : field === 'packOff' ? size[field] || '-' : field === 'minPack' ? size[field] || '-' : `₹${size[field] || '0.00'}`}
                     </td>
                   ))}
                   <td className="px-3 py-2 text-center"><span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{size.priceSlabs.length}</span></td>
