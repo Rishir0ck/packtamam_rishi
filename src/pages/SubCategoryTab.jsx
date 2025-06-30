@@ -154,7 +154,7 @@ export default function SubCategoriesTab({ data, loading, apiCall }) {
 
   return (
     <div className={`min-h-screen ${theme.bg}`}>
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-full mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className={`text-2xl font-semibold ${theme.text}`}>Sub Categories</h2>

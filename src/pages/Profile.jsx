@@ -226,7 +226,7 @@ export default function ProfileManager() {
 
   return (
     <div className={`p-6 min-h-screen ${themeClass('bg-gray-50', 'bg-gray-900')}`}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full mx-auto">
         <div className={`rounded-lg shadow ${themeClass('bg-white', 'bg-gray-800 border border-gray-700')}`}>
           {/* Header */}
           <div className={`px-6 py-4 border-b ${themeClass('border-gray-200', 'border-gray-700')}`}>

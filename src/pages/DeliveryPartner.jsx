@@ -161,7 +161,7 @@ export default function DeliveryPartnerAdmin() {
 
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-200`}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full p-4 mx-auto">
         {/* Header */}
         <div className={`${theme.card} rounded-lg shadow-sm border ${theme.border} p-6 mb-6 transition-colors duration-200`}>
           <div className="flex justify-between items-center mb-4">
