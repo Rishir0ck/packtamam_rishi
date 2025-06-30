@@ -17,12 +17,6 @@ export default function ProductForm() {
     name: '', category_id: '', subcategory_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
     specs: '', quality: ''
   });
-  // const [sizes, setSizes] = useState([{
-  //   id: 1, size: '', costPrice: '', inventory_code:'', markupPrice: '', sellPrice: '', grossProfit: '',
-  //   gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', quantity: '', minPack:'',
-  //   // priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
-  //   priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '', packOff: '', minPack: '', costPrice: '' }]
-  // }]);
 
   const [sizes, setSizes] = useState([{
   id: 1, size: '', inventory_code: '', costPrice: '', quantity: '',
@@ -130,26 +124,6 @@ export default function ProductForm() {
     }));
   }, []);
 
-  // FIXED: Updated slab price calculation
-  // const calculateSlabPrice = (sizeId, slabId, field, value) => {
-  //   setSizes(prev => prev.map(size => {
-  //     if (size.id !== sizeId) return size;
-  //     return {
-  //       ...size,
-  //       priceSlabs: size.priceSlabs.map(slab => {
-  //         if (slab.id !== slabId) return slab;
-  //         const updated = { ...slab, [field]: value };
-  //         if (field === 'price' || field === 'gst') {
-  //           const price = parseFloat(field === 'price' ? value : slab.price) || 0;
-  //           const gstRate = parseFloat(field === 'gst' ? value : slab.gst) || 0;
-  //           updated.finalPrice = (price + (price * gstRate) / 100).toFixed(2);
-  //         }
-  //         return updated;
-  //       })
-  //     };
-  //   }));
-  // };
-
   const calculateSlabPrice = (sizeId, slabId, field, value) => {
   setSizes(prev => prev.map(size => {
     if (size.id !== sizeId) return size;
@@ -201,12 +175,6 @@ export default function ProductForm() {
   };
 
   const removeImage = (id) => setImages(prev => prev.filter(img => img.id !== id));
-  
-  // const addSize = () => setSizes(prev => [...prev, {
-  //   id: Date.now(), size: '', inventory_code: '', costPrice: '', markupPrice: '', grossProfit: '', sellPrice: '',
-  //   gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '', packOff: '', quantity: '', minPack:'',
-  //   priceSlabs: [{ id: 1, quantity: '', price: '', gst: '', finalPrice: '' }]
-  // }]);
 
   const addSize = () => setSizes(prev => [...prev, {
   id: Date.now(), size: '', inventory_code: '', costPrice: '', quantity: '',
@@ -215,13 +183,6 @@ export default function ProductForm() {
 }]);
 
   const removeSize = (sizeId) => setSizes(prev => prev.filter(size => size.id !== sizeId));
-  
-  // const addPriceSlab = (sizeId) => setSizes(prev => prev.map(size => 
-  //   size.id === sizeId && size.priceSlabs.length < 10
-  //     // ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), quantity: '', price: '', gst: '', finalPrice: '' }] }
-  //     ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), quantity: '', price: '', gst: '', finalPrice: '', packOff: '', minPack: '', costPrice: '' }] }
-  //     : size
-  // ));
 
   const addPriceSlab = (sizeId) => setSizes(prev => prev.map(size => 
   size.id === sizeId && size.priceSlabs.length < 10
@@ -249,64 +210,6 @@ export default function ProductForm() {
     }
     return true;
   };
-
-  // const handleSubmit = async () => {
-  //   if (!validateForm()) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const productData = {
-  //       name: formData.name,
-  //       category_id: formData.category_id,
-  //       subcategory_id: formData.subcategory_id,
-  //       material_id: formData.material_id,
-  //       hsn_code: formData.hsn_code,
-  //       shape: formData.shape,
-  //       colour: formData.colour,
-  //       specs: formData.specs,  
-  //       features: formData.features,  
-  //       quality: formData.quality,
-  //       sizes: sizes.map(size => ({
-  //         size: size.size,
-  //         inventory_code: size.inventory_code,
-  //         costPrice: parseFloat(size.costPrice) || 0,
-  //         markupPrice: parseFloat(size.markupPrice) || 0,
-  //         sellPrice: parseFloat(size.sellPrice) || 0,
-  //         gst: parseFloat(size.gst) || 0,
-  //         packOff: size.packOff,
-  //         minPack: size.minPack,
-  //         quantity: parseInt(size.quantity) || 0,
-  //         priceWithGst: parseFloat(size.priceWithGst) || 0,
-  //         payableGst: parseFloat(size.payableGst) || 0,
-  //         netProfit: parseFloat(size.netProfit) || 0,
-  //         grossProfit: parseFloat(size.grossProfit) || 0,
-  //         gstAmount: parseFloat(size.gstAmount) || 0,
-  //         priceSlabs: size.priceSlabs.filter(slab => slab.quantity && slab.price).map(slab => ({
-  //           quantity: parseInt(slab.quantity),
-  //           price: parseFloat(slab.price),
-  //           gst: parseFloat(slab.gst) || 0,
-  //           finalPrice: parseFloat(slab.finalPrice) || 0
-  //         }))
-  //       })),
-  //       images: images
-  //     };
-
-  //     console.log('Submitting product data:', productData);
-  //     const response = await AdminService.addProduct(productData);
-      
-  //     if (response.success) {
-  //       message.success('Product added successfully!');
-  //       navigate('/inventory-management');
-  //     } else {
-  //       message.error(response.error || 'Failed to add product');
-  //     }
-  //   } catch (error) {
-  //     message.error('An error occurred while saving the product');
-  //     console.error('Product save error:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
 const handleSubmit = async () => {
   if (!validateForm()) return;
@@ -502,53 +405,6 @@ const handleSubmit = async () => {
     </div>
   );
 
-  // FIXED: Updated SizePricingStep with proper field handling
-  // const SizePricingStep = () => (
-  //   <div>
-  //     <div className="flex justify-between items-center mb-6">
-  //       <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Individual Pricing</h3>
-  //       <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-  //         <Plus className="w-4 h-4" />Add Size
-  //       </button>
-  //     </div>
-  //     <div className="space-y-6">
-  //       {sizes.map((size, index) => (
-  //         <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-  //           <div className="flex justify-between items-center mb-4">
-  //             <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
-  //             {sizes.length > 1 && (
-  //               <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
-  //                 <Trash2 className="w-4 h-4" />Remove
-  //               </button>
-  //             )}
-  //           </div>
-  //           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-  //             {[
-  //               { fields: [['Specs', 'size']]},
-  //               { fields: [['Cost Price (₹)', 'costPrice', 'number']]},
-  //               { fields: [['Inventory Code', 'inventory_code']]},
-  //               { fields: [['Quantity', 'quantity', 'number']]}
-  //             ].map((section, sectionIndex) => (
-  //               <div key={sectionIndex} className="space-y-3">
-  //                 {section.fields.map(([label, field, type = 'text', readOnly = false]) => (
-  //                   <Input 
-  //                     key={field} 
-  //                     label={label} 
-  //                     type={type} 
-  //                     value={size[field]} 
-  //                     readOnly={readOnly}
-  //                     onChange={(e) => calculateSizePrice(size.id, field, e.target?.value || e)}
-  //                   />
-  //                 ))}
-  //               </div>
-  //             ))}
-  //           </div>
-  //         </div>
-  //       ))}
-  //     </div>
-  //   </div>
-  // );
-
   const SizePricingStep = () => (
   <div>
     <div className="flex justify-between items-center mb-6">
@@ -597,125 +453,6 @@ const handleSubmit = async () => {
     </div>
   </div>
 );
-
-//   const BulkPricingStep = () => (
-//   <div>
-//     <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
-//     <div className="space-y-6">
-//       {sizes.map((size, sizeIndex) => (
-//         <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-//           <div className="flex justify-between items-center mb-4">
-//             <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
-//             <button
-//               onClick={() => addPriceSlab(size.id)}
-//               className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
-//             >
-//               <Plus className="w-3 h-3" /> Add Slab
-//             </button>
-//           </div>
-//           <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
-//             <div className="space-y-3 min-w-[900px]">
-//               {size.priceSlabs.map((slab, index) => {
-//                 // Calculate derived values based on the slab's own costPrice
-//                 const costPrice = parseFloat(slab.costPrice) || 0;
-//                 const markupPrice = parseFloat(slab.markupPrice) || 0;
-//                 const sellPrice = ((costPrice * markupPrice) / 100 + costPrice).toFixed(2);
-//                 const gstRate = parseFloat(slab.gst) || 0;
-//                 const gstAmount = (parseFloat(sellPrice) * gstRate) / 100;
-//                 const priceWithGst = (parseFloat(sellPrice) + gstAmount).toFixed(2);
-//                 const netProfit = (parseFloat(sellPrice) - costPrice).toFixed(2);
-//                 const grossProfit = (parseFloat(sellPrice) - costPrice).toFixed(2);
-
-//                 return (
-//                   <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
-//                     <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
-//                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-//                       {[
-//                         { title: 'Size Details', fields: [
-//                           ['Size', 'size'],
-//                           ['Pack Off','packOff','number'],
-//                           ['Minimum Pack','minPack','number']
-//                         ]},
-//                         { title: 'Cost & Markup', fields: [
-//                           ['Cost Price (₹)', 'costPrice', 'number'], 
-//                           ['Markup (%)', 'markupPrice', 'number'], 
-//                           ['Gross Profit (₹)', 'grossProfit', 'number', true, grossProfit]
-//                         ]},
-//                         { title: 'Selling Price', fields: [
-//                           ['Sell Price (₹)', 'sellPrice', 'number', true, sellPrice], 
-//                           ['GST (%)', 'gst', 'number']
-//                         ]},
-//                         { title: 'Final Price', fields: [
-//                           ['With GST (₹)', 'priceWithGst', 'number', true, priceWithGst], 
-//                           ['Payable GST (₹)', 'payableGst', 'number', true, gstAmount.toFixed(2)],
-//                           ['Net Profit (₹)', 'netProfit', 'number', true, netProfit]
-//                         ]}
-//                       ].map((group) => (
-//                         <div key={group.title} className="flex flex-col gap-1">
-//                           <div className="text-xs font-semibold text-center">{group.title}</div>
-//                           {group.fields.map(([label, field, type = 'text', readOnly = false, calculatedValue]) => (
-//                             <input
-//                               key={field}
-//                               type={type}
-//                               value={calculatedValue || (slab[field] || '')}
-//                               onChange={(e) => {
-//                                 if (!readOnly) {
-//                                   // Update the slab with the new value
-//                                   const updatedSlabs = size.priceSlabs.map(s => {
-//                                     if (s.id === slab.id) {
-//                                       return {
-//                                         ...s,
-//                                         [field]: e.target.value,
-//                                         // When costPrice changes, we need to recalculate derived fields
-//                                         ...(field === 'costPrice' ? {
-//                                           sellPrice: ((parseFloat(e.target.value) * (parseFloat(s.markupPrice) || 0)) / 100 + parseFloat(e.target.value)).toFixed(2)
-//                                         } : {}),
-//                                         ...(field === 'markupPrice' ? {
-//                                           sellPrice: ((parseFloat(s.costPrice || 0) * parseFloat(e.target.value)) / 100 + parseFloat(s.costPrice || 0)).toFixed(2)
-//                                         } : {}),
-//                                         ...(field === 'gst' ? {
-//                                           finalPrice: (parseFloat(s.sellPrice || 0) + (parseFloat(s.sellPrice || 0) * parseFloat(e.target.value)) / 100).toFixed(2)
-//                                         } : {})
-//                                       };
-//                                     }
-//                                     return s;
-//                                   });
-                                  
-//                                   // Update the state
-//                                   setSizes(prev => prev.map(s => 
-//                                     s.id === size.id ? { ...s, priceSlabs: updatedSlabs } : s
-//                                   ));
-//                                 }
-//                               }}
-//                               className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
-//                               placeholder={label}
-//                               readOnly={readOnly}
-//                             />
-//                           ))}
-//                         </div>
-//                       ))}
-//                     </div>
-
-//                     <div className="flex flex-col justify-center">
-//                       {size.priceSlabs.length > 1 && (
-//                         <button
-//                           onClick={() => removePriceSlab(size.id, slab.id)}
-//                           className="text-red-500 hover:text-red-700"
-//                         >
-//                           <Trash2 className="w-4 h-4" />
-//                         </button>
-//                       )}
-//                     </div>
-//                   </div>
-//                 );
-//               })}
-//             </div>
-//           </div>
-//         </div>
-//       ))}
-//     </div>
-//   </div>
-// );
 
 const BulkPricingStep = () => (
   <div>
@@ -840,70 +577,59 @@ const BulkPricingStep = () => (
 
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {/* {sizes.map((size, i) => (
-                <tr key={size.id} className={theme.hover}>
-                  <td className={`px-3 py-2 font-medium ${theme.text}`}>{size.size || `Size ${i + 1}`}</td>
-                  {['packOff', 'minPack','costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => (
-                    <td key={field} className={`px-3 py-2 ${theme.text} ${field === 'priceWithGst' ? 'font-bold text-green-600' : field === 'netProfit' ? 'font-medium text-blue-600' : ''}`}>
-                      {field === 'gst' ? `${size[field] || '0'}%` : field === 'packOff' ? size[field] || '-' : field === 'minPack' ? size[field] || '-' : `₹${size[field] || '0.00'}`}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2 text-center"><span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{size.priceSlabs.length}</span></td>
-                </tr>
-              ))} */}
               {sizes.map((size, i) => {
-  const firstSlab = size.priceSlabs[0] || {};
-  return (
-    <tr key={size.id} className={theme.hover}>
-      <td className={`px-3 py-2 font-medium ${theme.text}`}>
-        {size.size || `Size ${i + 1}`}
-      </td>
-      {['packOff', 'minPack', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => {
-        let value = '';
+                const firstSlab = size.priceSlabs[0] || {};
+                return (
+                  <tr key={size.id} className={theme.hover}>
+                    <td className={`px-3 py-2 font-medium ${theme.text}`}>
+                      {size.size || `Size ${i + 1}`}
+                    </td>
+                    {['packOff', 'minPack', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => {
+                      let value = '';
 
-        if (field === 'costPrice') {
-          value = firstSlab.costPrice || '0.00';
-        } else if (field === 'markupPrice') {
-          value = firstSlab.markupPrice || '0.00';
-        } else if (field === 'sellPrice') {
-          value = firstSlab.sellPrice || '0.00';
-        } else if (field === 'gst') {
-          value = `${firstSlab.gst || '0'}%`;
-        } else if (field === 'minPack') {
-          value = firstSlab.minPack || '-';
-        } else if (field === 'packOff') {
-          value = firstSlab.packOff || '-';
-        } else if (field === 'gstAmount') {
-          value = firstSlab.gstAmount || '0.00';
-        } else if (field === 'priceWithGst') {
-          value = firstSlab.priceWithGst || '0.00';
-        } else if (field === 'netProfit') {
-          value = firstSlab.netProfit || '0.00';
-        }
+                      if (field === 'costPrice') {
+                        value = firstSlab.costPrice || '0.00';
+                      } else if (field === 'markupPrice') {
+                        value = firstSlab.markupPrice || '0.00';
+                      } else if (field === 'sellPrice') {
+                        value = firstSlab.sellPrice || '0.00';
+                      } else if (field === 'gst') {
+                        value = `${firstSlab.gst || '0'}%`;
+                      } else if (field === 'minPack') {
+                        value = firstSlab.minPack || '-';
+                      } else if (field === 'packOff') {
+                        value = firstSlab.packOff || '-';
+                      } else if (field === 'gstAmount') {
+                        value = firstSlab.gstAmount || '0.00';
+                      } else if (field === 'priceWithGst') {
+                        value = firstSlab.priceWithGst || '0.00';
+                      } else if (field === 'netProfit') {
+                        value = firstSlab.netProfit || '0.00';
+                      }
 
-        return (
-          <td
-            key={field}
-            className={`px-3 py-2 ${theme.text} ${
-              field === 'priceWithGst'
-                ? 'font-bold text-green-600'
-                : field === 'netProfit'
-                ? 'font-medium text-blue-600'
-                : ''
-            }`}
-          >
-            {['gst'].includes(field) ? value : ['packOff', 'minPack'].includes(field) ? value : `₹${value}`}
-          </td>
-        );
-      })}
-      <td className="px-3 py-2 text-center">
-        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-          {size.priceSlabs.length}
-        </span>
-      </td>
-    </tr>
-  );
-})}
+                      return (
+                        <td
+                          key={field}
+                          className={`px-3 py-2 ${theme.text} ${
+                            field === 'priceWithGst'
+                              ? 'font-bold text-green-600'
+                              : field === 'netProfit'
+                              ? 'font-medium text-blue-600'
+                              : ''
+                          }`}
+                        >
+                          {['gst'].includes(field) ? value : ['packOff', 'minPack'].includes(field) ? value : `₹${value}`}
+                        </td>
+                      );
+                    })}
+                    <td className="px-3 py-2 text-center">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {size.priceSlabs.length}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
 
             </tbody>
           </table>
