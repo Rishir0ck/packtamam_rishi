@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Search, RefreshCw, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search, RefreshCw, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import AdminApiService from '../Firebase/services/adminApiService';
 
@@ -12,6 +12,7 @@ export default function PolicyAdmin() {
   const [editingPolicy, setEditingPolicy] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentForm, setCurrentForm] = useState({ title: '', content: '' });
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
   
   // Pagination & Sorting
   const [currentPage, setCurrentPage] = useState(1);
@@ -302,6 +303,12 @@ export default function PolicyAdmin() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Button 
+                              onClick={() => setSelectedPolicy(policy)} 
+                              className="text-blue-600 hover:text-blue-900" 
+                              icon={Eye} 
+                              title="View" 
+                            />
+                            <Button 
                               onClick={() => openModal(policy)} 
                               className="text-blue-600 hover:text-blue-900" 
                               icon={Edit2} 
@@ -377,6 +384,56 @@ export default function PolicyAdmin() {
                 >
                   {editingPolicy ? 'Update' : 'Add'} Policy
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Modal */}
+        {selectedPolicy && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedPolicy(null)}>
+            <div className={`rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto ${themeClass('bg-white', 'bg-gray-800')}`} onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>
+                  Policy Details
+                </h2>
+                <button onClick={() => setSelectedPolicy(null)} className={`${themeClass('text-gray-400 hover:text-gray-600', 'text-gray-400 hover:text-gray-300')}`}>
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${themeClass('text-gray-700', 'text-gray-300')}`}>Title</label>
+                  <div className={`p-3 border rounded-lg ${themeClass('border-gray-300 bg-gray-50', 'border-gray-600 bg-gray-700 text-white')}`}>
+                    {selectedPolicy.title || 'Untitled'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${themeClass('text-gray-700', 'text-gray-300')}`}>Content</label>
+                  <div className={`p-3 border rounded-lg min-h-32 whitespace-pre-wrap ${themeClass('border-gray-300 bg-gray-50', 'border-gray-600 bg-gray-700 text-white')}`}>
+                    {selectedPolicy.content || 'No content available'}
+                  </div>
+                </div>
+
+                {selectedPolicy.created_at && (
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${themeClass('text-gray-700', 'text-gray-300')}`}>Created Date</label>
+                    <div className={`p-3 border rounded-lg ${themeClass('border-gray-300 bg-gray-50', 'border-gray-600 bg-gray-700 text-white')}`}>
+                      {selectedPolicy.created_at}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setSelectedPolicy(null)}
+                  className={`px-4 py-2 rounded-lg ${themeClass('text-gray-700 bg-gray-100 hover:bg-gray-200', 'text-gray-300 bg-gray-700 hover:bg-gray-600')}`}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
