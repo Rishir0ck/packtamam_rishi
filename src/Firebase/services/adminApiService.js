@@ -302,6 +302,15 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', `/api/admin/notifications/count`);
   }
 
+  //Problems APIs
+  async getProblems() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/problem');
+  }
+
+  async changeProblemStatus(problemId, status) {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/problem/status', { id: problemId, status });
+  }
+  
 
   // Helper Methods
   createProductFormData(productData) {

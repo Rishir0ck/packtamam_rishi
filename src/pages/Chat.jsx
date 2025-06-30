@@ -1,42 +1,49 @@
-import React, { useState, useMemo } from 'react';
-import { MessageSquare, AlertCircle, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { MessageSquare, AlertCircle, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Loader2 } from 'lucide-react';
 import useTheme from '../hooks/useTheme';
+import adminApiService from '../Firebase/services/adminApiService'; // Adjust path as needed
 
-export default function ChatModule(){
-  const [problems, setProblems] = useState([
-    { id: 1, title: 'Bot not responding to greetings', status: 'open', priority: 'high', date: '2024-01-15' },
-    { id: 2, title: 'Incorrect product recommendations', status: 'in-progress', priority: 'medium', date: '2024-01-14' },
-    { id: 3, title: 'Response timeout issues', status: 'resolved', priority: 'low', date: '2024-01-13' },
-    { id: 4, title: 'Language detection failing', status: 'open', priority: 'high', date: '2024-01-12' }
-  ]);
-  
-  // New state for sorting, pagination, and filtering
+export default function ChatModule() {
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState('title');
   const [sortDir, setSortDir] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(3); // Reduced for demonstration
+  const [itemsPerPage] = useState(3);
   const [filterStatus, setFilterStatus] = useState('all');
-  
   const { isDark } = useTheme();
 
-  // Theme configuration
+  // Fetch problems on component mount
+  useEffect(() => {
+    fetchProblems();
+  }, []);
+
+  const fetchProblems = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await adminApiService.getProblems();
+      // Ensure we always set an array
+      const problemsData = response?.data || response;
+      setProblems(Array.isArray(problemsData) ? problemsData : []);
+    } catch (err) {
+      setError('Failed to fetch problems. Please try again.');
+      console.error('Error fetching problems:', err);
+      setProblems([]); // Reset to empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Theme configuration (compact)
   const theme = isDark ? {
-    bg: 'bg-gray-900',
-    card: 'bg-gray-800',
-    text: 'text-white',
-    muted: 'text-gray-300',
-    border: 'border-gray-700',
-    tableHeader: 'bg-gray-700',
-    tableRow: 'hover:bg-gray-750'
+    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white', muted: 'text-gray-300',
+    border: 'border-gray-700', tableHeader: 'bg-gray-700', tableRow: 'hover:bg-gray-750'
   } : {
-    bg: 'bg-gray-50',
-    card: 'bg-white',
-    text: 'text-gray-900',
-    muted: 'text-gray-600',
-    border: 'border-gray-200',
-    tableHeader: 'bg-gray-50',
-    tableRow: 'hover:bg-gray-50'
+    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600',
+    border: 'border-gray-200', tableHeader: 'bg-gray-50', tableRow: 'hover:bg-gray-50'
   };
 
   const statusColors = {
@@ -51,66 +58,62 @@ export default function ChatModule(){
     'low': isDark ? 'text-gray-400' : 'text-gray-600'
   };
 
-  // Filter problems based on search and status filter
+  // Filter, sort, and paginate problems (with safety checks)
   const filteredProblems = useMemo(() => {
-    return problems.filter(problem => {
-      const matchesSearch = problem.title.toLowerCase().includes(search.toLowerCase()) ||
-                           problem.status.toLowerCase().includes(search.toLowerCase()) ||
-                           problem.priority.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || problem.status === filterStatus;
+    if (!Array.isArray(problems)) return [];
+    return problems.filter(p => {
+      if (!p) return false; // Skip null/undefined items
+      const matchesSearch = [p.title, p.status, p.priority].some(field => 
+        field?.toLowerCase().includes(search.toLowerCase())
+      );
+      const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
       return matchesSearch && matchesStatus;
     });
   }, [problems, search, filterStatus]);
 
-  // Sort filtered problems
   const sortedProblems = useMemo(() => {
+    if (!Array.isArray(filteredProblems)) return [];
     return [...filteredProblems].sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
-      
-      // Handle different data types
+      if (!a || !b) return 0; // Handle null/undefined items
+      let aVal = a[sortField], bVal = b[sortField];
       if (sortField === 'date') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+        aVal = new Date(aVal); bVal = new Date(bVal);
       } else {
-        aVal = String(aVal).toLowerCase();
-        bVal = String(bVal).toLowerCase();
+        aVal = String(aVal || '').toLowerCase(); 
+        bVal = String(bVal || '').toLowerCase();
       }
-      
-      if (sortDir === 'asc') {
-        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-      } else {
-        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-      }
+      return sortDir === 'asc' ? (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) : (aVal > bVal ? -1 : aVal < bVal ? 1 : 0);
     });
   }, [filteredProblems, sortField, sortDir]);
 
-  // Paginate sorted problems
   const paginatedProblems = useMemo(() => {
+    if (!Array.isArray(sortedProblems)) return [];
     const start = (currentPage - 1) * itemsPerPage;
     return sortedProblems.slice(start, start + itemsPerPage);
   }, [sortedProblems, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(sortedProblems.length / itemsPerPage);
 
-  // Sorting handler
   const handleSort = (field) => {
     setSortField(field);
     setSortDir(sortField === field && sortDir === 'asc' ? 'desc' : 'asc');
   };
 
-  // Status filter handler
   const handleStatusFilter = (status) => {
     setFilterStatus(status);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   };
 
-  // Update problem status
-  const updateProblemStatus = (id, status) => {
-    setProblems(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  const updateProblemStatus = async (id, status) => {
+    try {
+      await adminApiService.changeProblemStatus(id, status);
+      setProblems(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    } catch (err) {
+      setError('Failed to update problem status.');
+      console.error('Error updating status:', err);
+    }
   };
 
-  // Sortable header component
   const SortHeader = ({ field, children }) => (
     <th 
       className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition-colors ${
@@ -120,14 +123,21 @@ export default function ChatModule(){
     >
       <div className="flex items-center space-x-1">
         <span>{children}</span>
-        {sortField === field && (
-          sortDir === 'asc' ? 
-            <ChevronUp className="w-4 h-4" /> : 
-            <ChevronDown className="w-4 h-4" />
-        )}
+        {sortField === field && (sortDir === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
       </div>
     </th>
   );
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-amber-600" />
+          <p className={theme.muted}>Loading problems...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`max-w-full mx-auto p-4 min-h-screen ${theme.bg}`}>
@@ -141,8 +151,23 @@ export default function ChatModule(){
             </h1>
             <p className={`${theme.muted} mt-2`}>Monitor and manage chat system issues</p>
           </div>
+          <button
+            onClick={fetchProblems}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              isDark ? 'bg-blue-700 hover:bg-blue-600 text-blue-200' : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+            }`}
+          >
+            Refresh
+          </button>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-100 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-800 dark:text-red-200">{error}</p>
+        </div>
+      )}
 
       {/* Problems Section */}
       <div className={`${theme.card} rounded-lg shadow-sm overflow-hidden`}>
@@ -220,7 +245,9 @@ export default function ChatModule(){
                         {problem.status.replace('-', ' ')}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme.muted}`}>{problem.date}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme.muted}`}>
+                      {problem.date ? new Date(problem.date).toLocaleDateString() : 'N/A'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         {['open', 'in-progress', 'resolved'].map(status => (
@@ -280,4 +307,4 @@ export default function ChatModule(){
       </div>
     </div>
   );
-};
+}

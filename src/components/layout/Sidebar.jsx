@@ -128,7 +128,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User Section */}
-      <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      {/* <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className={`flex items-center space-x-3 p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
           <div className="w-10 h-10 bg-[#c79e73] rounded-full flex items-center justify-center">
             <User className="w-5 h-5 text-white" />
@@ -138,7 +138,7 @@ export default function Sidebar() {
             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>admin@packtamam.com</p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Brand accent */}
       <div className="h-1 bg-[#c79e73]"></div>
