@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
-import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, User2, Phone, Key, MoveUpRight, CalendarDays, RefreshCw, FileText, Briefcase, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Building2 } from 'lucide-react'
+import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, User2, Coins, Phone, Key, MoveUpRight, CalendarDays, RefreshCw, FileText, Briefcase, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Building2 } from 'lucide-react'
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
@@ -9,6 +9,7 @@ const TABLE_COLUMNS = [
   { key: 'outlet_type', label: 'Type', sortable: true },
   { key: 'city', label: 'City', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
+  { key: 'credits', label: 'Credits', sortable: true },
   { key: 'franchises', label: 'Franchises', sortable: false },
   { key: 'joinedDate', label: 'Joined', sortable: true },
   { key: 'actions', label: 'Actions', sortable: false }
@@ -19,7 +20,7 @@ export default function RestaurantManagement() {
   const [state, setState] = useState({
     restaurants: [], loading: true, error: '', selected: null, search: '', filter: 'all', modal: '', editData: null, saving: false,
     newFranchise: { business_name: '', email: '', owner_name: '', mobile_number: '', outlet_type: '' },
-    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10, outletTypes: [], loadingOutlets: false
+    sortBy: 'name', sortOrder: 'asc', currentPage: 1, itemsPerPage: 10, outletTypes: [], loadingOutlets: false, creditAmount: ''
   })
 
   const theme = useCallback((light, dark = '') => isDark ? `${dark} dark` : light, [isDark])
@@ -45,6 +46,7 @@ export default function RestaurantManagement() {
         lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
         joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
         status: r.status === 'Approved' ? 'active' : 'inactive',
+        credits: r.credits || 0, // Add credits field
         profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
         restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
         franchises: r.franchise || []
@@ -75,6 +77,32 @@ export default function RestaurantManagement() {
   }
 
   useEffect(() => { fetchData() }, [])
+
+  const handleCreditAssign = async () => {
+    if (!state.editData || !state.creditAmount) return
+    
+    try {
+      setState(prev => ({ ...prev, saving: true }))
+      const newCredits = (state.editData.credits || 0) + parseInt(state.creditAmount)
+      
+      // Update restaurant credits via API
+      const result = await AdminService.updateRestaurantCredits(state.editData.id, newCredits)
+      
+      if (result.success) {
+        setState(prev => ({
+          ...prev,
+          restaurants: prev.restaurants.map(r => r.id === state.editData.id ? {...r, credits: newCredits} : r),
+          editData: {...prev.editData, credits: newCredits},
+          creditAmount: '',
+          saving: false
+        }))
+      } else {
+        setState(prev => ({ ...prev, error: result.error || 'Failed to assign credits', saving: false }))
+      }
+    } catch (err) {
+      setState(prev => ({ ...prev, error: 'Failed to assign credits', saving: false }))
+    }
+  }
 
   const handleInputChange = useCallback((field, value) => {
     setState(prev => ({ ...prev, editData: { ...prev.editData, [field]: value } }))
@@ -181,7 +209,8 @@ export default function RestaurantManagement() {
     { label: 'Total', value: state.restaurants.length, icon: Store, color: '#c79e73', filter: 'all' },
     { label: 'Active', value: state.restaurants.filter(r => r.status === 'active').length, icon: Users, color: '#10b981', filter: 'active' },
     { label: 'Inactive', value: state.restaurants.filter(r => r.status === 'inactive').length, icon: MapPin, color: '#ef4444', filter: 'inactive' },
-    { label: 'With Franchises', value: state.restaurants.filter(r => r.franchises?.length > 0).length, icon: Store, color: '#8b5cf6', filter: 'with-franchises' }
+    { label: 'With Franchises', value: state.restaurants.filter(r => r.franchises?.length > 0).length, icon: Store, color: '#8b5cf6', filter: 'with-franchises' },
+    { label: 'Total Credits', value: state.restaurants.reduce((sum, r) => sum + (r.credits || 0), 0), icon: Coins, color: '#f59e0b', filter: 'all' }
   ]
 
   if (state.loading) {
@@ -328,7 +357,7 @@ export default function RestaurantManagement() {
       {/* Header */}
       <div className="mb-6">
         <h1 className={`text-2xl font-bold ${theme('text-gray-900', 'text-white')} mb-1`}>Restaurant Management</h1>
-        <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>Manage approved restaurants and their franchises</p>
+        <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>Manage approved restaurants, credits and their franchises</p>
         
         {state.error && (
           <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm">
@@ -428,6 +457,21 @@ export default function RestaurantManagement() {
                       }`}>
                         {r.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <span className={`font-medium ${theme('text-gray-900', 'text-white')}`}>
+                          ₹{r.credits || 0}
+                        </span>
+                      <button 
+                        onClick={() => setState(prev => ({ ...prev, editData: { ...r }, modal: 'credit' }))} 
+                        className="p-1.5 text-white rounded transition-colors hover:opacity-80"
+                        style={{ backgroundColor: '#c79e73' }}
+                        >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                        </div>
                     </td>
                     <td className="px-4 py-3">
                       {r.franchises?.length > 0 ? (
@@ -633,6 +677,67 @@ export default function RestaurantManagement() {
             </div>
           </div>
           )}
+        </Modal>
+      )}
+
+      {/* Credit Assignment Modal */}
+      {state.modal === 'credit' && state.editData && (
+        <Modal title={`Assign Credits - ${state.editData.name}`} onClose={() => setState(prev => ({ ...prev, modal: '', creditAmount: '' }))}>
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Coins className="w-8 h-8 text-yellow-500" />
+                <span className={`text-2xl font-bold ${theme('text-gray-900', 'text-white')}`}>
+                  Current: ₹{state.editData.credits || 0}
+                </span>
+              </div>
+              <p className={`text-sm ${theme('text-gray-600', 'text-gray-400')}`}>1 Credit = ₹1</p>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme('text-gray-700', 'text-gray-300')}`}>
+                Add Credits (₹)
+              </label>
+              <input
+                type="number"
+                placeholder="Enter amount to add"
+                value={state.creditAmount}
+                onChange={(e) => setState(prev => ({ ...prev, creditAmount: e.target.value }))}
+                className={inputClass}
+                min="1"
+              />
+            </div>
+
+            {state.creditAmount && (
+              <div className={`p-3 rounded-lg ${theme('bg-blue-50', 'bg-blue-900/20')}`}>
+                <div className={`text-sm ${theme('text-blue-700', 'text-blue-300')}`}>
+                  <strong>Preview:</strong><br />
+                  Current Credits: ₹{state.editData.credits || 0}<br />
+                  Adding: ₹{state.creditAmount}<br />
+                  New Total: ₹{(state.editData.credits || 0) + parseInt(state.creditAmount || 0)}
+                </div>
+              </div>
+            )}
+
+            <div className={`flex gap-2 pt-4 border-t ${theme('border-gray-200', 'border-gray-700')}`}>
+              <button 
+                onClick={handleCreditAssign}
+                disabled={state.saving || !state.creditAmount}
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors text-sm disabled:opacity-50 hover:opacity-80"
+                style={{ backgroundColor: '#c79e73' }}
+              >
+                {state.saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {state.saving ? 'Assigning...' : 'Assign Credits'}
+              </button>
+              <button 
+                onClick={() => setState(prev => ({ ...prev, modal: '', creditAmount: '' }))}
+                disabled={state.saving}
+                className={`px-4 py-2 text-sm disabled:opacity-50 rounded-lg transition-colors ${theme('bg-gray-200 hover:bg-gray-300 text-gray-700', 'bg-gray-700 hover:bg-gray-600 text-gray-200')}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
