@@ -1,9 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Upload, Plus, Trash2, Package, X, Image, ArrowRight, ArrowLeft, CheckCircle, IndianRupee, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
 import AdminService from '../Firebase/services/adminApiService';
-import { message, Select } from 'antd';
+import { message } from 'antd';
+
+// Move Input component outside to prevent recreation
+const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "", theme }) => (
+  <div className={className}>
+    <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
+    <input
+      type={type} 
+      value={value || ''} 
+      onChange={onChange}
+      placeholder={placeholder} 
+      readOnly={readOnly}
+      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
+      step={type === 'number' ? '0.01' : undefined}
+    />
+  </div>
+);
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -15,17 +31,19 @@ export default function ProductForm() {
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
     name: '', category_id: '', subcategory_id: '', material_id: '', hsn_code: '', shape: '', colour: '',
-    specs: '', quality: ''
+    specs: '', quality: '', features: ''
   });
 
   const [sizes, setSizes] = useState([{
-  id: 1, size: '', inventory_code: '', costPrice: '', quantity: '',
-  priceSlabs: [{ id: 1, costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '',gst: '', gstAmount: '', priceWithGst: '', 
-    payableGst: '', netProfit: '', packOff: '', minPack: '' }]
-}]);
+    id: 1, size: '', inventory_code: '', costPrice: '', quantity: '',
+    priceSlabs: [{ id: 1, costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '', gst: '', gstAmount: '', priceWithGst: '', 
+      payableGst: '', netProfit: '', packOff: '', minPack: '' }]
+  }]);
 
   const { isDark } = useTheme();
-  const theme = isDark ? {
+  
+  // Memoize theme object to prevent recreation
+  const theme = useMemo(() => isDark ? {
     bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white',
     muted: 'text-gray-300', border: 'border-gray-700',
     input: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700'
@@ -33,41 +51,32 @@ export default function ProductForm() {
     bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900',
     muted: 'text-gray-600', border: 'border-gray-200',
     input: 'bg-white border-gray-300', hover: 'hover:bg-gray-50'
-  };
+  }, [isDark]);
 
-  const steps = [
+  const steps = useMemo(() => [
     { id: 1, title: 'Basic Info', icon: Package, desc: 'Product details and images' },
     { id: 2, title: 'Sizes & Pricing', icon: IndianRupee, desc: 'Individual size pricing' },
     { id: 3, title: 'Bulk Pricing', icon: Layers, desc: 'Price slabs for bulk orders' },
     { id: 4, title: 'Review', icon: CheckCircle, desc: 'Final review and save' }
-  ];
+  ], []);
 
-  const basicFields = [
+  const basicFields = useMemo(() => [
     ['Product Name', 'name'], ['HSN Code', 'hsn_code'], ['Shape', 'shape'], 
     ['Color', 'colour'], ['Quality', 'quality']
-  ];
+  ], []);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [categoriesRes, materialsRes, subcategoriesRes] =
-          await Promise.all([
-            AdminService.getCategories(),
-            AdminService.getMaterials(),
-            AdminService.getSubCategories(),
-          ]);
+        const [categoriesRes, materialsRes, subcategoriesRes] = await Promise.all([
+          AdminService.getCategories(),
+          AdminService.getMaterials(),
+          AdminService.getSubCategories(),
+        ]);
         
-        const categoriesData = categoriesRes?.success ? categoriesRes.data.data || [] : [];
-        const subcategoriesData = subcategoriesRes?.success ? subcategoriesRes.data.data || [] : [];
-        const materialsData = materialsRes?.success ? materialsRes.data.data || [] : [];
-
-        console.log('Categories loaded:', categoriesData);
-        console.log('Subcategories loaded:', subcategoriesData);
-        console.log('Materials loaded:', materialsData);
-        
-        setCategories(categoriesData);
-        setSubCategories(subcategoriesData);
-        setMaterials(materialsData);
+        setCategories(categoriesRes?.success ? categoriesRes.data.data || [] : []);
+        setSubCategories(subcategoriesRes?.success ? subcategoriesRes.data.data || [] : []);
+        setMaterials(materialsRes?.success ? materialsRes.data.data || [] : []);
       } catch (error) {
         console.error('Failed to load data:', error);
         message.error('Failed to load categories and materials');
@@ -79,24 +88,11 @@ export default function ProductForm() {
     loadData();
   }, []);
 
-  const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "" }) => (
-    <div className={className}>
-      <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
-      <input
-        type={type} 
-        value={value || ''} 
-        onChange={onChange}
-        placeholder={placeholder} 
-        readOnly={readOnly}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
-        step={type === 'number' ? '0.01' : undefined}
-      />
-    </div>
-  );
+  const handleInputChange = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
-  const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
-
-  // FIXED: Updated calculation function for size pricing
+  // Optimized calculation functions
   const calculateSizePrice = useCallback((sizeId, field, value) => {
     setSizes(prev => prev.map(size => {
       if (size.id !== sizeId) return size;
@@ -124,43 +120,40 @@ export default function ProductForm() {
     }));
   }, []);
 
-  const calculateSlabPrice = (sizeId, slabId, field, value) => {
-  setSizes(prev => prev.map(size => {
-    if (size.id !== sizeId) return size;
-    return {
-      ...size,
-      priceSlabs: size.priceSlabs.map(slab => {
-        if (slab.id !== slabId) return slab;
-        const updated = { ...slab, [field]: value };
-        
-        // Calculate derived values when costPrice or markupPrice changes
-        if (field === 'costPrice' || field === 'markupPrice') {
-          const cost = parseFloat(field === 'costPrice' ? value : slab.costPrice) || 0;
-          const markup = parseFloat(field === 'markupPrice' ? value : slab.markupPrice) || 0;
-          updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
-          updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
-        }
-        
-        // Calculate GST related fields
-        if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
-          const sellPrice = parseFloat(updated.sellPrice) || 0;
-          const gstRate = parseFloat(field === 'gst' ? value : slab.gst) || 0;
-          const gstAmount = (sellPrice * gstRate) / 100;
-          const costPrice = parseFloat(updated.costPrice) || 0;
+  const calculateSlabPrice = useCallback((sizeId, slabId, field, value) => {
+    setSizes(prev => prev.map(size => {
+      if (size.id !== sizeId) return size;
+      return {
+        ...size,
+        priceSlabs: size.priceSlabs.map(slab => {
+          if (slab.id !== slabId) return slab;
+          const updated = { ...slab, [field]: value };
           
-          updated.gstAmount = gstAmount.toFixed(2);
-          updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
-          updated.payableGst = gstAmount.toFixed(2);
-          updated.netProfit = (sellPrice - costPrice).toFixed(2);
-        }
-        
-        return updated;
-      })
-    };
-  }));
-};
+          if (field === 'costPrice' || field === 'markupPrice') {
+            const cost = parseFloat(field === 'costPrice' ? value : slab.costPrice) || 0;
+            const markup = parseFloat(field === 'markupPrice' ? value : slab.markupPrice) || 0;
+            updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
+            updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
+          }
+          
+          if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
+            const sellPrice = parseFloat(updated.sellPrice) || 0;
+            const gstRate = parseFloat(field === 'gst' ? value : slab.gst) || 0;
+            const gstAmount = (sellPrice * gstRate) / 100;
+            const costPrice = parseFloat(updated.costPrice) || 0;
+            
+            updated.gstAmount = gstAmount.toFixed(2);
+            updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
+            updated.payableGst = gstAmount.toFixed(2);
+            updated.netProfit = (sellPrice - costPrice).toFixed(2);
+          }
+          return updated;
+        })
+      };
+    }));
+  }, []);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = useCallback((e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
       const reader = new FileReader();
@@ -172,34 +165,49 @@ export default function ProductForm() {
       }]);
       reader.readAsDataURL(file);
     });
-  };
+  }, []);
 
-  const removeImage = (id) => setImages(prev => prev.filter(img => img.id !== id));
+  const removeImage = useCallback((id) => {
+    setImages(prev => prev.filter(img => img.id !== id));
+  }, []);
 
-  const addSize = () => setSizes(prev => [...prev, {
-  id: Date.now(), size: '', inventory_code: '', costPrice: '', quantity: '',
-  priceSlabs: [{ id: 1, costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '', gst: '', gstAmount: '', 
-    priceWithGst: '', payableGst: '', netProfit: '', packOff: '', minPack: '' }]
-}]);
+  const addSize = useCallback(() => {
+    setSizes(prev => [...prev, {
+      id: Date.now(), size: '', inventory_code: '', costPrice: '', quantity: '',
+      priceSlabs: [{ id: 1, costPrice: '', markupPrice: '', sellPrice: '', grossProfit: '', gst: '', gstAmount: '', 
+        priceWithGst: '', payableGst: '', netProfit: '', packOff: '', minPack: '' }]
+    }]);
+  }, []);
 
-  const removeSize = (sizeId) => setSizes(prev => prev.filter(size => size.id !== sizeId));
+  const removeSize = useCallback((sizeId) => {
+    setSizes(prev => prev.filter(size => size.id !== sizeId));
+  }, []);
 
-  const addPriceSlab = (sizeId) => setSizes(prev => prev.map(size => 
-  size.id === sizeId && size.priceSlabs.length < 10
-    ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), costPrice: '', markupPrice: '', sellPrice: '', 
-      grossProfit: '', gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '',
-          packOff: '', minPack: '' }] }
-    : size
-));
+  const addPriceSlab = useCallback((sizeId) => {
+    setSizes(prev => prev.map(size => 
+      size.id === sizeId && size.priceSlabs.length < 10
+        ? { ...size, priceSlabs: [...size.priceSlabs, { id: Date.now(), costPrice: '', markupPrice: '', sellPrice: '', 
+          grossProfit: '', gst: '', gstAmount: '', priceWithGst: '', payableGst: '', netProfit: '',
+            packOff: '', minPack: '' }] }
+        : size
+    ));
+  }, []);
 
-  const removePriceSlab = (sizeId, slabId) => setSizes(prev => prev.map(size =>
-    size.id === sizeId ? { ...size, priceSlabs: size.priceSlabs.filter(slab => slab.id !== slabId) } : size
-  ));
+  const removePriceSlab = useCallback((sizeId, slabId) => {
+    setSizes(prev => prev.map(size =>
+      size.id === sizeId ? { ...size, priceSlabs: size.priceSlabs.filter(slab => slab.id !== slabId) } : size
+    ));
+  }, []);
 
-  const nextStep = () => currentStep < 4 && setCurrentStep(currentStep + 1);
-  const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+  const nextStep = useCallback(() => {
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
+  }, [currentStep]);
   
-  const validateForm = () => {
+  const prevStep = useCallback(() => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  }, [currentStep]);
+
+  const validateForm = useCallback(() => {
     if (!formData.name?.trim()) {
       message.error('Product name is required');
       return false;
@@ -209,62 +217,61 @@ export default function ProductForm() {
       return false;
     }
     return true;
-  };
+  }, [formData.name, sizes]);
 
-const handleSubmit = async () => {
-  if (!validateForm()) return;
+  const handleSubmit = useCallback(async () => {
+    if (!validateForm()) return;
 
-  setLoading(true);
-  try {
-    const productData = {
-      name: formData.name,
-      category_id: formData.category_id,
-      subcategory_id: formData.subcategory_id,
-      material_id: formData.material_id,
-      hsn_code: formData.hsn_code,
-      shape: formData.shape,
-      colour: formData.colour,
-      specs: formData.specs,  
-      features: formData.features,  
-      quality: formData.quality,
-      sizes: sizes.map(size => ({
-        size: size.size,
-        inventory_code: size.inventory_code,
-        costPrice: parseFloat(size.costPrice) || 0,
-        quantity: parseInt(size.quantity) || 0,
-        priceSlabs: size.priceSlabs.filter(slab => slab.costPrice && slab.markupPrice).map(slab => ({
-          costPrice: parseFloat(slab.costPrice) || 0,
-          markupPrice: parseFloat(slab.markupPrice) || 0,
-          sellPrice: parseFloat(slab.sellPrice) || 0,
-          grossProfit: parseFloat(slab.grossProfit) || 0,
-          gst: parseFloat(slab.gst) || 0,
-          priceWithGst: parseFloat(slab.priceWithGst) || 0,
-          gstAmount: parseFloat(slab.gstAmount) || 0,
-          payableGst: parseFloat(slab.payableGst) || 0,
-          netProfit: parseFloat(slab.netProfit) || 0,
-          packOff: parseInt(slab.packOff) || 0,
-          minPack: parseInt(slab.minPack) || 0
-        }))
-      })),
-      images: images
-    };
+    setLoading(true);
+    try {
+      const productData = {
+        name: formData.name,
+        category_id: formData.category_id,
+        subcategory_id: formData.subcategory_id,
+        material_id: formData.material_id,
+        hsn_code: formData.hsn_code,
+        shape: formData.shape,
+        colour: formData.colour,
+        specs: formData.specs,  
+        features: formData.features,  
+        quality: formData.quality,
+        sizes: sizes.map(size => ({
+          size: size.size,
+          inventory_code: size.inventory_code,
+          costPrice: parseFloat(size.costPrice) || 0,
+          quantity: parseInt(size.quantity) || 0,
+          priceSlabs: size.priceSlabs.filter(slab => slab.costPrice && slab.markupPrice).map(slab => ({
+            costPrice: parseFloat(slab.costPrice) || 0,
+            markupPrice: parseFloat(slab.markupPrice) || 0,
+            sellPrice: parseFloat(slab.sellPrice) || 0,
+            grossProfit: parseFloat(slab.grossProfit) || 0,
+            gst: parseFloat(slab.gst) || 0,
+            priceWithGst: parseFloat(slab.priceWithGst) || 0,
+            gstAmount: parseFloat(slab.gstAmount) || 0,
+            payableGst: parseFloat(slab.payableGst) || 0,
+            netProfit: parseFloat(slab.netProfit) || 0,
+            packOff: parseInt(slab.packOff) || 0,
+            minPack: parseInt(slab.minPack) || 0
+          }))
+        })),
+        images: images
+      };
 
-    console.log('Submitting product data:', productData);
-    const response = await AdminService.addProduct(productData);
-    
-    if (response.success) {
-      message.success('Product added successfully!');
-      navigate('/inventory-management');
-    } else {
-      message.error(response.error || 'Failed to add product');
+      const response = await AdminService.addProduct(productData);
+      
+      if (response.success) {
+        message.success('Product added successfully!');
+        navigate('/inventory-management');
+      } else {
+        message.error(response.error || 'Failed to add product');
+      }
+    } catch (error) {
+      message.error('An error occurred while saving the product');
+      console.error('Product save error:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    message.error('An error occurred while saving the product');
-    console.error('Product save error:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  }, [validateForm, formData, sizes, images, navigate]);
 
   const StepProgress = () => (
     <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-4 border-b ${theme.border}`}>
@@ -329,7 +336,9 @@ const handleSubmit = async () => {
             <div key={field}>
               <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
               <input
-                type="text" value={formData[field]} onChange={(e) => handleInputChange(field, e.target.value)}
+                type="text" 
+                value={formData[field]} 
+                onChange={(e) => handleInputChange(field, e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
               />
             </div>
@@ -343,14 +352,12 @@ const handleSubmit = async () => {
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Category</option>
-              {Array.isArray(categories) && categories.map((cat) => (
+              {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {(!categories || categories.length === 0) && (
-              <p className="text-xs text-red-500 mt-1">No categories available</p>
-            )}
           </div>
+          
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Sub Category</label>
             <select 
@@ -359,13 +366,10 @@ const handleSubmit = async () => {
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Sub Category</option>
-              {Array.isArray(subcategories) && subcategories.map((cat) => (
+              {subcategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {(!categories || categories.length === 0) && (
-              <p className="text-xs text-red-500 mt-1">No Sub categories available</p>
-            )}
           </div>
 
           <div>
@@ -376,29 +380,30 @@ const handleSubmit = async () => {
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
             >
               <option value="">Select Material</option>
-              {Array.isArray(materials) && materials.map((mat) => (
+              {materials.map((mat) => (
                 <option key={mat.id} value={mat.id}>{mat.name}</option>
               ))}
             </select>
-            {(!materials || materials.length === 0) && (
-              <p className="text-xs text-red-500 mt-1">No materials available</p>
-            )}
           </div>
         </div>
         
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Description</label>
           <textarea
-            value={formData.specs} onChange={(e) => handleInputChange('specs', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
+            value={formData.specs} 
+            onChange={(e) => handleInputChange('specs', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
+            rows={2}
           />
         </div>
 
         <div className="mt-3">
           <label className={`block text-sm font-medium ${theme.text} mb-1`}>Features</label>
           <textarea
-            value={formData.features} onChange={(e) => handleInputChange('features', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} rows={2}
+            value={formData.features} 
+            onChange={(e) => handleInputChange('features', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
+            rows={2}
           />
         </div>
       </div>
@@ -406,131 +411,135 @@ const handleSubmit = async () => {
   );
 
   const SizePricingStep = () => (
-  <div>
-    <div className="flex justify-between items-center mb-6">
-      <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Basic Info</h3>
-      <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-        <Plus className="w-4 h-4" />Add Size
-      </button>
-    </div>
-    <div className="space-y-6">
-      {sizes.map((size, index) => (
-        <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
-            {sizes.length > 1 && (
-              <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
-                <Trash2 className="w-4 h-4" />Remove
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Input 
-              label="Size/Specs" 
-              value={size.size} 
-              onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, size: e.target.value} : s))}
-            />
-            <Input 
-              label="Inventory Code" 
-              value={size.inventory_code} 
-              onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, inventory_code: e.target.value} : s))}
-            />
-            <Input 
-              label="Base Cost Price (₹)" 
-              type="number"
-              value={size.costPrice} 
-              onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, costPrice: e.target.value} : s))}
-            />
-            <Input 
-              label="Quantity" 
-              type="number"
-              value={size.quantity} 
-              onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, quantity: e.target.value} : s))}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const BulkPricingStep = () => (
-  <div>
-    <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
-    <div className="space-y-6">
-      {sizes.map((size, sizeIndex) => (
-        <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
-            <button
-              onClick={() => addPriceSlab(size.id)}
-              className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
-            >
-              <Plus className="w-3 h-3" /> Add Slab
-            </button>
-          </div>
-          <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
-            <div className="space-y-3 min-w-[900px]">
-              {size.priceSlabs.map((slab, index) => (
-                <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
-                  <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    {[
-                      { title: 'Pack Details', fields: [
-                        ['Pack Off', 'packOff', 'number'],
-                        ['Minimum Pack', 'minPack', 'number']
-                      ]},
-                      { title: 'Cost & Markup', fields: [
-                        ['Cost Price (₹)', 'costPrice', 'number'], 
-                        ['Markup (%)', 'markupPrice', 'number'], 
-                        ['Gross Profit (₹)', 'grossProfit', 'number', true]
-                      ]},
-                      { title: 'Selling Price', fields: [
-                        ['Sell Price (₹)', 'sellPrice', 'number', true], 
-                        ['GST (%)', 'gst', 'number'],
-                        ['GST Amount (₹)', 'gstAmount', 'number', true]
-                      ]},
-                      { title: 'Final Price', fields: [
-                        ['With GST (₹)', 'priceWithGst', 'number', true], 
-                        ['Payable GST (₹)', 'payableGst', 'number', true],
-                        ['Net Profit (₹)', 'netProfit', 'number', true]
-                      ]}
-                    ].map((group) => (
-                      <div key={group.title} className="flex flex-col gap-1">
-                        <div className="text-xs font-semibold text-center">{group.title}</div>
-                        {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
-                          <input
-                            key={field}
-                            type={type}
-                            value={slab[field] || ''}
-                            onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
-                            className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
-                            placeholder={label}
-                            readOnly={readOnly}
-                          />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    {size.priceSlabs.length > 1 && (
-                      <button
-                        onClick={() => removePriceSlab(size.id, slab.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Basic Info</h3>
+        <button onClick={addSize} className="bg-[#c79e73] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+          <Plus className="w-4 h-4" />Add Size
+        </button>
+      </div>
+      <div className="space-y-6">
+        {sizes.map((size, index) => (
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className={`font-medium text-lg ${theme.text}`}>Size #{index + 1}</h4>
+              {sizes.length > 1 && (
+                <button onClick={() => removeSize(size.id)} className="text-red-500 hover:text-red-700 flex items-center gap-1">
+                  <Trash2 className="w-4 h-4" />Remove
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Input 
+                label="Size/Specs" 
+                value={size.size} 
+                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, size: e.target.value} : s))}
+                theme={theme}
+              />
+              <Input 
+                label="Inventory Code" 
+                value={size.inventory_code} 
+                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, inventory_code: e.target.value} : s))}
+                theme={theme}
+              />
+              <Input 
+                label="Base Cost Price (₹)" 
+                type="number"
+                value={size.costPrice} 
+                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, costPrice: e.target.value} : s))}
+                theme={theme}
+              />
+              <Input 
+                label="Quantity" 
+                type="number"
+                value={size.quantity} 
+                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, quantity: e.target.value} : s))}
+                theme={theme}
+              />
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+
+  const BulkPricingStep = () => (
+    <div>
+      <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
+      <div className="space-y-6">
+        {sizes.map((size, sizeIndex) => (
+          <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
+              <button
+                onClick={() => addPriceSlab(size.id)}
+                className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" /> Add Slab
+              </button>
+            </div>
+            <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
+              <div className="space-y-3 min-w-[900px]">
+                {size.priceSlabs.map((slab, index) => (
+                  <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
+                    <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      {[
+                        { title: 'Pack Details', fields: [
+                          ['Pack Off', 'packOff', 'number'],
+                          ['Minimum Pack', 'minPack', 'number']
+                        ]},
+                        { title: 'Cost & Markup', fields: [
+                          ['Cost Price (₹)', 'costPrice', 'number'], 
+                          ['Markup (%)', 'markupPrice', 'number'], 
+                          ['Gross Profit (₹)', 'grossProfit', 'number', true]
+                        ]},
+                        { title: 'Selling Price', fields: [
+                          ['Sell Price (₹)', 'sellPrice', 'number', true], 
+                          ['GST (%)', 'gst', 'number'],
+                          ['GST Amount (₹)', 'gstAmount', 'number', true]
+                        ]},
+                        { title: 'Final Price', fields: [
+                          ['With GST (₹)', 'priceWithGst', 'number', true], 
+                          ['Payable GST (₹)', 'payableGst', 'number', true],
+                          ['Net Profit (₹)', 'netProfit', 'number', true]
+                        ]}
+                      ].map((group) => (
+                        <div key={group.title} className="flex flex-col gap-1">
+                          <div className="text-xs font-semibold text-center">{group.title}</div>
+                          {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
+                            <input
+                              key={field}
+                              type={type}
+                              value={slab[field] || ''}
+                              onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
+                              className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
+                              placeholder={label}
+                              readOnly={readOnly}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      {size.priceSlabs.length > 1 && (
+                        <button
+                          onClick={() => removePriceSlab(size.id, slab.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const ReviewStep = () => (
     <div className="space-y-6">
@@ -543,11 +552,13 @@ const BulkPricingStep = () => (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th><th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th></tr>
+              <tr>
+                <th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Field</th>
+                <th className={`px-4 py-2 text-left font-medium ${theme.text}`}>Value</th>
+              </tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], //['Quantity', 'quantity'],
-               ['Specification', 'specs']].map(([field, key]) => (
+              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], ['Specification', 'specs']].map(([field, key]) => (
                 <tr key={field} className={theme.hover}>
                   <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
                   <td className={`px-4 py-2 ${theme.text}`}>
@@ -557,124 +568,170 @@ const BulkPricingStep = () => (
                   </td>
                 </tr>
               ))}
-              <tr className={theme.hover}>
+                <tr className={theme.hover}>
                 <td className={`px-4 py-2 font-medium ${theme.text}`}>Images</td>
-                <td className={`px-4 py-2 ${theme.text}`}>{images.length} uploaded</td>
+                <td className={`px-4 py-2 ${theme.text}`}>
+                  <div className="flex gap-2">
+                    {images.slice(0, 3).map(img => (
+                      <img key={img.id} src={img.url} alt={img.name} className="w-12 h-12 object-cover rounded" />
+                    ))}
+                    {images.length > 3 && (
+                      <div className={`w-12 h-12 rounded flex items-center justify-center text-xs ${isDark ? 'bg-gray-600' : 'bg-gray-200'} ${theme.text}`}>
+                        +{images.length - 3}
+                      </div>
+                    )}
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Sizes and Pricing Review */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
         <div className={`px-6 py-4 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} border-b ${theme.border}`}>
-          <h4 className={`font-semibold ${theme.text}`}>Sizes & Pricing Summary</h4>
+          <h4 className={`font-semibold ${theme.text}`}>Sizes & Pricing</h4>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-              <tr>{['Size', 'Pack Off', 'Minimum Pack','Cost (₹)', 'Markup (₹)', 'Sell (₹)', 'GST (%)', 'GST Amt (₹)', 'Final (₹)', 'Profit (₹)', 'Slabs'].map(h => <th key={h} className={`px-3 py-2 text-left font-medium ${theme.text}`}>{h}</th>)}</tr>
-
-            </thead>
-            <tbody className={`divide-y ${theme.border}`}>
-              {sizes.map((size, i) => {
-                const firstSlab = size.priceSlabs[0] || {};
-                return (
-                  <tr key={size.id} className={theme.hover}>
-                    <td className={`px-3 py-2 font-medium ${theme.text}`}>
-                      {size.size || `Size ${i + 1}`}
-                    </td>
-                    {['packOff', 'minPack', 'costPrice', 'markupPrice', 'sellPrice', 'gst', 'gstAmount', 'priceWithGst', 'netProfit'].map(field => {
-                      let value = '';
-
-                      if (field === 'costPrice') {
-                        value = firstSlab.costPrice || '0.00';
-                      } else if (field === 'markupPrice') {
-                        value = firstSlab.markupPrice || '0.00';
-                      } else if (field === 'sellPrice') {
-                        value = firstSlab.sellPrice || '0.00';
-                      } else if (field === 'gst') {
-                        value = `${firstSlab.gst || '0'}%`;
-                      } else if (field === 'minPack') {
-                        value = firstSlab.minPack || '-';
-                      } else if (field === 'packOff') {
-                        value = firstSlab.packOff || '-';
-                      } else if (field === 'gstAmount') {
-                        value = firstSlab.gstAmount || '0.00';
-                      } else if (field === 'priceWithGst') {
-                        value = firstSlab.priceWithGst || '0.00';
-                      } else if (field === 'netProfit') {
-                        value = firstSlab.netProfit || '0.00';
-                      }
-
-                      return (
-                        <td
-                          key={field}
-                          className={`px-3 py-2 ${theme.text} ${
-                            field === 'priceWithGst'
-                              ? 'font-bold text-green-600'
-                              : field === 'netProfit'
-                              ? 'font-medium text-blue-600'
-                              : ''
-                          }`}
-                        >
-                          {['gst'].includes(field) ? value : ['packOff', 'minPack'].includes(field) ? value : `₹${value}`}
-                        </td>
-                      );
-                    })}
-                    <td className="px-3 py-2 text-center">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {size.priceSlabs.length}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-
-            </tbody>
-          </table>
+        <div className="p-6 space-y-4">
+          {sizes.map((size, index) => (
+            <div key={size.id} className={`border ${theme.border} rounded-lg p-4`}>
+              <h5 className={`font-medium mb-3 ${theme.text}`}>Size: {size.size || `Size ${index + 1}`}</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className={`${theme.muted}`}>Inventory Code:</span>
+                  <p className={theme.text}>{size.inventory_code || '-'}</p>
+                </div>
+                <div>
+                  <span className={`${theme.muted}`}>Base Cost:</span>
+                  <p className={theme.text}>₹{size.costPrice || '0'}</p>
+                </div>
+                <div>
+                  <span className={`${theme.muted}`}>Quantity:</span>
+                  <p className={theme.text}>{size.quantity || '0'}</p>
+                </div>
+                <div>
+                  <span className={`${theme.muted}`}>Price Slabs:</span>
+                  <p className={theme.text}>{size.priceSlabs.filter(s => s.costPrice && s.markupPrice).length}</p>
+                </div>
+              </div>
+              
+              {/* Price Slabs Summary */}
+              {size.priceSlabs.filter(s => s.costPrice && s.markupPrice).length > 0 && (
+                <div className="mt-3">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+                        <tr>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Pack Off</th>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Min Pack</th>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Cost</th>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Markup</th>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Sell Price</th>
+                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>With GST</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${theme.border}`}>
+                        {size.priceSlabs.filter(s => s.costPrice && s.markupPrice).map((slab, slabIndex) => (
+                          <tr key={slab.id} className={theme.hover}>
+                            <td className={`px-2 py-1 ${theme.text}`}>{slab.packOff || '-'}</td>
+                            <td className={`px-2 py-1 ${theme.text}`}>{slab.minPack || '-'}</td>
+                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.costPrice}</td>
+                            <td className={`px-2 py-1 ${theme.text}`}>{slab.markupPrice}%</td>
+                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.sellPrice}</td>
+                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.priceWithGst}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1: return <BasicInfoStep />;
+      case 2: return <SizePricingStep />;
+      case 3: return <BulkPricingStep />;
+      case 4: return <ReviewStep />;
+      default: return <BasicInfoStep />;
+    }
+  };
+
   return (
-    <div className={`max-w-7xl mx-auto p-6 min-h-screen ${theme.bg}`}>
-      <div className={`max-w-7xl mx-auto ${theme.card} rounded-2xl shadow-xl overflow-hidden border ${theme.border}`}>
-        <div className={`${theme.card} rounded-lg shadow-sm p-6 mb-6 border-b ${theme.border}`}>
-          <h1 className={`text-2xl font-bold ${theme.text} flex items-center gap-3`}>
-            <Package className="w-7 h-7" />Product Management System
-          </h1>
-          <p className={`${theme.muted} mt-1`}>Professional multi-step product creation</p>
+    <div className={`min-h-screen ${theme.bg}`}>
+      <div className={`${theme.card} shadow-sm`}>
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className={`text-2xl font-bold ${theme.text}`}>Add New Product</h1>
+              <p className={`${theme.muted} text-sm mt-1`}>Create a new product with pricing and inventory details</p>
+            </div>
+            <button
+              onClick={() => navigate('/inventory-management')}
+              className={`px-4 py-2 rounded-lg border transition-colors ${theme.border} ${theme.hover} ${theme.text}`}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-
+        
         <StepProgress />
-
-        {/* Content */}
+        
         <div className="p-6">
-          {currentStep === 1 && <BasicInfoStep />}
-          {currentStep === 2 && <SizePricingStep />}
-          {currentStep === 3 && <BulkPricingStep />}
-          {currentStep === 4 && <ReviewStep />}
+          {renderCurrentStep()}
         </div>
-
-        {/* Navigation */}
-        <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-4 flex justify-between border-t ${theme.border}`}>
-          <button onClick={prevStep} disabled={currentStep === 1}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${
-              currentStep === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-600 text-white hover:bg-gray-700'
-            }`}>
-            <ArrowLeft className="w-4 h-4" />Previous
+        
+        {/* Navigation Buttons */}
+        <div className={`px-6 py-4 border-t ${theme.border} flex justify-between`}>
+          <button
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={`px-6 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
+              currentStep === 1 
+                ? 'opacity-50 cursor-not-allowed' 
+                : `${theme.border} ${theme.hover} ${theme.text}`
+            }`}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
           </button>
+          
           {currentStep < 4 ? (
-            <button onClick={nextStep}
-              className=" text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
-              Next<ArrowRight className="w-4 h-4" />
+            <button
+              onClick={nextStep}
+              className="bg-[#c79e73] hover:bg-[#b8906a] text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+            >
+              Next
+              <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button onClick={handleSubmit}
-              className="text-white px-8 py-2 rounded-lg transition-all flex items-center gap-2" style={{ backgroundColor: '#c79e73' }}>
-              Save Product
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`px-6 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                loading 
+                  ? 'bg-gray-500 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700'
+              } text-white`}
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Save Product
+                </>
+              )}
             </button>
           )}
         </div>
