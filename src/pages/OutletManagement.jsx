@@ -209,7 +209,7 @@ export default function OutletManagement() {
           <thead className={`${themeClass('bg-gray-50', 'bg-gray-700')}`}>
             <tr>
               {[
-                // { key: 'index', label: 'Sr.No.', sortable: true },
+                { key: 'index', label: 'Sr.No.', sortable: true },
                 { key: 'name', label: 'Outlet Name', sortable: true },
                 { key: 'is_active', label: 'Status', sortable: true },
                 { key: 'actions', label: 'Actions', sortable: false }
@@ -231,9 +231,9 @@ export default function OutletManagement() {
           <tbody className={`divide-y ${themeClass('divide-gray-200', 'divide-gray-600')}`}>
             {paginatedOutlets.map((outlet) => (
               <tr key={outlet.id} className={`hover:bg-opacity-50 ${themeClass('hover:bg-gray-50', 'hover:bg-gray-700')}`}>
-                {/* <td className={`px-6 py-4 whitespace-nowrap text-sm ${themeClass('text-gray-900', 'text-white')}`}>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${themeClass('text-gray-900', 'text-white')}`}>
                   {outlet.index}
-                </td> */}
+                </td>
                 <td className={`px-6 py-4 whitespace-nowrap ${themeClass('text-gray-900', 'text-white')}`}>
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#c79e73' }}>

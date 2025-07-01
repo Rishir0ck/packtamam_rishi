@@ -186,9 +186,8 @@ export default function CategoriesTab({ data, loading, apiCall }) {
           <table className="w-full">
             <thead className={theme.tableHeader}>
               <tr>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                  Image
-                </th>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Sr. No.</th>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Image</th>
                 {[
                   { key: 'name', label: 'Name' },
                   { key: 'is_active', label: 'Status' }
@@ -209,8 +208,9 @@ export default function CategoriesTab({ data, loading, apiCall }) {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {paginatedData.map((item) => (
+              {paginatedData.map((item,index) => (
                 <tr key={item.id} className={`${theme.tableRow} transition-colors`}>
+                  <td className={`px-4 py-3 font-medium ${theme.text}`}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>
                     {item.image_url ? (
                       <img src={item.image_url} alt={item.name} className="w-10 h-10 object-cover rounded" />

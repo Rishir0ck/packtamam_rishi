@@ -153,7 +153,6 @@ export default function RestaurantOnboarding() {
   }
 }
 
-
   const downloadDocument = async (url, fileName) => {
     if (!url || url === '#') return
     try {
@@ -308,6 +307,7 @@ export default function RestaurantOnboarding() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
                   <tr>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>Sr. No.</th>
                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>Restaurant</th>
                     <TableHeader label="Owner" sortKey="owner" />
                     <TableHeader label="Buisness Type" sortKey="cuisine" />
@@ -325,8 +325,11 @@ export default function RestaurantOnboarding() {
                       </td>
                     </tr>
                   ) : (
-                    paginatedData.map((r) => (
+                    paginatedData.map((r,index) => {
+                      const serialNumber = startIndex + index + 1;
+                      return(
                       <tr key={r.id} className={`${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>{serialNumber}</td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />
@@ -370,7 +373,7 @@ export default function RestaurantOnboarding() {
                           </div>
                         </td>
                       </tr>
-                    ))
+                      )})
                   )}
                 </tbody>
               </table>

@@ -174,6 +174,7 @@ export default function SubCategoriesTab({ data, loading, apiCall }) {
           <table className="w-full">
             <thead className={theme.tableHeader}>
               <tr>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Sr. No.</th>
                 {[
                   { key: 'name', label: 'Name' },
                   { key: 'is_active', label: 'Status' },
@@ -194,8 +195,9 @@ export default function SubCategoriesTab({ data, loading, apiCall }) {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {paginatedData.map((item) => (
+              {paginatedData.map((item,index) => (
                 <tr key={item.id} className={`${theme.tableRow} transition-colors`}>
+                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{ (currentPage - 1) * itemsPerPage + index + 1 }</td>
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{item.name}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${

@@ -464,7 +464,7 @@ export default function AdvertisementModule() {
               <table className="w-full">
                 <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                   <tr>
-                    {['Image', 'Title', 'Placement', 'Status', 'Priority', 'Actions'].map(header => (
+                    {['Sr.No.','Image', 'Title', 'Placement', 'Status', 'Priority', 'Actions'].map(header => (
                       <th key={header} className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider ${header === 'Actions' ? 'text-right' : ''}`}>
                         {header}
                       </th>
@@ -474,6 +474,7 @@ export default function AdvertisementModule() {
                 <tbody className={`divide-y ${theme.border}`}>
                   {ads.map((ad, index) => (
                     <tr key={ad.id || index} className={theme.hover}>
+                      <td className="px-6 py-4 whitespace-nowrap"><span className={`text-sm ${theme.text}`}>{index + 1}</span></td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getImageUrl(ad) ? (
                           <img

@@ -267,6 +267,7 @@ export default function PolicyAdmin() {
               <table className="w-full">
                 <thead className={themeClass('bg-gray-50', 'bg-gray-700')}>
                   <tr>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${themeClass('text-gray-500', 'text-gray-300')}`}>Sr. No.</th>
                     <SortHeader field="title">Title</SortHeader>
                     <SortHeader field="content">Content</SortHeader>
                     <SortHeader field="created_at">Created</SortHeader>
@@ -285,8 +286,9 @@ export default function PolicyAdmin() {
                       </td>
                     </tr>
                   ) : (
-                    paginatedPolicies.map((policy) => (
+                    paginatedPolicies.map((policy,index) => (
                       <tr key={policy.id} className={themeClass('hover:bg-gray-50', 'hover:bg-gray-700')}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td className="px-6 py-4">
                           <div className={`font-medium ${themeClass('text-gray-900', 'text-white')}`}>
                             {policy.title || 'Untitled'}

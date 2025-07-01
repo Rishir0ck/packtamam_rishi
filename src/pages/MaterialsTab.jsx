@@ -174,6 +174,7 @@ export default function MaterialsTab({ data, loading, apiCall }) {
           <table className="w-full">
             <thead className={theme.tableHeader}>
               <tr>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Sr. No.</th>
                 <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                   <button
                     onClick={() => handleSort('name')}
@@ -189,8 +190,9 @@ export default function MaterialsTab({ data, loading, apiCall }) {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {paginatedData.map((material) => (
+              {paginatedData.map((material,index) => (
                 <tr key={material.id} className={`${theme.tableRow} transition-colors`}>
+                  <td className={`px-4 py-3 font-medium ${theme.text}`}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{material.name}</td>
                   {/* <td className="px-4 py-3 flex gap-2">
                     <ActionButton

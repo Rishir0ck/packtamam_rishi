@@ -380,6 +380,8 @@ export default function RestaurantManagement() {
           <table className="w-full">
             <thead className={`${theme('bg-gray-50', 'bg-gray-700')}`}>
               <tr>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme('text-gray-500', 'text-gray-300')}`}>Sr. No.</th>
+
                 {TABLE_COLUMNS.map((col) => (
                   <th
                     key={col.key}
@@ -403,8 +405,9 @@ export default function RestaurantManagement() {
                   </td>
                 </tr>
               ) : (
-                processedData.paginated.map((r) => (
+                processedData.paginated.map((r,index) => (
                   <tr key={r.id} className={`${theme('hover:bg-gray-50', 'hover:bg-gray-750')}`}>
+                    <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img src={r.profileImg} alt="" className="w-8 h-8 rounded-full object-cover" />

@@ -211,6 +211,9 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
           <table className="w-full">
             <thead className={theme.tableHeader}>
               <tr>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
+      Sr. No.
+    </th>
                 <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Image</th>
                 {tableColumns.map(({ key, label, sortable }) => (
                   <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
@@ -225,10 +228,12 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {paginatedData.map((item) => {
+              {paginatedData.map((item,index) => {
                 const price = getPrice(item)
+                const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;  // Calculate Sr. No here
                 return (
                   <tr key={item.id} className={`${theme.tableRow} transition-colors`}>
+                    <td className={`px-4 py-3 text-sm ${theme.text}`}>{serialNumber}</td> {/* Sr. No. cell */}
                     <td className={`px-4 py-3 text-sm ${theme.text}`}>
                       {item.images?.[0]?.image_url ? (
                         <img src={item.images[0].image_url} alt="Product" className="w-10 h-10 object-cover rounded" />

@@ -261,6 +261,7 @@ export default function ProfileManager() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
               <thead className={`${themeClass('bg-gray-50', 'bg-gray-700')}`}>
                 <tr>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${themeClass('text-gray-500', 'text-gray-300')}`}>Sr. No.</th>
                   <SortHeader field="name">Name</SortHeader>
                   <SortHeader field="email">Email</SortHeader>
                   <SortHeader field="role">Role</SortHeader>
@@ -276,13 +277,18 @@ export default function ProfileManager() {
               <tbody className={`divide-y ${themeClass('bg-white divide-gray-200', 'bg-gray-800 divide-gray-600')}`}>
                 {paginatedProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className={`px-6 py-8 text-center ${themeClass('text-gray-500', 'text-gray-400')}`}>
+                    <td colSpan="7" className={`px-6 py-8 text-center ${themeClass('text-gray-500', 'text-gray-400')}`}>
                       {profiles.length === 0 ? 'No profiles found' : 'No profiles match your search'}
                     </td>
                   </tr>
                 ) : (
                   paginatedProfiles.map((profile, index) => (
                     <tr key={profile.id || profile.email || index} className={`${themeClass('hover:bg-gray-50', 'hover:bg-gray-700')}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${themeClass('text-gray-900', 'text-white')}`}>
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm font-medium ${themeClass('text-gray-900', 'text-white')}`}>
                           {profile.name || 'N/A'}
