@@ -10,10 +10,9 @@ const icons = {
   default: <Bell className="w-4 h-4 text-gray-500" />
 }
 
-export default function Notifications({ onClose }) {
+export default function Notifications({ onClose, onCountUpdate }) {
   const { isDark } = useTheme()
-  const [notifications, setNotifications] = useState([])
-  const [totalCount, setTotalCount] = useState(0)
+  const [notifications, setNotifications] = useState([]) // Ensure it's always an array
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const fetchedRef = useRef(false)
@@ -27,68 +26,43 @@ export default function Notifications({ onClose }) {
         setLoading(true)
         setError(null)
         
-        console.log('Fetching notifications and count...') // Debug log
-        
-        // Fetch both notifications and count in parallel
         const [notificationsResponse, countResponse] = await Promise.all([
           adminApiService.getNotifications(),
           adminApiService.getNotificationCount()
         ])
         
-        console.log('Notifications API response:', notificationsResponse) // Debug log
-        console.log('Count API response:', countResponse) // Debug log
+        // Process notifications - ensure we always get an array
+        let notificationArray = Array.isArray(notificationsResponse) ? notificationsResponse :
+                               notificationsResponse?.notifications || notificationsResponse?.data || 
+                               (notificationsResponse ? [notificationsResponse] : [])
         
-        let notificationArray = []
-        
-        // Handle different response structures for notifications
-        if (Array.isArray(notificationsResponse)) {
-          notificationArray = notificationsResponse
-        } else if (notificationsResponse && Array.isArray(notificationsResponse.notifications)) {
-          notificationArray = notificationsResponse.notifications
-        } else if (notificationsResponse && Array.isArray(notificationsResponse.data)) {
-          notificationArray = notificationsResponse.data
-        } else if (notificationsResponse && typeof notificationsResponse === 'object') {
-          // Handle case where data might be a single notification object
-          notificationArray = [notificationsResponse]
+        // Additional safety check to ensure it's an array
+        if (!Array.isArray(notificationArray)) {
+          notificationArray = []
         }
         
-        console.log('Processed notifications:', notificationArray) // Debug log
-        console.log('Total count from API:', countResponse) // Debug log
+        // Process count
+        const count = typeof countResponse === 'number' ? countResponse :
+                     countResponse?.count || countResponse?.total || countResponse?.data || 0
         
         setNotifications(notificationArray)
-        
-        // Handle count response - it might be a number or an object with count property
-        let count = 0
-        if (typeof countResponse === 'number') {
-          count = countResponse
-        } else if (countResponse && typeof countResponse.count === 'number') {
-          count = countResponse.count
-        } else if (countResponse && typeof countResponse.total === 'number') {
-          count = countResponse.total
-        } else if (countResponse && typeof countResponse.data === 'number') {
-          count = countResponse.data
-        }
-        
-        setTotalCount(count)
-        console.log('Final count set:', count) // Debug log
+        onCountUpdate?.(count) // Update parent component with count
         
       } catch (err) {
         console.error('Notification fetch error:', err)
         setError('Failed to load notifications')
+        setNotifications([]) // Ensure notifications is still an array on error
       } finally {
         setLoading(false)
       }
     }
 
     fetchNotifications()
-  }, [])
+  }, [onCountUpdate])
 
-  // Debug: Log current state
-  console.log('Current state:', { loading, error, notifications, count: notifications.length, totalCount })
-
-  const unreadCount = notifications.filter(n => n && !n.read).length
-  // Use totalCount from API or fallback to array length
-  const displayCount = totalCount > 0 ? totalCount : notifications.length
+  // Add safety check for the filter operation
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => n && !n.read).length : 0
+  
   const dark = isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-[#c79e73]/20 text-[#43311e]'
   const hover = isDark ? 'hover:bg-gray-700' : 'hover:bg-[#c79e73]/5'
   const border = isDark ? 'border-gray-700' : 'border-[#c79e73]/20'
@@ -108,15 +82,7 @@ export default function Notifications({ onClose }) {
   if (error) return (
     <div className={`absolute right-0 mt-2 w-80 rounded-lg shadow-lg border z-50 ${dark} p-4 text-center`}>
       <p className="text-sm text-red-500">{error}</p>
-      <button 
-        onClick={() => {
-          setError(null)
-          setTotalCount(0)
-          fetchedRef.current = false
-          window.location.reload() // Force retry
-        }}
-        className="mt-2 text-xs text-blue-500 hover:underline"
-      >
+      <button onClick={() => window.location.reload()} className="mt-2 text-xs text-blue-500 hover:underline">
         Retry
       </button>
     </div>
@@ -141,12 +107,9 @@ export default function Notifications({ onClose }) {
           <div className="p-8 text-center">
             <Bell className={`w-8 h-8 mx-auto mb-2 ${muted}`} />
             <p className={`text-sm ${muted}`}>No notifications</p>
-            {/* Debug info - remove in production */}
-            <p className={`text-xs mt-2 ${muted}`}>Debug: {notifications.length} items loaded, Total: {totalCount}</p>
           </div>
         ) : (
           notifications.map((notification, index) => {
-            // Handle cases where notification might be null/undefined
             if (!notification) return null
             
             const { 
@@ -160,7 +123,6 @@ export default function Notifications({ onClose }) {
               timestamp
             } = notification
 
-            // Use fallback for time display
             const displayTime = time || created_at || timestamp || 'Unknown time'
 
             return (
@@ -188,7 +150,7 @@ export default function Notifications({ onClose }) {
       {notifications.length > 0 && (
         <div className={`p-3 border-t ${border}`}>
           <button className={`w-full text-center text-sm font-medium transition-colors ${muted} hover:${accent}`}>
-            View All ({displayCount})
+            View All ({notifications.length})
           </button>
         </div>
       )}

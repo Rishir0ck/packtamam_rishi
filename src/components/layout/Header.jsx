@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Bell, ChevronDown, User, LogOut, RotateCcw } from 'lucide-react'
 import ThemeToggle from '../ui/ThemeToggle'
 import Notifications from '../common/Notifications'
 import { useAuthGuard } from '../../Firebase/hooks/useAuthGuard'
 import useTheme from '../../hooks/useTheme'
+import adminApiService from '../../Firebase/services/adminApiService'
 
 export default function Header() {
   const { logout, loading, user } = useAuthGuard()
@@ -12,6 +13,23 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(0)
+
+  // Fetch notification count on mount
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await adminApiService.getNotificationCount()
+        const count = typeof response === 'number' ? response : 
+                     response?.count || response?.total || response?.data || 0
+        setNotificationCount(count)
+      } catch (error) {
+        console.error('Failed to fetch notification count:', error)
+      }
+    }
+
+    fetchNotificationCount()
+  }, [])
 
   const toggleProfileMenu = () => {
     setShowProfileMenu(!showProfileMenu)
@@ -29,7 +47,6 @@ export default function Header() {
     setShowNotifications(false)
     
     try {
-      // Refresh the entire page/system
       window.location.reload()
     } catch (error) {
       console.error('Refresh error:', error)
@@ -92,7 +109,7 @@ export default function Header() {
           <RotateCcw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
         
-        {/* Notifications */}
+        {/* Notifications with Count Badge */}
         <div className="relative">
           <button 
             onClick={toggleNotifications}
@@ -104,13 +121,20 @@ export default function Header() {
             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Bell className="w-5 h-5" />
-            {/* <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-[10px] text-white font-bold">3</span>
-            </span> */}
+            {notificationCount > 0 && (
+              <span className={`absolute -top-1 -right-1 ${
+                isDark ? 'bg-blue-500' : 'bg-[#c79e73]'
+              } text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium`}>
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
           </button>
           
           {showNotifications && (
-            <Notifications onClose={() => setShowNotifications(false)} />
+            <Notifications 
+              onClose={() => setShowNotifications(false)}
+              onCountUpdate={setNotificationCount}
+            />
           )}
         </div>
 
@@ -159,20 +183,6 @@ export default function Header() {
               </div>
               
               <div className="py-2">
-                {/* <button 
-                  disabled={isLoggingOut}
-                  className={`w-full px-4 py-2 text-left flex items-center space-x-2 transition-colors duration-200 ${
-                    isDark 
-                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                      : 'text-[#43311e] hover:bg-[#c79e73]/10'
-                  } ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <User className="w-4 h-4" />
-                  <span>Profile</span>
-                </button> */}
-                
-                {/* <hr className={`my-2 ${isDark ? 'border-gray-700' : 'border-[#c79e73]/20'}`} /> */}
-                
                 <button 
                   onClick={handleLogout}
                   disabled={isLoggingOut}
