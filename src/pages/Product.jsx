@@ -5,8 +5,8 @@ import useTheme from '../hooks/useTheme';
 import AdminService from '../Firebase/services/adminApiService';
 import { message } from 'antd';
 
-// Move Input component outside to prevent recreation
-const Input = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "", theme }) => (
+// Stable Input component outside main component - KEY FIX #1
+const Input = React.memo(({ label, value, onChange, type = "text", placeholder = "", readOnly = false, className = "", theme }) => (
   <div className={className}>
     <label className={`block text-sm font-medium ${theme.text} mb-1`}>{label}</label>
     <input
@@ -19,7 +19,7 @@ const Input = ({ label, value, onChange, type = "text", placeholder = "", readOn
       step={type === 'number' ? '0.01' : undefined}
     />
   </div>
-);
+));
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -42,7 +42,6 @@ export default function ProductForm() {
 
   const { isDark } = useTheme();
   
-  // Memoize theme object to prevent recreation
   const theme = useMemo(() => isDark ? {
     bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white',
     muted: 'text-gray-300', border: 'border-gray-700',
@@ -92,32 +91,9 @@ export default function ProductForm() {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  // Optimized calculation functions
-  const calculateSizePrice = useCallback((sizeId, field, value) => {
-    setSizes(prev => prev.map(size => {
-      if (size.id !== sizeId) return size;
-      const updated = { ...size, [field]: value };
-      
-      if (field === 'costPrice' || field === 'markupPrice') {
-        const cost = parseFloat(field === 'costPrice' ? value : size.costPrice) || 0;
-        const markup = parseFloat(field === 'markupPrice' ? value : size.markupPrice) || 0;
-        updated.sellPrice = ((cost * markup) / 100 + cost).toFixed(2);
-        updated.grossProfit = (parseFloat(updated.sellPrice) - cost).toFixed(2);
-      }
-      
-      if (['sellPrice', 'gst', 'costPrice', 'markupPrice'].includes(field)) {
-        const sellPrice = parseFloat(updated.sellPrice) || 0;
-        const gstRate = parseFloat(field === 'gst' ? value : size.gst) || 0;
-        const gstAmount = (sellPrice * gstRate) / 100;
-        const costPrice = parseFloat(updated.costPrice) || 0;
-        
-        updated.gstAmount = gstAmount.toFixed(2);
-        updated.priceWithGst = (sellPrice + gstAmount).toFixed(2);
-        updated.payableGst = gstAmount.toFixed(2);
-        updated.netProfit = (sellPrice - costPrice).toFixed(2);
-      }
-      return updated;
-    }));
+  // KEY FIX #2: Stable event handlers with proper closure
+  const handleSizeChange = useCallback((sizeId, field, value) => {
+    setSizes(prev => prev.map(size => size.id === sizeId ? { ...size, [field]: value } : size));
   }, []);
 
   const calculateSlabPrice = useCallback((sizeId, slabId, field, value) => {
@@ -273,7 +249,8 @@ export default function ProductForm() {
     }
   }, [validateForm, formData, sizes, images, navigate]);
 
-  const StepProgress = () => (
+  // KEY FIX #3: Memoized step components with stable props
+  const StepProgress = useMemo(() => (
     <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-4 border-b ${theme.border}`}>
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
@@ -301,9 +278,9 @@ export default function ProductForm() {
         })}
       </div>
     </div>
-  );
+  ), [currentStep, steps, theme, isDark]);
 
-  const BasicInfoStep = () => (
+  const BasicInfoStep = useMemo(() => (
     <div className="grid lg:grid-cols-2 gap-6">
       <div className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
         <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${theme.text}`}>
@@ -408,9 +385,9 @@ export default function ProductForm() {
         </div>
       </div>
     </div>
-  );
+  ), [theme, basicFields, formData, handleInputChange, categories, subcategories, materials, images, handleImageUpload, removeImage]);
 
-  const SizePricingStep = () => (
+  const SizePricingStep = useMemo(() => (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className={`text-lg font-semibold ${theme.text}`}>Product Sizes & Basic Info</h3>
@@ -433,27 +410,27 @@ export default function ProductForm() {
               <Input 
                 label="Size/Specs" 
                 value={size.size} 
-                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, size: e.target.value} : s))}
+                onChange={(e) => handleSizeChange(size.id, 'size', e.target.value)}
                 theme={theme}
               />
               <Input 
                 label="Inventory Code" 
                 value={size.inventory_code} 
-                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, inventory_code: e.target.value} : s))}
+                onChange={(e) => handleSizeChange(size.id, 'inventory_code', e.target.value)}
                 theme={theme}
               />
               <Input 
                 label="Base Cost Price (₹)" 
                 type="number"
                 value={size.costPrice} 
-                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, costPrice: e.target.value} : s))}
+                onChange={(e) => handleSizeChange(size.id, 'costPrice', e.target.value)}
                 theme={theme}
               />
               <Input 
                 label="Quantity" 
                 type="number"
                 value={size.quantity} 
-                onChange={(e) => setSizes(prev => prev.map(s => s.id === size.id ? {...s, quantity: e.target.value} : s))}
+                onChange={(e) => handleSizeChange(size.id, 'quantity', e.target.value)}
                 theme={theme}
               />
             </div>
@@ -461,9 +438,9 @@ export default function ProductForm() {
         ))}
       </div>
     </div>
-  );
+  ), [sizes, theme, addSize, removeSize, handleSizeChange]);
 
-  const BulkPricingStep = () => (
+  const BulkPricingStep = useMemo(() => (
     <div>
       <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
       <div className="space-y-6">
@@ -539,9 +516,9 @@ export default function ProductForm() {
         ))}
       </div>
     </div>
-  );
+  ), [sizes, theme, addPriceSlab, removePriceSlab, calculateSlabPrice]);
 
-  const ReviewStep = () => (
+  const ReviewStep = useMemo(() => (
     <div className="space-y-6">
       <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Review Product Details</h3>
       
@@ -588,62 +565,49 @@ export default function ProductForm() {
         </div>
       </div>
 
-      {/* Sizes and Pricing Review */}
       <div className={`${theme.card} rounded-xl border ${theme.border} overflow-hidden`}>
         <div className={`px-6 py-4 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} border-b ${theme.border}`}>
           <h4 className={`font-semibold ${theme.text}`}>Sizes & Pricing</h4>
         </div>
         <div className="p-6 space-y-4">
           {sizes.map((size, index) => (
-            <div key={size.id} className={`border ${theme.border} rounded-lg p-4`}>
-              <h5 className={`font-medium mb-3 ${theme.text}`}>Size: {size.size || `Size ${index + 1}`}</h5>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div key={size.id} className={`p-4 border rounded-lg ${theme.border}`}>
+              <div className="flex justify-between items-center mb-2">
+                <h5 className={`font-medium ${theme.text}`}>{size.size || `Size ${index + 1}`}</h5>
+                <span className={`text-sm ${theme.muted}`}>Qty: {size.quantity || 0}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className={`${theme.muted}`}>Inventory Code:</span>
-                  <p className={theme.text}>{size.inventory_code || '-'}</p>
+                  <span className={`ml-2 ${theme.text}`}>{size.inventory_code || '-'}</span>
                 </div>
                 <div>
                   <span className={`${theme.muted}`}>Base Cost:</span>
-                  <p className={theme.text}>₹{size.costPrice || '0'}</p>
-                </div>
-                <div>
-                  <span className={`${theme.muted}`}>Quantity:</span>
-                  <p className={theme.text}>{size.quantity || '0'}</p>
-                </div>
-                <div>
-                  <span className={`${theme.muted}`}>Price Slabs:</span>
-                  <p className={theme.text}>{size.priceSlabs.filter(s => s.costPrice && s.markupPrice).length}</p>
+                  <span className={`ml-2 ${theme.text}`}>₹{size.costPrice || 0}</span>
                 </div>
               </div>
-              
-              {/* Price Slabs Summary */}
-              {size.priceSlabs.filter(s => s.costPrice && s.markupPrice).length > 0 && (
+              {size.priceSlabs.length > 0 && (
                 <div className="mt-3">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-                        <tr>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Pack Off</th>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Min Pack</th>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Cost</th>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Markup</th>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>Sell Price</th>
-                          <th className={`px-2 py-1 text-left font-medium ${theme.text}`}>With GST</th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme.border}`}>
-                        {size.priceSlabs.filter(s => s.costPrice && s.markupPrice).map((slab, slabIndex) => (
-                          <tr key={slab.id} className={theme.hover}>
-                            <td className={`px-2 py-1 ${theme.text}`}>{slab.packOff || '-'}</td>
-                            <td className={`px-2 py-1 ${theme.text}`}>{slab.minPack || '-'}</td>
-                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.costPrice}</td>
-                            <td className={`px-2 py-1 ${theme.text}`}>{slab.markupPrice}%</td>
-                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.sellPrice}</td>
-                            <td className={`px-2 py-1 ${theme.text}`}>₹{slab.priceWithGst}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <p className={`text-sm font-medium ${theme.text} mb-2`}>Price Slabs:</p>
+                  <div className="space-y-2">
+                    {size.priceSlabs.map((slab, slabIndex) => (
+                      <div key={slab.id} className={`p-2 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-50'} text-xs`}>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <span className={`${theme.muted}`}>Pack:</span>
+                            <span className={`ml-1 ${theme.text}`}>{slab.minPack || 0}-{slab.packOff || 0}</span>
+                          </div>
+                          <div>
+                            <span className={`${theme.muted}`}>Sell Price:</span>
+                            <span className={`ml-1 ${theme.text}`}>₹{slab.sellPrice || 0}</span>
+                          </div>
+                          <div>
+                            <span className={`${theme.muted}`}>With GST:</span>
+                            <span className={`ml-1 ${theme.text}`}>₹{slab.priceWithGst || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -652,88 +616,57 @@ export default function ProductForm() {
         </div>
       </div>
     </div>
-  );
+  ), [theme, basicFields, categories, materials, formData, images, sizes, isDark]);
 
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 1: return <BasicInfoStep />;
-      case 2: return <SizePricingStep />;
-      case 3: return <BulkPricingStep />;
-      case 4: return <ReviewStep />;
-      default: return <BasicInfoStep />;
-    }
-  };
-
+  // Main render function
   return (
     <div className={`min-h-screen ${theme.bg}`}>
       <div className={`${theme.card} shadow-sm`}>
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className={`text-2xl font-bold ${theme.text}`}>Add New Product</h1>
-              <p className={`${theme.muted} text-sm mt-1`}>Create a new product with pricing and inventory details</p>
-            </div>
-            <button
-              onClick={() => navigate('/inventory-management')}
-              className={`px-4 py-2 rounded-lg border transition-colors ${theme.border} ${theme.hover} ${theme.text}`}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-        
-        <StepProgress />
+        {StepProgress}
         
         <div className="p-6">
-          {renderCurrentStep()}
+          <div className="max-w-7xl mx-auto">
+            {currentStep === 1 && BasicInfoStep}
+            {currentStep === 2 && SizePricingStep}
+            {currentStep === 3 && BulkPricingStep}
+            {currentStep === 4 && ReviewStep}
+          </div>
         </div>
-        
-        {/* Navigation Buttons */}
-        <div className={`px-6 py-4 border-t ${theme.border} flex justify-between`}>
+
+        <div className={`px-6 py-4 border-t ${theme.border} flex justify-between items-center`}>
           <button
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={`px-6 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
               currentStep === 1 
-                ? 'opacity-50 cursor-not-allowed' 
-                : `${theme.border} ${theme.hover} ${theme.text}`
+                ? 'text-gray-400 cursor-not-allowed' 
+                : `${theme.text} hover:bg-gray-100 ${isDark ? 'hover:bg-gray-700' : ''}`
             }`}
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
           </button>
-          
-          {currentStep < 4 ? (
-            <button
-              onClick={nextStep}
-              className="bg-[#c79e73] hover:bg-[#b8906a] text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
-            >
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className={`px-6 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                loading 
-                  ? 'bg-gray-500 cursor-not-allowed' 
-                  : 'bg-green-600 hover:bg-green-700'
-              } text-white`}
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Save Product
-                </>
-              )}
-            </button>
-          )}
+
+          <div className="flex items-center gap-2">
+            {currentStep < 4 ? (
+              <button
+                onClick={nextStep}
+                className="bg-[#c79e73] hover:bg-[#b8915f] text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+              >
+                Next
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Product'}
+                <CheckCircle className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
