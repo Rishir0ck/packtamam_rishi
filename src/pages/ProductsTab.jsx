@@ -130,11 +130,11 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
 
   const tableColumns = [
     { key: 'name', label: 'Product', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
+    // { key: 'category', label: 'Category', sortable: true },
     { key: 'material', label: 'Material', sortable: true },
     { key: 'hsn_code', label: 'HSN', sortable: true },
     { key: 'quality', label: 'Quality', sortable: true },
-    { key: 'price', label: 'Price', sortable: true },
+    // { key: 'price', label: 'Price', sortable: true },
     { key: 'is_active', label: 'Status', sortable: true }
   ]
 
@@ -246,7 +246,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                         </div>
                       )}
                     </td>
-                    <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.category?.name || '-'}</td>
+                    {/* <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.category?.name || '-'}</td> */}
                     <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.material?.name || '-'}</td>
                     <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.hsn_code || '-'}</td>
                     <td className="px-4 py-3">
@@ -261,12 +261,12 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                         {item.quality}
                       </span>
                     </td>
-                    <td className={`px-4 py-3 text-sm font-semibold ${theme.text}`}>
+                    {/* <td className={`px-4 py-3 text-sm font-semibold ${theme.text}`}>
                       ₹{price || '-'}
                       {item.inventories?.length > 1 && (
                         <div className={`text-xs ${theme.muted}`}>+{item.inventories.length - 1} more</div>
                       )}
-                    </td>
+                    </td> */}
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                         item.is_active 
@@ -406,10 +406,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                           {[
                             ['Size', inventory.size || 'N/A'],
                             ['Inventory Code', inventory.inventory_code || 'N/A'],
-                            ['Cost Price', `₹${inventory.costPrice || 0}`],
-                            ['Sell Price', `₹${inventory.sellPrice || 0}`],
-                            ['Price with GST', `₹${inventory.priceWithGst || 0}`],
-                            ['GST', `${inventory.gst || 0}%`]
+                            ['Cost Price', `₹${inventory.costPrice || 0}`]
                           ].map(([label, value], i) => (
                             <div key={i}>
                               <p className={`text-sm font-medium ${theme.muted}`}>{label}</p>
@@ -425,9 +422,10 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                             <div className="space-y-2">
                               {inventory.price_slabs.map((slab, slabIndex) => (
                                 <div key={slab.id || slabIndex} className={`flex gap-4 text-sm ${theme.text}`}>
-                                  <span>Qty: {slab.quantity}+</span>
-                                  <span>Price: ₹{slab.price}</span>
-                                  <span>Final: ₹{slab.finalPrice}</span>
+                                  <span>Qty: {slab.packOff}</span>
+                                  <span>Min. Pack: {slab.minPack}</span>
+                                  <span>Price: ₹{slab.costPrice}</span>
+                                  <span>Final: ₹{slab.sellPrice}</span>
                                 </div>
                               ))}
                             </div>
