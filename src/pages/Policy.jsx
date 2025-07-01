@@ -349,6 +349,7 @@ export default function PolicyAdmin() {
                   <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Title *</label>
                   <input
                     type="text"
+                    disabled={currentForm.title}
                     value={currentForm.title}
                     onChange={(e) => setCurrentForm(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter policy title"
