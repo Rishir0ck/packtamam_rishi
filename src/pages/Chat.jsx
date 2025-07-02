@@ -103,12 +103,6 @@ export default function ChatModule() {
     resolved: isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'
   };
 
-  const priorityColors = {
-    high: isDark ? 'text-red-400' : 'text-red-600',
-    medium: isDark ? 'text-yellow-400' : 'text-yellow-600',
-    low: isDark ? 'text-gray-400' : 'text-gray-600'
-  };
-
   const filteredProblems = useMemo(() => {
     return problems.filter(p => {
       const matchesSearch = [p?.title, p?.status, p?.mobile_number, p?.user?.owner_name, p?.user?.business_name].some(field => 
@@ -228,7 +222,7 @@ export default function ChatModule() {
             
             {activeTab === 'problems' && (
               <div className="flex flex-wrap gap-2">
-                {['all', 'open', 'in-progress', 'resolved'].map(filter => (
+                {['all', 'sent', 'seen', 'replied','closed'].map(filter => (
                   <button key={filter} onClick={() => { setFilterStatus(filter); setCurrentPage(1); }} className={`px-3 py-1 text-sm rounded-md transition-colors capitalize ${filterStatus === filter ? (isDark ? 'bg-blue-700 text-blue-200' : 'bg-blue-100 text-blue-800') : (isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700')}`}>
                     {filter === 'all' ? 'All' : filter.replace('-', ' ')}
                   </button>
@@ -245,11 +239,10 @@ export default function ChatModule() {
                 <tr>
                    <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Sr. No.</th>
                   <SortHeader field="title">Problem</SortHeader>
-                  <SortHeader field="title">Problem</SortHeader>
                   <SortHeader field="mobile_number">Contact</SortHeader>
                   <SortHeader field="status">Status</SortHeader>
                   <SortHeader field="date">Date</SortHeader>
-                  {/* <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Actions</th> */}
+                  <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider`}>Actions</th>
                 </tr>
               </thead>
               <tbody className={`${theme.card} divide-y ${theme.border}`}>
@@ -283,7 +276,7 @@ export default function ChatModule() {
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColors[problem.status] || statusColors.open}`}>
-                          {(problem.status || 'open').replace('-', ' ')}
+                          {(problem.status || '').replace('-', ' ')}
                         </span>
                       </td>
                       <td className={`px-4 py-4 text-sm ${theme.muted}`}>
@@ -291,7 +284,7 @@ export default function ChatModule() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex gap-1">
-                          {['open', 'in-progress', 'resolved'].map(status => (
+                          {['sent', 'seen', 'replied', 'closed'].map(status => (
                             <button key={status} onClick={() => updateProblemStatus(problem.id, status)} disabled={problem.status === status} className={`px-2 py-1 text-xs rounded transition-colors ${problem.status === status ? `${isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed` : `${isDark ? 'bg-blue-900 text-blue-200 hover:bg-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}`}>
                               {status.replace('-', ' ')}
                             </button>
