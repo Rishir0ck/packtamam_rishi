@@ -222,7 +222,7 @@ export default function ChatModule() {
             
             {activeTab === 'problems' && (
               <div className="flex flex-wrap gap-2">
-                {['all', 'sent', 'seen', 'replied','closed'].map(filter => (
+                {['all', 'Request Submitted', 'In Process', 'Request Closed'].map(filter => (
                   <button key={filter} onClick={() => { setFilterStatus(filter); setCurrentPage(1); }} className={`px-3 py-1 text-sm rounded-md transition-colors capitalize ${filterStatus === filter ? (isDark ? 'bg-blue-700 text-blue-200' : 'bg-blue-100 text-blue-800') : (isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700')}`}>
                     {filter === 'all' ? 'All' : filter.replace('-', ' ')}
                   </button>
@@ -284,7 +284,7 @@ export default function ChatModule() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex gap-1">
-                          {['sent', 'seen', 'replied', 'closed'].map(status => (
+                          {['Request Submitted', 'In Process', 'Request Closed'].map(status => (
                             <button key={status} onClick={() => updateProblemStatus(problem.id, status)} disabled={problem.status === status} className={`px-2 py-1 text-xs rounded transition-colors ${problem.status === status ? `${isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed` : `${isDark ? 'bg-blue-900 text-blue-200 hover:bg-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}`}>
                               {status.replace('-', ' ')}
                             </button>
