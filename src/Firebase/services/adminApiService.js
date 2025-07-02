@@ -314,6 +314,14 @@ class AdminService {
     return this.makeAuthenticatedRequest('GET', '/api/admin/problem/status', { id: problemId, status });
   }
   
+  //Bot APIs
+  async getBotData() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/bot/message-list');
+  }
+
+  async updateBotMessages(type, message) {
+    return this.makeAuthenticatedRequest('POST', `/api/admin/bot/update-message`, {type, message});
+  }
 
   // Helper Methods
   createProductFormData(productData) {
