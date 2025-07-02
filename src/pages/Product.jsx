@@ -440,6 +440,90 @@ export default function ProductForm() {
     </div>
   ), [sizes, theme, addSize, removeSize, handleSizeChange]);
 
+  // const BulkPricingStep = useMemo(() => (
+  //   <div>
+  //     <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
+  //     <div className="space-y-6">
+  //       {sizes.map((size, sizeIndex) => (
+  //         <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
+  //           <div className="flex justify-between items-center mb-4">
+  //             <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
+  //             <button
+  //               onClick={() => addPriceSlab(size.id)}
+  //               className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+  //             >
+  //               <Plus className="w-3 h-3" /> Add Slab
+  //             </button>
+  //           </div>
+  //           <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
+  //             <div className="space-y-3 min-w-[900px]">
+  //               {size.priceSlabs.map((slab, index) => (
+  //                 <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
+  //                   <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
+  //                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+  //                     {[
+  //                       {
+  //                         title: 'Pack Details', fields: [
+  //                           ['Pack Off', 'packOff', 'number'],
+  //                           ['Qty of Pack', 'minPack', 'number']
+  //                         ]
+  //                       },
+  //                       {
+  //                         title: 'Cost & Markup', fields: [
+  //                           ['Cost Price(₹)', 'costPrice', 'number'],
+  //                           ['Markup(%)', 'markupPrice', 'number'],
+  //                           ['Gross Profit(₹)', 'grossProfit', 'number', true]
+  //                         ]
+  //                       },
+  //                       {
+  //                         title: 'Selling Price', fields: [
+  //                           ['Sell Price(₹)', 'sellPrice', 'number', true],
+  //                           ['GST(%)', 'gst', 'number'],
+  //                           ['GST Amount(₹)', 'gstAmount', 'number', true]
+  //                         ]
+  //                       },
+  //                       {
+  //                         title: 'Final Price', fields: [
+  //                           ['With GST(₹)', 'priceWithGst', 'number', true]
+  //                         ]
+  //                       }
+  //                     ].map((group) => (
+  //                       <div key={group.title} className="flex flex-col gap-1">
+  //                         <div className="text-xs font-semibold text-center">{group.title}</div>
+  //                         {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
+  //                           <input
+  //                             key={field}
+  //                             type={type}
+  //                             value={slab[field] || ''}
+  //                             onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
+  //                             className={`w-32 px-1 py-1 border rounded text-sm ${readOnly ? 'opacity-60 cursor-not-allowed' : ''} ${theme.input}`}
+  //                             placeholder={label}
+  //                             readOnly={readOnly}
+  //                           />
+  //                         ))}
+  //                       </div>
+  //                     ))}
+  //                   </div>
+  //                   <div className="flex flex-col justify-center">
+  //                     {size.priceSlabs.length > 1 && (
+  //                       <button
+  //                         onClick={() => removePriceSlab(size.id, slab.id)}
+  //                         className="text-red-500 hover:text-red-700"
+  //                       >
+  //                         <Trash2 className="w-4 h-4" />
+  //                       </button>
+  //                     )}
+  //                   </div>
+  //                 </div>
+  //               ))}
+  //             </div>
+  //           </div>
+  //         </div>
+  //       ))}
+  //     </div>
+  //   </div>
+  // ), [sizes, theme, addPriceSlab, removePriceSlab, calculateSlabPrice]);
+
   const BulkPricingStep = useMemo(() => (
     <div>
       <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
@@ -460,38 +544,44 @@ export default function ProductForm() {
                 {size.priceSlabs.map((slab, index) => (
                   <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
                     <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                       {[
-                        { title: 'Pack Details', fields: [
-                          ['Pack Off', 'packOff', 'number'],
-                          ['Minimum Pack', 'minPack', 'number']
-                        ]},
-                        { title: 'Cost & Markup', fields: [
-                          ['Cost Price (₹)', 'costPrice', 'number'], 
-                          ['Markup (%)', 'markupPrice', 'number'], 
-                          ['Gross Profit (₹)', 'grossProfit', 'number', true]
-                        ]},
-                        { title: 'Selling Price', fields: [
-                          ['Sell Price (₹)', 'sellPrice', 'number', true], 
-                          ['GST (%)', 'gst', 'number'],
-                          ['GST Amount (₹)', 'gstAmount', 'number', true]
-                        ]},
-                        { title: 'Final Price', fields: [
-                          ['With GST (₹)', 'priceWithGst', 'number', true], 
-                          // ['Payable GST (₹)', 'payableGst', 'number', true],
-                          // ['Net Profit (₹)', 'netProfit', 'number', true]
-                        ]}
+                        {
+                          title: 'Pack Details', fields: [
+                            ['Pack Off', 'packOff', 'number'],
+                            ['Qunatity of Pack', 'minPack', 'number']
+                          ]
+                        },
+                        {
+                          title: 'Cost & Markup', fields: [
+                            ['Cost Price (₹)', 'costPrice', 'number'],
+                            ['Markup (%)', 'markupPrice', 'number'],
+                            ['Gross Profit (₹)', 'grossProfit', 'number', true]
+                          ]
+                        },
+                        {
+                          title: 'Selling Price', fields: [
+                            ['Sell Price (₹)', 'sellPrice', 'number', true],
+                            ['GST (%)', 'gst', 'number'],
+                            ['GST Amount (₹)', 'gstAmount', 'number', true]
+                          ]
+                        },
+                        {
+                          title: 'Final Price', fields: [
+                            ['With GST (₹)', 'priceWithGst', 'number', true]
+                          ]
+                        }
                       ].map((group) => (
                         <div key={group.title} className="flex flex-col gap-1">
-                          <div className="text-xs font-semibold text-center">{group.title}</div>
+                          <div className="text-x font-semibold text-center">{group.title}</div>
                           {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
-                            <input
+                            <Input
                               key={field}
+                              label={label}
                               type={type}
                               value={slab[field] || ''}
                               onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
-                              className={`w-32 p-1 border rounded ${readOnly ? 'opacity-60' : ''} ${theme.input}`}
-                              placeholder={label}
+                              theme={theme}
                               readOnly={readOnly}
                             />
                           ))}
@@ -574,7 +664,7 @@ export default function ProductForm() {
             <div key={size.id} className={`p-4 border rounded-lg ${theme.border}`}>
               <div className="flex justify-between items-center mb-2">
                 <h5 className={`font-medium ${theme.text}`}>{size.size || `Size ${index + 1}`}</h5>
-                <span className={`text-sm ${theme.muted}`}>Qty: {size.quantity || 0}</span>
+                <span className={`text-sm ${theme.muted}`}>Quantity: {size.quantity || 0}</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -582,7 +672,7 @@ export default function ProductForm() {
                   <span className={`ml-2 ${theme.text}`}>{size.inventory_code || '-'}</span>
                 </div>
                 <div>
-                  <span className={`${theme.muted}`}>Base Cost:</span>
+                  <span className={`${theme.muted}`}>Base Cost Price:</span>
                   <span className={`ml-2 ${theme.text}`}>₹{size.costPrice || 0}</span>
                 </div>
               </div>
@@ -594,15 +684,15 @@ export default function ProductForm() {
                       <div key={slab.id} className={`p-2 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-50'} text-xs`}>
                         <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <span className={`${theme.muted}`}>Pack:</span>
-                            <span className={`ml-1 ${theme.text}`}>{slab.minPack || 0}-{slab.packOff || 0}</span>
+                            <span className={`${theme.muted}`}>Quantity of Pack:</span>
+                            <span className={`ml-1 ${theme.text}`}>{slab.minPack || 0}- Pack Off:{slab.packOff || 0}</span>
                           </div>
                           <div>
-                            <span className={`${theme.muted}`}>Sell Price:</span>
+                            <span className={`${theme.muted}`}>Selling Price:</span>
                             <span className={`ml-1 ${theme.text}`}>₹{slab.sellPrice || 0}</span>
                           </div>
                           <div>
-                            <span className={`${theme.muted}`}>With GST:</span>
+                            <span className={`${theme.muted}`}>Final Price:</span>
                             <span className={`ml-1 ${theme.text}`}>₹{slab.priceWithGst || 0}</span>
                           </div>
                         </div>
@@ -622,6 +712,14 @@ export default function ProductForm() {
   return (
     <div className={`min-h-screen ${theme.bg}`}>
       <div className={`${theme.card} shadow-sm`}>
+        <div className="flex justify-end">
+          <button
+            onClick={() => navigate('/inventory-management')}
+            className={`px-4 py-2 rounded-lg transition-colors ${theme.border} ${theme.hover} ${theme.text}`}
+          >
+            Cancel
+          </button>
+        </div>
         {StepProgress}
         
         <div className="p-6">
