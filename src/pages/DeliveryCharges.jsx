@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Edit2, Trash2, Truck, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, Moon, Sun } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, Truck, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
-import useTheme from '../hooks/useTheme'
+import useTheme from '../hooks/useTheme';
+import adminApiService from '../Firebase/services/adminApiService';
 
 export default function DeliveryCharges() {
   const { isDark } = useTheme();
@@ -11,17 +12,16 @@ export default function DeliveryCharges() {
   const [cities, setCities] = useState([]);
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [deliveryOptions, setDeliveryOptions] = useState([]);
-  const [selectedDelivery, setSelectedDelivery] = useState('');
   const [discountSlabs, setDiscountSlabs] = useState([]);
   const [showSlabForm, setShowSlabForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [savedConfigs, setSavedConfigs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const [viewConfig, setViewConfig] = useState(null);
-  const [activeTab, setActiveTab] = useState('list'); // 'add' or 'list'
+  const [activeTab, setActiveTab] = useState('list');
   const itemsPerPage = 5;
 
   const [formData, setFormData] = useState({
@@ -37,6 +37,30 @@ export default function DeliveryCharges() {
     border: 'border-gray-200', input: 'bg-white border-gray-300',
     hover: 'hover:bg-gray-50', tableHeader: 'bg-gray-50', btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700'
   };
+
+  // Load delivery configurations from API
+  const loadDeliveries = async () => {
+    try {
+      setLoading(true);
+      const response = await adminApiService.getDeliveries();
+      if (response.success) {
+        // Ensure we always set an array, even if response.data is null/undefined
+        setSavedConfigs(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setSavedConfigs([]);
+      }
+    } catch (error) {
+      console.error('Error loading deliveries:', error);
+      setSavedConfigs([]); // Set empty array on error
+      alert('Failed to load delivery configurations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDeliveries();
+  }, []);
 
   useEffect(() => {
     if (selectedCountry) {
@@ -54,22 +78,28 @@ export default function DeliveryCharges() {
     }
   }, [selectedState, selectedCountry]);
 
-  const fetchDeliveryOptions = async () => {
-    const mockOptions = [
-      { id: 1, name: 'Standard Delivery', type: 'standard' },
-      { id: 2, name: 'Express Delivery', type: 'express' },
-      { id: 3, name: 'Same Day Delivery', type: 'same_day' }
-    ];
-    setDeliveryOptions(mockOptions);
-  };
-
-  const handleAddDelivery = () => {
+  const handleAddDelivery = async () => {
     if (!selectedState || !selectedCity) {
       alert('Please select state and city first');
       return;
     }
-    fetchDeliveryOptions();
-    setShowSlabForm(true);
+    
+    try {
+      setLoading(true);
+      const stateName = states.find(s => s.isoCode === selectedState)?.name;
+      const response = await adminApiService.addDeliveryLocation(stateName, selectedCity);
+      
+      if (response.success) {
+        setShowSlabForm(true);
+      } else {
+        alert('Failed to add delivery location');
+      }
+    } catch (error) {
+      console.error('Error adding delivery location:', error);
+      alert('Failed to add delivery location');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSlabSubmit = () => {
@@ -102,43 +132,68 @@ export default function DeliveryCharges() {
     setDiscountSlabs(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleSaveConfig = () => {
-    if (!selectedState || !selectedCity || !selectedDelivery || discountSlabs.length === 0) {
+  const handleSaveConfig = async () => {
+    if (!selectedState || !selectedCity || discountSlabs.length === 0) {
       alert('Please fill all required fields and add at least one slab');
       return;
     }
 
-    const newConfig = {
-      id: Date.now(),
-      country: countries.find(c => c.isoCode === selectedCountry)?.name,
-      state: states.find(s => s.isoCode === selectedState)?.name,
-      city: cities.find(c => c.name === selectedCity)?.name,
-      delivery: deliveryOptions.find(d => d.id === parseInt(selectedDelivery)),
-      slabs: [...discountSlabs],
-      status: 'active',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      setLoading(true);
+      const pricing = {
+        state: states.find(s => s.isoCode === selectedState)?.name,
+        city: selectedCity,
+        slabs: discountSlabs.map(slab => ({
+          min_amount: slab.minAmount,
+          max_amount: slab.maxAmount,
+          discount_type: slab.discountType,
+          discount_value: slab.discountValue
+        }))
+      };
 
-    setSavedConfigs(prev => [...prev, newConfig]);
-    
-    setSelectedState('');
-    setSelectedCity('');
-    setSelectedDelivery('');
-    setDiscountSlabs([]);
-    setShowSlabForm(false);
-    alert('Configuration saved successfully!');
+      const response = await adminApiService.addDeliveryLocationPricing(pricing);
+      
+      if (response.success) {
+        await loadDeliveries(); // Reload the list
+        setSelectedState('');
+        setSelectedCity('');
+        setDiscountSlabs([]);
+        setShowSlabForm(false);
+        alert('Configuration saved successfully!');
+      } else {
+        alert('Failed to save configuration');
+      }
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      alert('Failed to save configuration');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleStatus = (id) => {
-    setSavedConfigs(prev => prev.map(config => 
-      config.id === id 
-        ? { ...config, status: config.status === 'active' ? 'inactive' : 'active' }
-        : config
-    ));
+  const toggleStatus = async (id, currentStatus) => {
+    try {
+      setLoading(true);
+      const response = await adminApiService.updateDeliveryStatus(id, !currentStatus);
+      
+      if (response.success) {
+        await loadDeliveries(); // Reload the list
+      } else {
+        alert('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sortedConfigs = useMemo(() => {
-    return [...savedConfigs].sort((a, b) => {
+    // Ensure savedConfigs is always an array before processing
+    const configsArray = Array.isArray(savedConfigs) ? savedConfigs : [];
+    
+    return [...configsArray].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
       
@@ -158,7 +213,8 @@ export default function DeliveryCharges() {
     return sortedConfigs.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedConfigs, currentPage]);
 
-  const totalPages = Math.ceil(savedConfigs.length / itemsPerPage);
+  // Ensure savedConfigs is an array for length calculation
+  const totalPages = Math.ceil((Array.isArray(savedConfigs) ? savedConfigs.length : 0) / itemsPerPage);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -176,9 +232,18 @@ export default function DeliveryCharges() {
   };
 
   const getChargesTypeDisplay = (slabs) => {
-    const types = [...new Set(slabs.map(s => s.discountType))];
+    if (!slabs || !Array.isArray(slabs)) return 'N/A';
+    const types = [...new Set(slabs.map(s => s.discount_type || s.discountType))];
     return types.map(type => type === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)').join(', ');
   };
+
+  if (loading) {
+    return (
+      <div className={`max-w-full mx-auto p-4 min-h-screen ${theme.bg} flex items-center justify-center`}>
+        <div className={`text-lg ${theme.text}`}>Loading...</div>
+      </div>
+    );
+  }
 
   if (viewConfig) {
     return (
@@ -186,45 +251,42 @@ export default function DeliveryCharges() {
         <div className={`rounded-lg shadow-sm border ${theme.card} ${theme.border}`}>
           <div className={`border-b px-4 py-3 flex justify-between items-center ${theme.border}`}>
             <h1 className={`text-xl font-bold ${theme.text}`}>View Configuration</h1>
-            <div className="flex gap-2">
-              <button onClick={() => setViewConfig(null)} className="bg-gray-500 text-white px-3 py-1 rounded">
-                Back
-              </button>
-            </div>
+            <button onClick={() => setViewConfig(null)} className="bg-gray-500 text-white px-3 py-1 rounded">
+              Back
+            </button>
           </div>
           <div className="p-6">
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <h3 className={`text-lg font-semibold mb-3 ${theme.text}`}>Location Details</h3>
                 <div className="space-y-2">
-                  <p className={theme.text}><span className="font-medium">Country:</span> {viewConfig.country}</p>
+                  <p className={theme.text}><span className="font-medium">Country:</span> {viewConfig.country || 'India'}</p>
                   <p className={theme.text}><span className="font-medium">State:</span> {viewConfig.state}</p>
                   <p className={theme.text}><span className="font-medium">City:</span> {viewConfig.city}</p>
-                  <p className={theme.text}><span className="font-medium">Delivery:</span> {viewConfig.delivery?.name}</p>
                   <p className={theme.text}><span className="font-medium">Status:</span> 
                     <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                      viewConfig.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      (viewConfig.is_active ?? viewConfig.status === 'active') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {viewConfig.status}
+                      {(viewConfig.is_active ?? viewConfig.status === 'active') ? 'Active' : 'Inactive'}
                     </span>
                   </p>
                 </div>
               </div>
               <div>
-                <h3 className={`text-lg font-semibold mb-3 ${theme.text}`}>Discount Slabs</h3>
+                <h3 className={`text-lg font-semibold mb-3 ${theme.text}`}>Charge Slabs</h3>
                 <div className="space-y-2">
-                  {viewConfig.slabs.map((slab, index) => (
+                  {(viewConfig.slabs || viewConfig.pricing_slabs || []).map((slab, index) => (
                     <div key={index} className={`p-3 border rounded ${theme.border} ${theme.card}`}>
                       <div className="flex justify-between items-center">
                         <span className={`font-medium ${theme.text}`}>
-                          ₹{slab.minAmount}{slab.maxAmount ? ` - ₹${slab.maxAmount}` : "+"}
+                          ₹{slab.min_amount || slab.minAmount}{(slab.max_amount || slab.maxAmount) ? ` - ₹${slab.max_amount || slab.maxAmount}` : "+"}
                         </span>
                         <span className="text-green-600 font-semibold">
-                          {slab.discountValue}{slab.discountType === "percentage" ? "%" : "₹"} OFF
+                          {slab.discount_value || slab.discountValue}{(slab.discount_type || slab.discountType) === "percentage" ? "%" : "₹"} Charge
                         </span>
                       </div>
                       <p className={`text-sm mt-1 ${theme.muted}`}>
-                        Type: {slab.discountType === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
+                        Type: {(slab.discount_type || slab.discountType) === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
                       </p>
                     </div>
                   ))}
@@ -328,37 +390,21 @@ export default function DeliveryCharges() {
                 <div className="flex items-end">
                   <button
                     onClick={handleAddDelivery}
-                    disabled={!selectedState || !selectedCity}
+                    disabled={!selectedState || !selectedCity || loading}
                     className="w-full text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#c79e73' }}
                   >
-                    Add Delivery
+                    {loading ? 'Adding...' : 'Add Delivery'}
                   </button>
                 </div>
               </div>
 
-              {/* Delivery Options & Discount Slabs */}
+              {/* Discount Slabs */}
               {showSlabForm && (
                 <div className={`border rounded-lg p-4 ${theme.border}`}>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${theme.text}`}>Delivery Type *</label>
-                    <select
-                      value={selectedDelivery}
-                      onChange={(e) => setSelectedDelivery(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
-                    >
-                      <option value="">Select Delivery Type</option>
-                      {deliveryOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   <div className="flex justify-between items-center mb-3">
                     <h3 className={`text-lg font-semibold ${theme.text}`}>
-                      Discount Slabs ({discountSlabs.length}/3)
+                      Delivery Charge Slabs ({discountSlabs.length}/3)
                     </h3>
                   </div>
 
@@ -423,7 +469,7 @@ export default function DeliveryCharges() {
                             ₹{slab.minAmount}{slab.maxAmount ? ` - ₹${slab.maxAmount}` : "+"}
                           </span>
                           <span className="text-green-600">
-                            {slab.discountValue}{slab.discountType === "percentage" ? "%" : "₹"} OFF
+                            {slab.discountValue}{slab.discountType === "percentage" ? "%" : "₹"} Charge
                           </span>
                         </div>
                         <div className="flex gap-1">
@@ -441,10 +487,11 @@ export default function DeliveryCharges() {
                   {discountSlabs.length > 0 && (
                     <button
                       onClick={handleSaveConfig}
-                      className="w-full mt-3 text-white py-2 rounded font-medium"
+                      disabled={loading}
+                      className="w-full mt-3 text-white py-2 rounded font-medium disabled:opacity-50"
                       style={{ backgroundColor: '#c79e73' }}
                     >
-                      Save Configuration
+                      {loading ? 'Saving...' : 'Save Configuration'}
                     </button>
                   )}
                 </div>
@@ -452,7 +499,7 @@ export default function DeliveryCharges() {
             </div>
           ) : (
             /* List Tab */
-            savedConfigs.length > 0 && (
+            Array.isArray(savedConfigs) && savedConfigs.length > 0 && (
               <div className={`border rounded-lg overflow-hidden ${theme.border}`}>
                 <div className={`px-4 py-2 border-b ${theme.tableHeader} ${theme.border}`}>
                   <h3 className={`text-lg font-semibold ${theme.text}`}>Saved Configurations</h3>
@@ -467,7 +514,6 @@ export default function DeliveryCharges() {
                           <div className="flex items-center gap-1">State <SortIcon field="state" /></div>
                         </th>
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>City</th>
-                        <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Delivery Name</th>
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Charges Type</th>
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Status</th>
                         <th className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`} onClick={() => handleSort("createdAt")}>
@@ -482,22 +528,22 @@ export default function DeliveryCharges() {
                           <td className={`px-4 py-3 text-sm ${theme.text}`}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className={`px-4 py-3 text-sm font-medium ${theme.text}`}>{config.state}</td>
                           <td className={`px-4 py-3 text-sm ${theme.text}`}>{config.city}</td>
-                          <td className={`px-4 py-3 text-sm ${theme.text}`}>{config.delivery?.name}</td>
-                          <td className={`px-4 py-3 text-sm ${theme.text}`}>{getChargesTypeDisplay(config.slabs)}</td>
+                          <td className={`px-4 py-3 text-sm ${theme.text}`}>{getChargesTypeDisplay(config.slabs || config.pricing_slabs)}</td>
                           <td className="px-4 py-3">
                             <button
-                              onClick={() => toggleStatus(config.id)}
-                              className={`px-2 py-1 text-xs rounded-full ${
-                                config.status === 'active' 
+                              onClick={() => toggleStatus(config.id, config.is_active ?? (config.status === 'active'))}
+                              disabled={loading}
+                              className={`px-2 py-1 text-xs rounded-full disabled:opacity-50 ${
+                                (config.is_active ?? (config.status === 'active'))
                                   ? 'bg-green-100 text-green-800' 
                                   : 'bg-red-100 text-red-800'
                               }`}
                             >
-                              {config.status}
+                              {(config.is_active ?? (config.status === 'active')) ? 'Active' : 'Inactive'}
                             </button>
                           </td>
                           <td className={`px-4 py-3 text-sm ${theme.text}`}>
-                            {new Date(config.createdAt).toLocaleDateString()}
+                            {new Date(config.createdAt || config.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
                             <button

@@ -323,6 +323,21 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', `/api/admin/bot/update-message`, {type, message});
   }
 
+  //Delivery APIs
+  async getDeliveries() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/delhivery');
+  }
+  async addDeliveryLocation(state, city) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location', { state, city });
+  }
+  async addDeliveryLocationPricing(pricing) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location-pricing', {pricing});
+  }
+  async updateDeliveryStatus(deliveryId, is_active) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/change-status', { id: deliveryId, is_active });
+  }
+  
+
   // Helper Methods
   createProductFormData(productData) {
     const formData = new FormData();

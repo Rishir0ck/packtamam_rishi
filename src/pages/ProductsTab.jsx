@@ -131,7 +131,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
   const tableColumns = [
     { key: 'name', label: 'Product', sortable: true },
     // { key: 'category', label: 'Category', sortable: true },
-    { key: 'material', label: 'Material', sortable: true },
+    // { key: 'material', label: 'Material', sortable: true },
     { key: 'hsn_code', label: 'HSN', sortable: true },
     { key: 'quality', label: 'Quality', sortable: true },
     // { key: 'price', label: 'Price', sortable: true },
@@ -250,7 +250,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                       )}
                     </td>
                     {/* <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.category?.name || '-'}</td> */}
-                    <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.material?.name || '-'}</td>
+                    {/* <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.material?.name || '-'}</td> */}
                     <td className={`px-4 py-3 text-sm ${theme.text}`}>{item.hsn_code || '-'}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs rounded-full font-medium ${

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Store, Plus, Search, Loader2, X, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Store, Plus, Search, Loader2, X, Save, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react'
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
 
@@ -133,7 +133,7 @@ export default function OutletManagement() {
     return (
       <div className={`min-h-screen ${themeClass('bg-gray-50', 'bg-gray-900')} flex items-center justify-center`}>
         <div className="text-center">
-          <Loader2 className={`w-8 h-8 animate-spin mx-auto mb-4 ${themeClass('text-gray-900', 'text-white')}`} />
+          <RefreshCcw className={`w-8 h-8 animate-spin mx-auto mb-4 ${themeClass('text-gray-900', 'text-white')}`} />
           <p className={`text-lg font-medium ${themeClass('text-gray-900', 'text-white')}`}>Loading outlets...</p>
         </div>
       </div>
