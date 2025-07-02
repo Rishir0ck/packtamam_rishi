@@ -5,16 +5,16 @@ import useTheme from '../hooks/useTheme'
 export default function DeliveryPartnerAdmin() {
   const { isDark } = useTheme();
   const [partners, setPartners] = useState([
-    { id: 1, name: 'John Smith', tracking_url: 'North Zone', status: 'Active'},
-    { id: 2, name: 'Sarah Johnson', tracking_url: 'South Zone', status: 'Active'},
-    { id: 3, name: 'Mike Wilson', tracking_url: 'East Zone', status: 'Inactive'},
-    { id: 4, name: 'Emily Davis', tracking_url: 'West Zone', status: 'Active'},
-    { id: 5, name: 'David Brown', tracking_url: 'Central Zone', status: 'Suspended'},
-    { id: 6, name: 'Lisa Garcia', tracking_url: 'North Zone', status: 'Active'},
-    { id: 7, name: 'Tom Anderson', tracking_url: 'South Zone', status: 'Active'},
-    { id: 8, name: 'Anna Martinez', tracking_url: 'East Zone', status: 'Active'},
-    { id: 9, name: 'Chris Lee', tracking_url: 'West Zone', status: 'Inactive'},
-    { id: 10, name: 'Jennifer White', tracking_url: 'Central Zone', status: 'Active'},
+    { id: 1, name: 'John Smith', tracking_url: 'North Zone'},
+    { id: 2, name: 'Sarah Johnson', tracking_url: 'South Zone'},
+    { id: 3, name: 'Mike Wilson', tracking_url: 'East Zone'},
+    { id: 4, name: 'Emily Davis', tracking_url: 'West Zone'},
+    { id: 5, name: 'David Brown', tracking_url: 'Central Zone'},
+    { id: 6, name: 'Lisa Garcia', tracking_url: 'North Zone'},
+    { id: 7, name: 'Tom Anderson', tracking_url: 'South Zone'},
+    { id: 8, name: 'Anna Martinez', tracking_url: 'East Zone'},
+    { id: 9, name: 'Chris Lee', tracking_url: 'West Zone'},
+    { id: 10, name: 'Jennifer White', tracking_url: 'Central Zone'},
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,9 +25,7 @@ export default function DeliveryPartnerAdmin() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedPartner, setSelectedPartner] = useState(null);
-  const [formData, setFormData] = useState({ name: '', tracking_url: '', status: 'Active' });
-
-  const statuses = ['Active', 'Inactive', 'Suspended'];
+  const [formData, setFormData] = useState({ name: '', tracking_url: ''});
 
   // Theme configuration
   const theme = isDark ? {
@@ -137,15 +135,6 @@ export default function DeliveryPartnerAdmin() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const colors = {
-      Active: 'bg-green-100 dark:text-green-800 light:bg-green-900 dark:text-green-300',
-      Inactive: 'bg-gray-100 dark:text-gray-800 light:bg-gray-700 dark:text-gray-300',
-      Suspended: 'bg-red-100 dark:text-red-800 light:bg-red-900 dark:text-red-300'
-    };
-    return `px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`;
-  };
-
   const SortIcon = ({ field }) => (
     <span className="ml-1 inline-flex flex-col">
       <ChevronUp className={`w-3 h-3 ${sortField === field && sortDirection === 'asc' ? 'text-blue-500' : theme.muted}`} />
@@ -206,9 +195,6 @@ export default function DeliveryPartnerAdmin() {
                   <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('zone')}>
                     Tracking URL <SortIcon field="tracking_url" />
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme.muted} uppercase tracking-wider cursor-pointer ${theme.hover} transition-colors`} onClick={() => handleSort('status')}>
-                    Status <SortIcon field="status" />
-                  </th>
                   <th className={`px-6 py-3 text-right text-xs font-medium ${theme.muted} uppercase tracking-wider`}>
                     Actions
                   </th>
@@ -228,11 +214,6 @@ export default function DeliveryPartnerAdmin() {
                         <MapPin className={`w-3 h-3 ${theme.muted}`} />
                         {partner.tracking_url}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`${getStatusBadge(partner.status)} ${isDark ? 'dark' : ''}`}>
-                        {partner.status}
-                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
@@ -314,7 +295,6 @@ export default function DeliveryPartnerAdmin() {
                 <div className="space-y-4">
                   <div className={theme.text}><strong>Partner Name:</strong> {selectedPartner?.name}</div>
                   <div className={theme.text}><strong>Tracking:</strong> {selectedPartner?.tracking_url}</div>
-                  <div className={theme.text}><strong>Status:</strong> <span className={`${getStatusBadge(selectedPartner?.status)} ${isDark ? 'dark' : ''}`}>{selectedPartner?.status}</span></div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -334,13 +314,6 @@ export default function DeliveryPartnerAdmin() {
                     className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
                     required
                   />
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className={`w-full p-2 border rounded-lg transition-colors ${theme.input}`}
-                  >
-                    {statuses.map(status => <option key={status} value={status}>{status}</option>)}
-                  </select>
                   <div className="flex gap-2 pt-4">
                     <button
                       type="button"
