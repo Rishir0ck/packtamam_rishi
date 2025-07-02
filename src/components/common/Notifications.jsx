@@ -33,7 +33,7 @@ export default function Notifications({ onClose, onCountUpdate }) {
         
         // Process notifications - ensure we always get an array
         let notificationArray = Array.isArray(notificationsResponse) ? notificationsResponse :
-                               notificationsResponse?.notifications || notificationsResponse?.data || 
+                               notificationsResponse?.notifications || notificationsResponse?.data.data || 
                                (notificationsResponse ? [notificationsResponse] : [])
         
         // Additional safety check to ensure it's an array
@@ -61,7 +61,7 @@ export default function Notifications({ onClose, onCountUpdate }) {
   }, [onCountUpdate])
 
   // Add safety check for the filter operation
-  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => n && !n.read).length : 0
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => n && n.read).length : 0
   
   const dark = isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-[#c79e73]/20 text-[#43311e]'
   const hover = isDark ? 'hover:bg-gray-700' : 'hover:bg-[#c79e73]/5'
@@ -117,7 +117,7 @@ export default function Notifications({ onClose, onCountUpdate }) {
               type = 'default', 
               title = 'Notification', 
               message = 'No message', 
-              read = false, 
+              read = true, 
               time, 
               created_at,
               timestamp

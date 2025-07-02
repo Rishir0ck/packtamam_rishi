@@ -21,7 +21,7 @@ export default function Header() {
       try {
         const response = await adminApiService.getNotificationCount()
         const count = typeof response === 'number' ? response : 
-                     response?.count || response?.total || response?.data || 0
+                     response?.count || response?.total || response?.data.count || 0
         setNotificationCount(count)
       } catch (error) {
         console.error('Failed to fetch notification count:', error)
