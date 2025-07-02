@@ -405,10 +405,11 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                   <div className="space-y-4">
                     {selected.inventories.map((inventory, index) => (
                       <div key={inventory.id || index} className={`border rounded-lg p-4 ${theme.card}`}>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                           {[
                             ['Size', inventory.size || 'N/A'],
                             ['Inventory Code', inventory.inventory_code || 'N/A'],
+                            ['Quantity', inventory.quantity || 'N/A'],
                             ['Cost Price', `₹${inventory.costPrice || 0}`]
                           ].map(([label, value], i) => (
                             <div key={i}>
@@ -425,10 +426,10 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                             <div className="space-y-2">
                               {inventory.price_slabs.map((slab, slabIndex) => (
                                 <div key={slab.id || slabIndex} className={`flex gap-4 text-sm ${theme.text}`}>
-                                  <span>Qty: {slab.packOff}</span>
-                                  <span>Min. Pack: {slab.minPack}</span>
-                                  <span>Price: ₹{slab.costPrice}</span>
-                                  <span>Final: ₹{slab.sellPrice}</span>
+                                  <span>Quantity of Pack: {slab.packOff}</span>
+                                  <span>Pack Off: {slab.minPack}</span>
+                                  <span>Cost Price: ₹{slab.costPrice}</span>
+                                  <span>Final Price: ₹{slab.sellPrice}</span>
                                 </div>
                               ))}
                             </div>
