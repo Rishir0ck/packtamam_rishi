@@ -138,6 +138,9 @@ class AdminService {
   async getQueryBusinessList(page = 1, perPage = 10) {
     return this.makeAuthenticatedRequest('GET', `/api/admin/query-business-list?page=${page}&per_page=${perPage}`);
   }
+  async updateRestaurantCredits(id, credits) {
+    return this.makeAuthenticatedRequest('POST', `/api/admin/add-credits`, { id, credits });
+  }
 
   async updateBusinessStatus(id, status, queryMessage = null) {
     const payload = { id, status };

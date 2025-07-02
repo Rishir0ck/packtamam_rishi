@@ -211,9 +211,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
           <table className="w-full">
             <thead className={theme.tableHeader}>
               <tr>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-      Sr. No.
-    </th>
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Sr. No.</th>
                 <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Image</th>
                 {tableColumns.map(({ key, label, sortable }) => (
                   <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
@@ -228,7 +226,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {paginatedData.map((item,index) => {
+              {paginatedData.map((item,index,productData) => {
                 const price = getPrice(item)
                 const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;  // Calculate Sr. No here
                 return (
@@ -287,7 +285,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <ActionButton onClick={() => { setSelected(item); setModal('view') }} color="#6b7280" icon={Eye} title="View" />
-                        <ActionButton onClick={() => navigate('/discount', { state: { editData: item } })} color="#c79e73" icon={Edit} title="Edit" />
+                        <ActionButton onClick={() => navigate('/discount', { state: { editData: productData } })} color="#c79e73" icon={Edit} title="Edit" />
                         <ActionButton onClick={() => toggleStatus(item.id, item.is_active)} color={item.is_active ? '#ef4444' : '#10b981'} icon={Power} title={item.is_active ? 'Deactivate' : 'Activate'} />
                         {/* <ActionButton onClick={() => deleteItem(item.id)} color="#ef4444" icon={Trash2} title="Delete" /> */}
                       </div>

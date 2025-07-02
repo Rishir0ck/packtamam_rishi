@@ -117,7 +117,7 @@ export default function RestaurantManagement() {
       ])
       
       const restaurants = restaurantResult.success ? restaurantResult.data.data?.map(r => ({
-        id: r.id, name: r.business_name || r.name, owner: r.owner_name || r.owner,
+        id: r.id, name: r.business_name || r.name, owner: r.owner_name || r.owner,user_id: r.user_id || null,
         legal_entity_name: r.legal_entity_name || 'N/A', email: r.email, phone: r.mobile_number,
         address: [r.address, r.location, r.landmark, r.pincode].filter(Boolean).join(', ') || 'N/A',
         city: r.city, franchise_code: r.franchise_code, fssai_no: r.fssai_no || 'N/A',
@@ -196,6 +196,8 @@ export default function RestaurantManagement() {
         id, name, owner, email, phone, city, address, businessType, outlet_type, 
         legal_entity_name, franchise_code, status === 'active', franchises
       )
+
+      console.log(result);
       
       if (result.success) {
         setState(prev => ({
@@ -518,105 +520,109 @@ export default function RestaurantManagement() {
             </div>
 
             {/* Credit Assignment */}
-            <div className={`rounded-lg p-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
-              <h4 className={`font-medium mb-2 ${theme('text-gray-900', 'text-white')}`}>Assign Credits</h4>
-              <div className="flex gap-2">
-                <input 
-                  type="number"
-                  placeholder="Amount to add"
-                  value={state.creditAmount}
-                  onChange={(e) => setState(prev => ({ ...prev, creditAmount: e.target.value }))}
-                  className={`flex-1 p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
-                />
-                <button 
-                  onClick={handleCreditAssign}
-                  disabled={!state.creditAmount || state.saving}
-                  className="px-4 py-2 text-white rounded-lg text-sm disabled:opacity-50 hover:opacity-80"
-                  style={{ backgroundColor: '#c79e73' }}
-                >
-                  Add Credits
-                </button>
-              </div>
-              <p className={`text-xs mt-1 ${theme('text-gray-600', 'text-gray-400')}`}>
-                Current: ₹{state.editData.credits || 0}
-              </p>
-            </div>
-
-            {/* Franchises */}
-            <div>
-              <h3 className={`font-semibold mb-3 ${theme('text-gray-900', 'text-white')}`}>Franchises</h3>
-              
-              {/* Add New Franchise */}
-              <div className={`rounded-lg p-3 mb-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  {[
-                    ['business_name', 'Business Name'],
-                    ['owner_name', 'Owner Name'],
-                    ['email', 'Email'],
-                    ['mobile_number', 'Mobile Number']
-                  ].map(([field, placeholder]) => (
-                    <input 
-                      key={field}
-                      type="text"
-                      placeholder={placeholder}
-                      value={state.newFranchise[field]}
-                      onChange={(e) => handleNewFranchiseChange(field, e.target.value)}
-                      className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
-                    />
-                  ))}
-                </div>
+            {!state.editData.user_id && (
+              <div className={`rounded-lg p-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
+                <h4 className={`font-medium mb-2 ${theme('text-gray-900', 'text-white')}`}>Assign Credits</h4>
                 <div className="flex gap-2">
-                  <select 
-                    value={state.newFranchise.outlet_type} 
-                    onChange={(e) => handleNewFranchiseChange('outlet_type', e.target.value)}
+                  <input 
+                    type="number"
+                    placeholder="Amount to add"
+                    value={state.creditAmount}
+                    onChange={(e) => setState(prev => ({ ...prev, creditAmount: e.target.value }))}
                     className={`flex-1 p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
-                    disabled={state.loadingOutlets}
-                  >
-                    <option value="">Select Outlet Type</option>
-                    {Array.isArray(state.outletTypes) && state.outletTypes
-                      .filter(type => type.is_active === true)
-                      .map((cat) => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                  </select>
+                  />
                   <button 
-                    onClick={addFranchise}
-                    disabled={!state.newFranchise.business_name || !state.newFranchise.email}
+                    onClick={handleCreditAssign}
+                    disabled={!state.creditAmount || state.saving}
                     className="px-4 py-2 text-white rounded-lg text-sm disabled:opacity-50 hover:opacity-80"
                     style={{ backgroundColor: '#c79e73' }}
                   >
-                    <Plus className="w-4 h-4" />
+                    Add Credits
                   </button>
                 </div>
+                <p className={`text-xs mt-1 ${theme('text-gray-600', 'text-gray-400')}`}>
+                  Current: ₹{state.editData.credits || 0}
+                </p>
               </div>
+            )}
 
-              {/* Existing Franchises */}
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {state.editData.franchises && state.editData.franchises.length > 0 ? (
-                  state.editData.franchises.map((franchise, index) => (
-                    <div key={index} className="relative">
-                      <FranchiseCard franchise={franchise} isDark={isDark} />
-                      <button 
-                        onClick={() => setState(prev => ({
-                          ...prev,
-                          editData: {
-                            ...prev.editData,
-                            franchises: prev.editData.franchises.filter((_, i) => i !== index)
-                          }
-                        }))}
-                        className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-100 rounded"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className={`text-sm ${theme('text-gray-500', 'text-gray-400')} text-center py-4`}>
-                    No franchises added yet
-                  </p>
-                )}
+            {/* Franchises - Only show if user_id is not null */}
+            {!state.editData.user_id && (
+              <div>
+                <h3 className={`font-semibold mb-3 ${theme('text-gray-900', 'text-white')}`}>Franchises</h3>
+                
+                {/* Add New Franchise */}
+                <div className={`rounded-lg p-3 mb-3 ${theme('bg-gray-50', 'bg-gray-700')}`}>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    {[
+                      ['business_name', 'Business Name'],
+                      ['owner_name', 'Owner Name'],
+                      ['email', 'Email'],
+                      ['mobile_number', 'Mobile Number']
+                    ].map(([field, placeholder]) => (
+                      <input 
+                        key={field}
+                        type="text"
+                        placeholder={placeholder}
+                        value={state.newFranchise[field]}
+                        onChange={(e) => handleNewFranchiseChange(field, e.target.value)}
+                        className={`p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <select 
+                      value={state.newFranchise.outlet_type} 
+                      onChange={(e) => handleNewFranchiseChange('outlet_type', e.target.value)}
+                      className={`flex-1 p-2 border rounded text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-600 text-white')}`}
+                      disabled={state.loadingOutlets}
+                    >
+                      <option value="">Select Outlet Type</option>
+                      {Array.isArray(state.outletTypes) && state.outletTypes
+                        .filter(type => type.is_active === true)
+                        .map((cat) => (
+                          <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
+                    </select>
+                    <button 
+                      onClick={addFranchise}
+                      disabled={!state.newFranchise.business_name || !state.newFranchise.email}
+                      className="px-4 py-2 text-white rounded-lg text-sm disabled:opacity-50 hover:opacity-80"
+                      style={{ backgroundColor: '#c79e73' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Existing Franchises */}
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {state.editData.franchises && state.editData.franchises.length > 0 ? (
+                    state.editData.franchises.map((franchise, index) => (
+                      <div key={index} className="relative">
+                        <FranchiseCard franchise={franchise} isDark={isDark} />
+                        <button 
+                          onClick={() => setState(prev => ({
+                            ...prev,
+                            editData: {
+                              ...prev.editData,
+                              franchises: prev.editData.franchises.filter((_, i) => i !== index)
+                            }
+                          }))}
+                          className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-100 rounded"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className={`text-sm ${theme('text-gray-500', 'text-gray-400')} text-center py-4`}>
+                      No franchises added yet
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Save Button */}
             <div className="flex justify-end gap-2 pt-4">

@@ -67,7 +67,7 @@ export default function RestaurantOnboarding() {
           appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           status: item.status,
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
-          profileImg: item.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+          profileImg: item.profile_picture || "",
           documents: item.documents || {},
           franchise: item.franchise || {},
           queryHistory: item.query_message || []

@@ -335,7 +335,7 @@ export default function ProductForm() {
             </select>
           </div>
           
-          <div>
+          {/* <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Sub Category</label>
             <select 
               value={formData.subcategory_id} 
@@ -347,7 +347,7 @@ export default function ProductForm() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           <div>
             <label className={`block text-sm font-medium ${theme.text} mb-1`}>Material</label>
@@ -478,8 +478,8 @@ export default function ProductForm() {
                         ]},
                         { title: 'Final Price', fields: [
                           ['With GST (₹)', 'priceWithGst', 'number', true], 
-                          ['Payable GST (₹)', 'payableGst', 'number', true],
-                          ['Net Profit (₹)', 'netProfit', 'number', true]
+                          // ['Payable GST (₹)', 'payableGst', 'number', true],
+                          // ['Net Profit (₹)', 'netProfit', 'number', true]
                         ]}
                       ].map((group) => (
                         <div key={group.title} className="flex flex-col gap-1">
