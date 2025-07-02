@@ -125,8 +125,8 @@ export default function RestaurantManagement() {
         lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
         joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
         status: r.status === 'Approved' ? 'active' : 'inactive', credits: r.credits || 0,
-        profileImg: r.profile_picture || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-        restaurantImg: r.restaurant_image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
+        profileImg: r.profile_picture || "../src/assets/user1.png",
+        restaurantImg: r.restaurant_image || "../src/assets/placeholder-image.jpg",
         franchises: r.franchise || []
       })) || [] : []
 
@@ -655,7 +655,7 @@ export default function RestaurantManagement() {
               <img 
                 src={state.selected.profileImg} 
                 alt={state.selected.name}
-                className="w-20 h-20 rounded-lg object-cover"
+                className="w-8 h-8 rounded-lg object-cover"
               />
               <div className="flex-1">
                 <h3 className={`text-xl font-bold ${theme('text-gray-900', 'text-white')}`}>
@@ -683,11 +683,11 @@ export default function RestaurantManagement() {
             </div>
 
             {/* Restaurant Image */}
-            <div>
+            <div className="flex justify-center">
               <img 
                 src={state.selected.restaurantImg} 
                 alt="Restaurant"
-                className="w-full h-48 rounded-lg object-cover"
+                className="w-60 h-40 rounded-lg object-cover"
               />
             </div>
 

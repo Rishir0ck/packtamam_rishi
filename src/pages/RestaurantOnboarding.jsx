@@ -67,7 +67,7 @@ export default function RestaurantOnboarding() {
           appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           status: item.status,
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
-          profileImg: item.profile_picture || "",
+          profileImg: item.profile_picture || "../src/assets/user1.png",
           documents: item.documents || {},
           franchise: item.franchise || {},
           queryHistory: item.query_message || []
@@ -433,7 +433,7 @@ export default function RestaurantOnboarding() {
                   <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}><strong>Contact</strong></h3>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Mail className="w-4 h-4" /><strong>Email:</strong> {selected.email}</div></div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><Phone className="w-4 h-4" /><strong>Phone:</strong> {selected.phone}</div></div>
-                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><MapPin className="w-8 h-8" /><strong>Address:</strong> {selected.address}</div></div>
+                  <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><MapPin className="w-4 h-4" /><strong>Address:</strong> {selected.address}</div></div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><FileText className="w-4 h-4" /><strong>FSSAI:</strong> {selected.fssaiNo}</div></div>
                   <div className={isDark ? 'text-gray-300' : 'text-gray-700'}><div className="flex items-center gap-2"><FileText className="w-4 h-4" /> <strong>GST:</strong> {selected.gstNo}</div></div>
                 </div>
