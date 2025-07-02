@@ -1,6 +1,6 @@
 // InventoryManagement.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { AlertCircle, X, Package, TrendingUp, Layers, BadgePercent  } from 'lucide-react'
+import { AlertCircle, X, Package, TrendingUp, Layers, BadgePercent, RefreshCw  } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import adminService from '../Firebase/services/adminApiService'
 import ProductsTab from './ProductsTab'
@@ -88,8 +88,8 @@ export default function InventoryManagement() {
   if (loading && !isInitialized) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+        <div className="text-center space-y-4">
+          <RefreshCw className={`w-8 h-8 text-gray-400 mx-auto animate-spin`} />
           <span className={`text-lg ${theme.text}`}>Loading inventory...</span>
         </div>
       </div>
