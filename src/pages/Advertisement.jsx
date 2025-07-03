@@ -406,7 +406,7 @@ export default function AdvertisementModule() {
               <div className="flex gap-3 pt-4">
                 <Btn 
                   onClick={() => handleEdit(showView)}
-                  className="flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700"
+                  className="flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium bg-[#cca883]"
                 >
                   <Edit className="w-4 h-4" />Edit
                 </Btn>
@@ -501,13 +501,13 @@ export default function AdvertisementModule() {
                           >
                             <Eye className="w-4 h-4" />
                           </Btn>
-                          <Btn 
+                          {/* <Btn 
                             onClick={() => handleEdit(ad)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
-                          </Btn>
+                          </Btn> */}
                           <Btn 
                             onClick={() => handleDelete(ad.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
