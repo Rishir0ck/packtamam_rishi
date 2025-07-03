@@ -62,10 +62,10 @@ const mockCartData = [
 
 const orderStatuses = [
   { key: 'cart', label: 'Cart', icon: ShoppingCart, color: '#6b7280' },
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle, color: '#059669' },
-  { key: 'preparing', label: 'Preparing', icon: Clock, color: '#d97706' },
-  { key: 'ready', label: 'Ready', icon: Package, color: '#7c3aed' },
-  { key: 'out-for-delivery', label: 'Delivery', icon: Truck, color: '#2563eb' },
+  { key: 'confirmed', label: 'Payment Done', icon: CheckCircle, color: '#059669' },
+  // { key: 'preparing', label: 'Order Preparing', icon: Clock, color: '#d97706' },
+  // { key: 'ready', label: 'Ready', icon: Package, color: '#7c3aed' },
+  { key: 'out-for-delivery', label: 'Assign Delivery Partner', icon: Truck, color: '#2563eb' },
   { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: '#059669' }
 ] 
 

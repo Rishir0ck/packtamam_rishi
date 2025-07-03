@@ -345,6 +345,26 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/add/delivery_partners', {name, tracking_link});
   }
   
+  //Discount Ticket APIs
+  async getDiscounts() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/list-discount-ticket-coupon');
+  }
+  async addDiscountTicket(discount) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add-discount-ticket', discount);
+  }
+  async updateDiscountTicket(discount) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/update/discount-ticket', discount);
+  }
+  async addTicketCoupon(coupon) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add-discount-ticket-coupon', { id: coupon });
+  }
+  async updateTicketCouponStatus(coupon) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/discount-ticket-coupon/status', coupon);
+  }
+  async deleteTicketCoupon(couponId) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delete/coupon', { id: couponId });
+  }
+
 
   // Helper Methods
   createProductFormData(productData) {

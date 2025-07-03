@@ -1,315 +1,329 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, DollarSign, Percent, Tag, Package, Calendar, X, RefreshCw } from 'lucide-react'
-import Modal from './Modal'
-import ActionButton from './ActionButton'
-import useTheme from '../hooks/useTheme'
+import { Plus, Edit, Save, Trash2, ChevronLeft, ChevronRight, IndianRupee, Percent, Calendar, X, RefreshCw, Gift, Copy } from 'lucide-react'
+import adminApiService from '../Firebase/services/adminApiService'
 
-// Dummy API - replace with your real API
-const dummyAPI = {
-  getDiscounts: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return [
-      {
-        id: 1, name: "Summer Sale", type: "amount", value: 1000, minTicketSize: 10000, maxTicketSize: 20000,
-        assignedTo: "category", assignedItems: ["Electronics", "Clothing"], timeRestricted: true,
-        startDate: "2024-07-01", endDate: "2024-07-31", recurring: false, isActive: true
-      },
-      {
-        id: 2, name: "VIP Discount", type: "percentage", value: 15, minTicketSize: 5000, maxTicketSize: null,
-        assignedTo: "product", assignedItems: ["iPhone 15", "MacBook Pro"], timeRestricted: false,
-        recurring: true, recurringDays: [25, 30], isActive: true
-      }
-    ]
-  },
-  saveDiscount: async (discount) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return { ...discount, id: discount.id || Date.now() }
-  },
-  deleteDiscount: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    return true
-  },
-  getCategories: async () => ["Electronics", "Clothing", "Home & Garden", "Sports", "Books"],
-  getProducts: async () => ["iPhone 15", "MacBook Pro", "Samsung TV", "Nike Shoes", "Adidas Jacket"]
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
 }
 
-export default function DiscountModule() {
+const ActionButton = ({ onClick, color, icon: Icon, title, disabled }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+    className="p-2 rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50"
+    style={{ backgroundColor: color }}
+  >
+    <Icon className="w-4 h-4 text-white" />
+  </button>
+)
+
+export default function PDiscount() {
   const [discounts, setDiscounts] = useState([])
-  const [categories, setCategories] = useState([])
-  const [products, setProducts] = useState([])
   const [modal, setModal] = useState('')
   const [editData, setEditData] = useState(null)
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const { isDark } = useTheme()
-
-  const theme = isDark ? {
-    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white', muted: 'text-gray-300',
-    border: 'border-gray-700', input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
-    hover: 'hover:bg-gray-700', tableHeader: 'bg-gray-700', tableRow: 'hover:bg-gray-750',
-    btn: 'bg-gray-700 hover:bg-gray-600 text-white', isDark: true
-  } : {
-    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600',
-    border: 'border-gray-200', input: 'bg-white border-gray-300 placeholder-gray-500',
-    hover: 'hover:bg-gray-50', tableHeader: 'bg-gray-50', tableRow: 'hover:bg-gray-50',
-    btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700', isDark: false
-  }
+  const [selectedDiscount, setSelectedDiscount] = useState(null)
+  const [generatingCoupon, setGeneratingCoupon] = useState(false)
 
   const initialFormData = {
-    name: '', type: 'amount', value: '', minTicketSize: '', maxTicketSize: '',
-    assignedTo: 'category', assignedItems: [], timeRestricted: false, startDate: '', endDate: '',
-    recurring: false, recurringDays: [], isActive: true
+    timeRestricted: false, startDate: '', endDate: '', isActive: true,
+    slabs: [{ min: '', max: '', value: '', type: 'amount' }]
   }
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  const showAlert = (message, type = 'info') => {
+    // You can replace this with a proper toast notification
+    alert(message)
+  }
 
-  const loadData = async () => {
+  const loadDiscounts = useCallback(async () => {
     try {
       setLoading(true)
-      const [discountsData, categoriesData, productsData] = await Promise.all([
-        dummyAPI.getDiscounts(), dummyAPI.getCategories(), dummyAPI.getProducts()
-      ])
-      setDiscounts(discountsData)
-      setCategories(categoriesData)
-      setProducts(productsData)
+      const response = await adminApiService.getDiscounts()
+      if (response.success) {
+        // Ensure we always set an array
+        const discountsData = response.data.data
+        if (Array.isArray(discountsData)) {
+          setDiscounts(discountsData)
+        } else {
+          console.warn('API response.data is not an array:', discountsData)
+          setDiscounts([])
+        }
+      } else {
+        setDiscounts([]) // Set empty array on failure
+        showAlert('Failed to load discounts', 'error')
+      }
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error('Error loading discounts:', error)
+      setDiscounts([]) // Set empty array on error
+      showAlert('Failed to load discounts', 'error')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleSort = useCallback((key) => {
-    setSortConfig(prev => ({
-      key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }))
-    setCurrentPage(1)
   }, [])
 
-  const sortedData = useMemo(() => {
-    if (!sortConfig.key) return discounts
-    return [...discounts].sort((a, b) => {
-      const aVal = a[sortConfig.key]
-      const bVal = b[sortConfig.key]
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [discounts, sortConfig])
+  useEffect(() => {
+    loadDiscounts()
+  }, [loadDiscounts])
 
   const paginatedData = useMemo(() => {
+    // Add safety check to ensure discounts is an array
+    if (!Array.isArray(discounts)) {
+      console.warn('discounts is not an array:', discounts)
+      return []
+    }
+    
     const start = (currentPage - 1) * itemsPerPage
-    return sortedData.slice(start, start + itemsPerPage)
-  }, [sortedData, currentPage, itemsPerPage])
+    return discounts.slice(start, start + itemsPerPage)
+  }, [discounts, currentPage, itemsPerPage])
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage)
+  // Add safety check for totalPages calculation
+  const totalPages = Math.ceil((Array.isArray(discounts) ? discounts.length : 0) / itemsPerPage)
 
   const handleFieldChange = useCallback((field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }))
   }, [])
 
-  const handleArrayChange = useCallback((field, item, checked) => {
+  const handleSlabChange = useCallback((index, field, value) => {
     setEditData(prev => ({
       ...prev,
-      [field]: checked ? [...prev[field], item] : prev[field].filter(i => i !== item)
+      slabs: prev.slabs.map((slab, i) => i === index ? { ...slab, [field]: value } : slab)
     }))
   }, [])
 
-  const saveItem = useCallback(async () => {
-    if (!editData?.name?.trim()) return alert('Discount name is required')
+  const addSlab = () => {
+    setEditData(prev => ({
+      ...prev,
+      slabs: [...prev.slabs, { min: '', max: '', value: '', type: 'amount' }]
+    }))
+  }
+
+  const removeSlab = (index) => {
+    setEditData(prev => ({
+      ...prev,
+      slabs: prev.slabs.filter((_, i) => i !== index)
+    }))
+  }
+
+  const saveDiscount = async () => {
+    if (!editData?.slabs?.length || !editData.slabs.some(s => s.value)) {
+      return showAlert('At least one slab with value is required', 'error')
+    }
     
     try {
       setSaving(true)
       const discountData = {
         ...editData,
-        value: parseFloat(editData.value),
-        minTicketSize: editData.minTicketSize ? parseFloat(editData.minTicketSize) : null,
-        maxTicketSize: editData.maxTicketSize ? parseFloat(editData.maxTicketSize) : null,
+        slabs: editData.slabs.map(slab => ({
+          min: slab.min ? parseFloat(slab.min) : null,
+          max: slab.max ? parseFloat(slab.max) : null,
+          value: parseFloat(slab.value),
+          type: slab.type
+        })).filter(slab => slab.value),
+        minTicketSize: editData.slabs[0]?.min ? parseFloat(editData.slabs[0].min) : null,
+        maxTicketSize: editData.slabs[0]?.max ? parseFloat(editData.slabs[0].max) : null
       }
       
-      const saved = await dummyAPI.saveDiscount(discountData)
+      const response = editData.id 
+        ? await adminApiService.updateDiscountTicket(discountData)
+        : await adminApiService.addDiscountTicket(discountData)
       
-      if (editData.id) {
-        setDiscounts(prev => prev.map(d => d.id === editData.id ? saved : d))
+      if (response.success) {
+        await loadDiscounts()
+        setModal('')
+        setEditData(null)
+        showAlert(`Discount ${editData.id ? 'updated' : 'added'} successfully`, 'success')
       } else {
-        setDiscounts(prev => [...prev, saved])
+        showAlert(response.message || 'Failed to save discount', 'error')
       }
-      
-      setModal('')
-      setEditData(null)
     } catch (error) {
       console.error('Error saving discount:', error)
+      showAlert('Failed to save discount', 'error')
     } finally {
       setSaving(false)
     }
-  }, [editData])
-
-  const deleteItem = useCallback(async (id) => {
-    if (window.confirm('Are you sure you want to delete this discount?')) {
-      try {
-        await dummyAPI.deleteDiscount(id)
-        setDiscounts(prev => prev.filter(d => d.id !== id))
-      } catch (error) {
-        console.error('Error deleting discount:', error)
-      }
-    }
-  }, [])
-
-  const openModal = useCallback((item = null) => {
-    setEditData(item ? {
-      ...item,
-      minTicketSize: item.minTicketSize?.toString() || '',
-      maxTicketSize: item.maxTicketSize?.toString() || '',
-      value: item.value.toString(),
-      recurringDays: item.recurringDays || []
-    } : initialFormData)
-    setModal('editDiscount')
-  }, [])
-
-  const SortIcon = ({ column }) => {
-    if (sortConfig.key !== column) return <ChevronUp className="w-4 h-4 opacity-30" />
-    return sortConfig.direction === 'asc' 
-      ? <ChevronUp className="w-4 h-4 text-blue-500" />
-      : <ChevronDown className="w-4 h-4 text-blue-500" />
   }
 
-  const Pagination = () => (
-    <div className={`flex items-center justify-between px-4 py-3 border-t ${theme.border}`}>
-      <div className="flex items-center gap-2">
-        <span className={`text-sm ${theme.muted}`}>Rows per page:</span>
-        <select
-          value={itemsPerPage}
-          onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }}
-          className={`px-2 py-1 border rounded text-sm ${theme.input}`}
-        >
-          {[5, 10, 20, 50].map(size => <option key={size} value={size}>{size}</option>)}
-        </select>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className={`text-sm ${theme.muted}`}>
-          {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length}
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className={`p-1 rounded transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : theme.hover}`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className={`p-1 rounded transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : theme.hover}`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  const deleteDiscount = async (id) => {
+    if (window.confirm('Are you sure you want to delete this discount?')) {
+      try {
+        // If you have a delete API endpoint, use it here
+        // const response = await adminApiService.deleteDiscountTicket(id)
+        // For now, removing from local state
+        setDiscounts(prev => Array.isArray(prev) ? prev.filter(d => d.id !== id) : [])
+        showAlert('Discount deleted successfully', 'success')
+      } catch (error) {
+        console.error('Error deleting discount:', error)
+        showAlert('Failed to delete discount', 'error')
+      }
+    }
+  }
+
+  const generateCoupon = async (discountId) => {
+    try {
+      setGeneratingCoupon(true)
+      const response = await adminApiService.addTicketCoupon(discountId)
+      if (response.success) {
+        await loadDiscounts()
+        showAlert('Coupon generated successfully', 'success')
+      } else {
+        showAlert(response.message || 'Failed to generate coupon', 'error')
+      }
+    } catch (error) {
+      console.error('Error generating coupon:', error)
+      showAlert('Failed to generate coupon', 'error')
+    } finally {
+      setGeneratingCoupon(false)
+    }
+  }
+
+  const deleteCoupon = async (couponId) => {
+    if (window.confirm('Are you sure you want to delete this coupon?')) {
+      try {
+        const response = await adminApiService.deleteTicketCoupon(couponId)
+        if (response.success) {
+          await loadDiscounts()
+          showAlert('Coupon deleted successfully', 'success')
+        } else {
+          showAlert(response.message || 'Failed to delete coupon', 'error')
+        }
+      } catch (error) {
+        console.error('Error deleting coupon:', error)
+        showAlert('Failed to delete coupon', 'error')
+      }
+    }
+  }
+
+  const toggleCouponStatus = async (coupon) => {
+    try {
+      const response = await adminApiService.updateTicketCouponStatus({
+        ...coupon,
+        isActive: !coupon.isActive
+      })
+      if (response.success) {
+        await loadDiscounts()
+        showAlert('Coupon status updated successfully', 'success')
+      } else {
+        showAlert(response.message || 'Failed to update coupon status', 'error')
+      }
+    } catch (error) {
+      console.error('Error updating coupon status:', error)
+      showAlert('Failed to update coupon status', 'error')
+    }
+  }
+
+  const openModal = (item = null) => {
+    setEditData(item ? {
+      ...item,
+      slabs: item.slabs?.length ? item.slabs.map(slab => ({
+        min: slab.min?.toString() || '',
+        max: slab.max?.toString() || '',
+        value: slab.value.toString(),
+        type: slab.type || 'amount'
+      })) : [{ min: item.minTicketSize?.toString() || '', max: item.maxTicketSize?.toString() || '', value: '', type: 'amount' }]
+    } : initialFormData)
+    setModal('editDiscount')
+  }
+
+  const openCouponModal = (discount) => {
+    setSelectedDiscount(discount)
+    setModal('manageCoupons')
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    showAlert('Coupon code copied!', 'success')
+  }
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
-        <div>
-          <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
-        </div>
-      </div>
-    )
-  }
-
-  if (!discounts.length) {
-    return (
-      <div className={`min-h-screen ${theme.bg}`}>
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="text-center py-16">
-            <Percent className={`w-16 h-16 mx-auto mb-4 ${theme.muted}`} />
-            <h3 className={`text-xl font-semibold mb-2 ${theme.text}`}>No discounts found</h3>
-            <p className={`${theme.muted}`}>Start by adding your first discount</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className={`min-h-screen ${theme.bg}`}>
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-full mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className={`text-2xl font-semibold ${theme.text}`}>Discounts</h2>
-            <p className={`${theme.muted}`}>Manage discount rules and offers</p>
+            <h2 className="text-2xl font-semibold text-gray-900">Discounts</h2>
+            <p className="text-gray-600">Manage discount rules and offers</p>
           </div>
           <button
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#c79e73' }}
+            className="flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors"
           >
             <Plus className="w-5 h-5" />
             Add Discount
           </button>
         </div>
 
-        <div className={`border rounded-lg overflow-hidden shadow-sm ${theme.card} ${theme.border}`}>
+        <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
           <table className="w-full">
-            <thead className={theme.tableHeader}>
+            <thead className="bg-gray-50">
               <tr>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Sr. No.</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1 transition-colors">
-                    Name <SortIcon column="name" />
-                  </button>
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Type</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Value</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Ticket Size</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Applied To</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Status</th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sr. No.</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slabs</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Period</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupons</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <tbody className="divide-y divide-gray-200">
               {paginatedData.map((discount, index) => (
-                <tr key={discount.id} className={`${theme.tableRow} transition-colors`}>
-                  <td className={`px-4 py-3 font-medium ${theme.text}`}>
+                <tr key={discount.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium text-gray-900">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
-                  <td className={`px-4 py-3 font-medium ${theme.text}`}>{discount.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                      discount.type === 'amount' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {discount.type === 'amount' ? <DollarSign size={12} /> : <Percent size={12} />}
-                      {discount.type}
-                    </span>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {discount.slabs?.length ? (
+                      <div className="space-y-1">
+                        {discount.slabs.map((slab, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                              slab.type === 'amount' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {slab.type === 'amount' ? <IndianRupee size={10} /> : <Percent size={10} />}
+                              {slab.type}
+                            </span>
+                            <span>
+                              {slab.min ? `₹${slab.min}` : '₹0'} - {slab.max ? `₹${slab.max}` : '∞'}: 
+                              {slab.type === 'amount' ? ` ₹${slab.value}` : ` ${slab.value}%`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs">No slabs defined</div>
+                    )}
                   </td>
-                  <td className={`px-4 py-3 ${theme.text}`}>
-                    {discount.type === 'amount' ? `₹${discount.value}` : `${discount.value}%`}
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {discount.timeRestricted 
+                      ? `${discount.startDate} to ${discount.endDate}`
+                      : 'No restriction'
+                    }
                   </td>
-                  <td className={`px-4 py-3 text-sm ${theme.muted}`}>
-                    {discount.minTicketSize ? `₹${discount.minTicketSize}` : 'No min'}
-                    {' - '}
-                    {discount.maxTicketSize ? `₹${discount.maxTicketSize}` : 'No max'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs w-fit ${
-                        discount.assignedTo === 'category' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {discount.assignedTo === 'category' ? <Tag size={12} /> : <Package size={12} />}
-                        {discount.assignedTo}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {discount.assignedItems.slice(0, 2).join(', ')}
-                        {discount.assignedItems.length > 2 && `... +${discount.assignedItems.length - 2} more`}
-                      </span>
-                    </div>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {discount.coupons?.length || 0} coupon(s)
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-1 rounded-full text-xs ${
@@ -319,153 +333,59 @@ export default function DiscountModule() {
                     </span>
                   </td>
                   <td className="px-4 py-3 flex gap-2">
-                    <ActionButton onClick={() => openModal(discount)} color="#c79e73" icon={Edit} title="Edit" />
-                    <ActionButton onClick={() => deleteItem(discount.id)} color="#ef4444" icon={Trash2} title="Delete" />
+                    <ActionButton onClick={() => openModal(discount)} color="#d97706" icon={Edit} title="Edit" />
+                    <ActionButton onClick={() => openCouponModal(discount)} color="#3b82f6" icon={Gift} title="Manage Coupons" />
+                    <ActionButton onClick={() => deleteDiscount(discount.id)} color="#ef4444" icon={Trash2} title="Delete" />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <Pagination />
+          
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Rows per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }}
+                className="px-2 py-1 border rounded text-sm"
+              >
+                {[5, 10, 20, 50].map(size => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, Array.isArray(discounts) ? discounts.length : 0)} of {Array.isArray(discounts) ? discounts.length : 0}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
+        {/* Edit Discount Modal */}
         <Modal
           isOpen={modal === 'editDiscount'}
           onClose={() => setModal('')}
           title={editData?.id ? 'Edit Discount' : 'Add Discount'}
-          theme={theme}
         >
           <div className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
-                  Discount Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editData?.name || ''}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
-                  placeholder="Enter discount name"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>Discount Type</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="type"
-                      value="amount"
-                      checked={editData?.type === 'amount'}
-                      onChange={(e) => handleFieldChange('type', e.target.value)}
-                      className="text-blue-600"
-                    />
-                    <DollarSign size={16} />
-                    Amount
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="type"
-                      value="percentage"
-                      checked={editData?.type === 'percentage'}
-                      onChange={(e) => handleFieldChange('type', e.target.value)}
-                      className="text-blue-600"
-                    />
-                    <Percent size={16} />
-                    Percentage
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
-                  Value {editData?.type === 'amount' ? '(Rs)' : '(%)'}
-                </label>
-                <input
-                  type="number"
-                  value={editData?.value || ''}
-                  onChange={(e) => handleFieldChange('value', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
-                  placeholder="Enter value"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>Min Ticket Size</label>
-                <input
-                  type="number"
-                  value={editData?.minTicketSize || ''}
-                  onChange={(e) => handleFieldChange('minTicketSize', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
-                  placeholder="Minimum amount"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>Max Ticket Size</label>
-                <input
-                  type="number"
-                  value={editData?.maxTicketSize || ''}
-                  onChange={(e) => handleFieldChange('maxTicketSize', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
-                  placeholder="Maximum amount"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme.text}`}>Assign To</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="assignedTo"
-                      value="category"
-                      checked={editData?.assignedTo === 'category'}
-                      onChange={(e) => handleFieldChange('assignedTo', e.target.value)}
-                      className="text-blue-600"
-                    />
-                    <Tag size={16} />
-                    Category
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="assignedTo"
-                      value="product"
-                      checked={editData?.assignedTo === 'product'}
-                      onChange={(e) => handleFieldChange('assignedTo', e.target.value)}
-                      className="text-blue-600"
-                    />
-                    <Package size={16} />
-                    Product
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme.text}`}>
-                Select {editData?.assignedTo === 'category' ? 'Categories' : 'Products'}
-              </label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-3 border rounded-lg">
-                {(editData?.assignedTo === 'category' ? categories : products).map(item => (
-                  <label key={item} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={editData?.assignedItems?.includes(item) || false}
-                      onChange={(e) => handleArrayChange('assignedItems', item, e.target.checked)}
-                      className="text-blue-600"
-                    />
-                    {item}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <label className="flex items-center gap-2 text-sm font-medium">
                 <input
                   type="checkbox"
@@ -476,83 +396,197 @@ export default function DiscountModule() {
                 <Calendar size={16} />
                 Time Restricted
               </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={editData?.isActive || false}
+                  onChange={(e) => handleFieldChange('isActive', e.target.checked)}
+                  className="text-blue-600"
+                />
+                Active
+              </label>
             </div>
 
             {editData?.timeRestricted && (
-              <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="timeType"
-                      checked={!editData?.recurring}
-                      onChange={() => handleFieldChange('recurring', false)}
-                      className="text-blue-600"
-                    />
-                    Date Range
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="timeType"
-                      checked={editData?.recurring}
-                      onChange={() => handleFieldChange('recurring', true)}
-                      className="text-blue-600"
-                    />
-                    Recurring Monthly
-                  </label>
+              <div className="space-y-2 p-3 bg-amber-50 rounded-lg">
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={editData?.startDate || ''}
+                    onChange={(e) => handleFieldChange('startDate', e.target.value)}
+                    className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                  />
+                  <input
+                    type="date"
+                    value={editData?.endDate || ''}
+                    onChange={(e) => handleFieldChange('endDate', e.target.value)}
+                    className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                  />
                 </div>
-
-                {!editData?.recurring ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={editData?.startDate || ''}
-                      onChange={(e) => handleFieldChange('startDate', e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-lg"
-                    />
-                    <input
-                      type="date"
-                      value={editData?.endDate || ''}
-                      onChange={(e) => handleFieldChange('endDate', e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    {[25, 30].map(day => (
-                      <label key={day} className="flex items-center gap-1 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={editData?.recurringDays?.includes(day) || false}
-                          onChange={(e) => handleArrayChange('recurringDays', day, e.target.checked)}
-                          className="text-blue-600"
-                        />
-                        {day}th
-                      </label>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium">Discount Slabs</label>
+                <button
+                  onClick={addSlab}
+                  className="flex items-center gap-1 px-3 py-1 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Slab
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {editData?.slabs?.map((slab, index) => (
+                  <div key={index} className="flex flex-wrap gap-2 items-center p-3 border rounded-lg">
+                    <div className="flex gap-2">
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="radio"
+                          name={`type-${index}`}
+                          value="amount"
+                          checked={slab.type === 'amount'}
+                          onChange={(e) => handleSlabChange(index, 'type', e.target.value)}
+                        />
+                        <IndianRupee size={14} />
+                        Amount
+                      </label>
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="radio"
+                          name={`type-${index}`}
+                          value="percentage"
+                          checked={slab.type === 'percentage'}
+                          onChange={(e) => handleSlabChange(index, 'type', e.target.value)}
+                        />
+                        <Percent size={14} />
+                        Percentage
+                      </label>
+                    </div>
+                    <input
+                      type="number"
+                      value={slab.min}
+                      onChange={(e) => handleSlabChange(index, 'min', e.target.value)}
+                      className="w-24 px-2 py-1 border rounded text-sm"
+                      placeholder="Min"
+                    />
+                    <span className="text-sm text-gray-500">to</span>
+                    <input
+                      type="number"
+                      value={slab.max}
+                      onChange={(e) => handleSlabChange(index, 'max', e.target.value)}
+                      className="w-24 px-2 py-1 border rounded text-sm"
+                      placeholder="Max"
+                    />
+                    <span className="text-sm text-gray-500">=</span>
+                    <input
+                      type="number"
+                      value={slab.value}
+                      onChange={(e) => handleSlabChange(index, 'value', e.target.value)}
+                      className="w-28 px-2 py-1 border rounded text-sm"
+                      placeholder="Value"
+                    />
+                    <span className="text-sm text-gray-500">
+                      {slab.type === 'amount' ? '₹' : '%'}
+                    </span>
+                    {editData?.slabs?.length > 1 && (
+                      <button
+                        onClick={() => removeSlab(index)}
+                        className="p-1 text-red-500 hover:bg-red-100 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className={`p-4 border-t flex justify-end gap-3 ${theme.border}`}>
+          <div className="p-4 border-t flex justify-end gap-3">
             <button
               onClick={() => setModal('')}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${theme.btn}`}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm"
             >
               Cancel
             </button>
             <button
-              onClick={saveItem}
+              onClick={saveDiscount}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg font-medium disabled:opacity-50 text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#c79e73' }}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50 text-sm hover:bg-amber-700"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save'}
             </button>
+          </div>
+        </Modal>
+
+        {/* Manage Coupons Modal */}
+        <Modal
+          isOpen={modal === 'manageCoupons'}
+          onClose={() => setModal('')}
+          title="Manage Coupons"
+        >
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-medium">Coupons for Discount #{selectedDiscount?.id}</h4>
+              <button
+                onClick={() => generateCoupon(selectedDiscount?.id)}
+                disabled={generatingCoupon}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+              >
+                <Gift className="w-4 h-4" />
+                {generatingCoupon ? 'Generating...' : 'Generate New Coupon'}
+              </button>
+            </div>
+
+            {selectedDiscount?.coupons?.length > 0 ? (
+              <div className="space-y-2">
+                {selectedDiscount.coupons.map((coupon) => (
+                  <div key={coupon.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+                        {coupon.code}
+                      </code>
+                      <button
+                        onClick={() => toggleCouponStatus(coupon)}
+                        className={`inline-flex px-2 py-1 rounded-full text-xs cursor-pointer hover:opacity-80 ${
+                          coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {coupon.isActive ? 'Active' : 'Inactive'}
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Created: {coupon.createdAt}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => copyToClipboard(coupon.code)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Copy Code"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteCoupon(coupon.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete Coupon"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Gift className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600">No coupons generated yet</p>
+              </div>
+            )}
           </div>
         </Modal>
       </div>
