@@ -336,6 +336,14 @@ class AdminService {
   async updateDeliveryStatus(deliveryId, is_active) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/change-status', { id: deliveryId, is_active });
   }
+
+  //Delivery Partner APIs
+  async getDeliveryPartners() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/list/delivery_partners');
+  }
+  async addDeliveryPartner(name, tracking_link) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/add/delivery_partners', {name, tracking_link});
+  }
   
 
   // Helper Methods
