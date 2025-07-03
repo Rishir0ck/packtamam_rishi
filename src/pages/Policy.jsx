@@ -233,7 +233,7 @@ export default function PolicyAdmin() {
           </h1>
           
           <div className="flex gap-4 items-center">
-            <div className="relative flex-1">
+            {/* <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
               <input
                 type="text"
@@ -242,7 +242,7 @@ export default function PolicyAdmin() {
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${themeClass('border-gray-300 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
               />
-            </div>
+            </div> */}
             {/* <Button 
               onClick={() => openModal()} 
               disabled={loading}
@@ -337,7 +337,7 @@ export default function PolicyAdmin() {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
             <div className={`rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto ${themeClass('bg-white', 'bg-gray-800')}`}>
               <div className="flex justify-between items-center mb-6">
                 <h2 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>
@@ -348,7 +348,7 @@ export default function PolicyAdmin() {
 
               <div className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Title *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Title <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     disabled={currentForm.title}
@@ -360,7 +360,7 @@ export default function PolicyAdmin() {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Content *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Content <span className="text-red-500">*</span></label>
                   <textarea
                     value={currentForm.content}
                     onChange={(e) => setCurrentForm(prev => ({ ...prev, content: e.target.value }))}
@@ -394,15 +394,13 @@ export default function PolicyAdmin() {
 
         {/* View Modal */}
         {selectedPolicy && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedPolicy(null)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm" onClick={() => setSelectedPolicy(null)}>
             <div className={`rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto ${themeClass('bg-white', 'bg-gray-800')}`} onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
                 <h2 className={`text-2xl font-bold ${themeClass('text-gray-900', 'text-white')}`}>
                   Policy Details
                 </h2>
-                <button onClick={() => setSelectedPolicy(null)} className={`${themeClass('text-gray-400 hover:text-gray-600', 'text-gray-400 hover:text-gray-300')}`}>
-                  ×
-                </button>
+                <Button onClick={() => setSelectedPolicy(null)} className={`${themeClass('text-gray-400 hover:text-gray-600', 'text-gray-400 hover:text-gray-300')}`} icon={X}/>
               </div>
 
               <div className="space-y-4">

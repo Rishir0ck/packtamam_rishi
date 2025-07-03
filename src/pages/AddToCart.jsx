@@ -413,7 +413,7 @@ export default function OrderTableManagement() {
 
         {/* View Modal */}
         {modal === 'view' && selected && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
             <div className={`${theme.modal} rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
               <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
                 <h2 className={`text-lg font-bold ${theme.text}`}>Order Details - {selected.trackingId}</h2>
@@ -468,7 +468,7 @@ export default function OrderTableManagement() {
 
         {/* Edit Modal */}
         {modal === 'edit' && editData && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
             <div className={`${theme.modal} rounded-xl max-w-md w-full`}>
               <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
                 <h2 className={`text-lg font-bold ${theme.text}`}>Update Order Status</h2>

@@ -285,7 +285,7 @@ export default function DeliveryPartnerAdmin() {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
             <div className={`${theme.modalBg} rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto transition-colors duration-200`}>
               <h2 className={`text-lg font-semibold mb-4 ${theme.text}`}>
                 {modalMode === 'add' ? 'Add New Partner' : modalMode === 'edit' ? 'Edit Partner' : 'Partner Details'}

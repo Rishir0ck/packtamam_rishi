@@ -166,7 +166,7 @@ export default function ChatModule() {
     return (
       <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
         <div className="text-center">
-          <RefreshCcw className="w-8 h-8 animate-spin mx-auto mb-4 text-amber-600" />
+          <RefreshCcw className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p className={theme.muted}>Loading...</p>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function ChatModule() {
             
             {activeTab === 'problems' && (
               <div className="flex flex-wrap gap-2">
-                {['all', 'Request Submitted', 'In Process', 'Request Closed'].map(filter => (
+                {['all', 'Request Submitted', 'In Process', 'Request Closed'].map(filter => (
                   <button key={filter} onClick={() => { setFilterStatus(filter); setCurrentPage(1); }} className={`px-3 py-1 text-sm rounded-md transition-colors capitalize ${filterStatus === filter ? (isDark ? 'bg-blue-700 text-blue-200' : 'bg-blue-100 text-blue-800') : (isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700')}`}>
                     {filter === 'all' ? 'All' : filter.replace('-', ' ')}
                   </button>

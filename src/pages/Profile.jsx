@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, ChevronUp, ChevronDown, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, ChevronUp, ChevronDown, Save, X, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import adminApiService from '../Firebase/services/adminApiService';
 import Password from 'antd/es/input/Password';
@@ -203,7 +203,10 @@ export default function ProfileManager() {
   if (loading) {
     return (
       <div className={`p-6 min-h-screen flex items-center justify-center ${themeClass('bg-gray-50', 'bg-gray-900')}`}>
-        <div className={`text-lg ${themeClass('text-gray-600', 'text-gray-400')}`}>Loading...</div>
+         <div className="text-center">
+          <RefreshCcw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className={themeClass.muted}>Loading...</p>
+        </div>
       </div>
     );
   }
@@ -244,7 +247,7 @@ export default function ProfileManager() {
               </button>
             </div>
             
-            <div className="relative">
+            {/* <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
@@ -253,7 +256,7 @@ export default function ProfileManager() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Table */}
@@ -385,37 +388,37 @@ export default function ProfileManager() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Name *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Email *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Email <span className="text-red-500">*</span></label>
                   <input
                     type="email"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                    className={`w-full px-3 py-2 border rounded-lg  ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Role *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Role <span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                     value={formData.role}
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Password *</label>
+                  <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Password <span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
@@ -423,7 +426,7 @@ export default function ProfileManager() {
                 <div>
                   <label className={`block text-sm font-medium mb-1 ${themeClass('text-gray-700', 'text-gray-300')}`}>Status</label>
                   <select
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${themeClass('border-gray-300 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
                     value={formData.is_active}
                     onChange={(e) => setFormData({...formData, is_active: e.target.value === 'true'})}
                   >
