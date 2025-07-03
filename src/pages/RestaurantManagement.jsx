@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react'
 import { Eye, Edit, Search, Store, MapPin, Users, Plus, Save, X, Loader2, User2, Coins, Phone, Key, MoveUpRight, CalendarDays, RefreshCw, FileText, Briefcase, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Building2 } from 'lucide-react'
 import { ThemeContext } from '../context/ThemeContext'
 import AdminService from '../Firebase/services/adminApiService'
+import { BiSolidUserCircle } from "react-icons/bi";
 
 const TABLE_COLUMNS = [
   { key: 'name', label: 'Restaurant', sortable: true },
@@ -125,7 +126,7 @@ export default function RestaurantManagement() {
         lift: r.is_lift_available && r.is_lift_access ? 'Yes' : 'No',
         joinedDate: r.created_at?.split('T')[0] || r.joinedDate, businessType: r.business_type || 'N/A',
         status: r.status === 'Approved' ? 'active' : 'inactive', credits: r.credits || 0,
-        profileImg: r.profile_picture || "../src/assets/user1.png",
+        profileImg: r.profile_picture || null,
         restaurantImg: r.restaurant_image || "../src/assets/placeholder-image.jpg",
         franchises: r.franchise || []
       })) || [] : []
@@ -348,7 +349,7 @@ export default function RestaurantManagement() {
                 placeholder="Search restaurants..."
                 value={state.search}
                 onChange={(e) => setState(prev => ({ ...prev, search: e.target.value, currentPage: 1 }))}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm ${theme('border-gray-200 bg-white text-gray-900', 'border-gray-600 bg-gray-700 text-white')}`}
+                className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
               />
             </div>
           </div>
@@ -363,7 +364,7 @@ export default function RestaurantManagement() {
             <div 
               key={i} 
               onClick={() => setState(prev => ({ ...prev, filter: stat.filter, currentPage: 1 }))}
-              className={`rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${theme('bg-white border-gray-200 hover:bg-gray-50', 'bg-gray-800 border-gray-700 hover:bg-gray-750')} ${state.filter === stat.filter ? 'ring-2' : ''}`}
+              className={`rounded-lg p-3 shadow-sm border cursor-pointer transition-all duration-200 hover:shadow-md ${theme('bg-white border-gray-200 hover:bg-gray-50', 'bg-gray-800 border-gray-700 hover:bg-gray-750')} ${state.filter === stat.filter ? 'ring-2 ring-amber-400' : ''}`}
               style={{ ringColor: state.filter === stat.filter ? '#c79e73' : 'transparent' }}
             >
               <div className="flex items-center justify-between">
@@ -415,7 +416,7 @@ export default function RestaurantManagement() {
                     <td className={`px-4 py-3 text-sm ${theme('text-gray-900', 'text-gray-300')}`}>{processedData.startIndex + index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <img src={r.profileImg} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        {r.profileImg ? (<img src={r.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />) : (<BiSolidUserCircle className="w-12 h-12 text-gray-400" />)}
                         <div>
                           <div className={`font-medium ${theme('text-gray-900', 'text-white')}`}>{r.name}</div>
                           <div className={`text-xs ${theme('text-gray-500', 'text-gray-400')}`}>{r.email}</div>
@@ -652,11 +653,7 @@ export default function RestaurantManagement() {
           <div className="space-y-6">
             {/* Restaurant Header */}
             <div className="flex items-start gap-4">
-              <img 
-                src={state.selected.profileImg} 
-                alt={state.selected.name}
-                className="w-8 h-8 rounded-lg object-cover"
-              />
+              {state.selected.profileImg ? (<img src={state.selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />) : (<BiSolidUserCircle className="w-12 h-12 text-gray-400" />)}
               <div className="flex-1">
                 <h3 className={`text-xl font-bold ${theme('text-gray-900', 'text-white')}`}>
                   {state.selected.name}

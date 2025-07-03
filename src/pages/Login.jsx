@@ -170,6 +170,10 @@ export default function Login() {
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onFocus={(e) => e.target.style.borderColor = '#c49373'}
                   onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  style={{ 
+                    '--tw-ring-color': '#c49373',
+                    focusRingColor: '#c49373'
+                  }}
                   placeholder="Enter your password"
                 />
                 <button

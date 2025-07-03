@@ -164,7 +164,7 @@ export default function OutletManagement() {
             key={i} 
             onClick={() => updateState({ statusFilter: stat.filter, currentPage: 1 })}
             className={`rounded-lg p-4 shadow-sm border cursor-pointer transition-all ${
-              stat.isActive ? 'ring-2 ring-opacity-50' : ''
+              stat.isActive ? 'ring-2 ring-amber-400' : ''
             } ${themeClass('bg-white border-gray-200 hover:shadow-md', 'bg-gray-800 border-gray-700 hover:shadow-lg')}`}
             style={stat.isActive ? { ringColor: stat.color } : {}}
           >
@@ -190,7 +190,7 @@ export default function OutletManagement() {
             placeholder="Search outlets..." 
             value={state.search} 
             onChange={(e) => updateState({ search: e.target.value, currentPage: 1 })}
-            className={`pl-10 pr-4 py-2 w-80 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${themeClass('border-gray-300 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
+            className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
           />
         </div>
         <button 
@@ -218,7 +218,7 @@ export default function OutletManagement() {
                   {col.sortable ? (
                     <button 
                       onClick={() => handleSort(col.key)}
-                      className="flex items-center gap-1 hover:text-blue-600"
+                      className="flex items-center gap-1"
                     >
                       {col.label}
                       <SortIcon column={col.key} />
@@ -326,7 +326,7 @@ export default function OutletManagement() {
                   value={state.newOutlet} 
                   onChange={(e) => updateState({ newOutlet: e.target.value })}
                   placeholder="Enter outlet name"
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${themeClass('border-gray-300 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
+                  className={`w-full p-3 border rounded-lg ${themeClass('border-gray-300 bg-white', 'border-gray-600 bg-gray-700 text-white')}`}
                   autoFocus
                 />
               </div>

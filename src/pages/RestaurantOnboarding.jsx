@@ -333,12 +333,7 @@ export default function RestaurantOnboarding() {
                         <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>{serialNumber}</td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {/* <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" /> */}
-                            {r.profileImg ? (
-  <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />
-) : (
-  <BiSolidUserCircle className="w-10 h-10 text-gray-400" />
-)}
+                            {r.profileImg ? (<img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />) : (<BiSolidUserCircle className="w-10 h-10 text-gray-400" />)}
                             <div className="ml-3">
                               <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</div>
                               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{r.email}</div>
@@ -422,12 +417,7 @@ export default function RestaurantOnboarding() {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
               <div className="flex items-center gap-3">
-                {/* <img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" /> */}
-                {selected.profileImg ? (
-  <img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />
-) : (
-  <BiSolidUserCircle className="w-12 h-12 text-gray-400" />
-)}
+                {selected.profileImg ? (<img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />) : (<BiSolidUserCircle className="w-12 h-12 text-gray-400" />)}
                 <div>
                   <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selected.name}</h2>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>by {selected.owner}</p>
@@ -623,10 +613,10 @@ export default function RestaurantOnboarding() {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-md w-full`}>
             <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Send Query</h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>to {queryTarget.name}</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>to {queryTarget.name}</p> 
             </div>
             <div className="p-4">
-              <textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Write your query here..." className={`w-full h-24 p-3 border ${isDark ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg resize-none focus:outline-none text-sm`} />
+              <textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Write your query here..." className={`w-full h-24 p-3 border ${isDark ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-600 bg-white text-gray-900'} rounded-lg resize-none focus:outline-none text-sm`} />
               <div className="flex gap-2 mt-3">
                 <button onClick={sendQuery} disabled={!query.trim() || loading} className={`flex-1 px-4 py-2 text-sm ${!query.trim() || loading ? (isDark ? 'bg-gray-600 text-gray-400' : 'bg-gray-300 text-gray-500') : 'text-white'} rounded-lg`} style={{ backgroundColor: !query.trim() || loading ? undefined : '#c79e73' }}>
                   {loading ? 'Sending...' : 'Send Query'}
