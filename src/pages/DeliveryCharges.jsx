@@ -23,6 +23,10 @@ export default function DeliveryCharges() {
   const [viewConfig, setViewConfig] = useState(null);
   const [activeTab, setActiveTab] = useState('list');
   const itemsPerPage = 5;
+  const [editingSlabIndex, setEditingSlabIndex] = useState(-1);
+  const [editSlabData, setEditSlabData] = useState({
+    min_amount: '', max_amount: '', charges_type: 'percentage', charge: ''
+  });
 
   const [formData, setFormData] = useState({
     minAmount: '', maxAmount: '', chargesType: 'percentage', charge: ''
@@ -38,59 +42,122 @@ export default function DeliveryCharges() {
     hover: 'hover:bg-gray-50', tableHeader: 'bg-gray-50', btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700'
   };
 
-  // Load delivery configurations from API
-  // const loadDeliveries = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const response = await adminApiService.getDeliveries();
-  //     if (response.success) {
-  //       // Ensure we always set an array, even if response.data is null/undefined
-  //       setSavedConfigs(Array.isArray(response.data.data) ? response.data.data : []);
-  //     } else {
-  //       setSavedConfigs([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error loading deliveries:', error);
-  //     setSavedConfigs([]); // Set empty array on error
-  //     alert('Failed to load delivery configurations');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-const loadDeliveries = async () => {
-  try {
-    setLoading(true);
-    const response = await adminApiService.getDeliveries();
-    console.log('API Response:', response); // Add this for debugging
-    
-    if (response.success) {
-      // Handle different possible response structures
-      let deliveries = [];
+  const loadDeliveries = async () => {
+    try {
+      setLoading(true);
+      const response = await adminApiService.getDeliveries();
+      console.log('API Response:', response); // Add this for debugging
       
-      if (Array.isArray(response.data)) {
-        deliveries = response.data;
-      } else if (response.data && Array.isArray(response.data.data)) {
-        deliveries = response.data.data;
-      } else if (response.data && Array.isArray(response.data.deliveries)) {
-        deliveries = response.data.deliveries;
-      } else if (response.deliveries && Array.isArray(response.deliveries)) {
-        deliveries = response.deliveries;
+      if (response.success) {
+        // Handle different possible response structures
+        let deliveries = [];
+        
+        if (Array.isArray(response.data)) {
+          deliveries = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          deliveries = response.data.data;
+        } else if (response.data && Array.isArray(response.data.deliveries)) {
+          deliveries = response.data.deliveries;
+        } else if (response.deliveries && Array.isArray(response.deliveries)) {
+          deliveries = response.deliveries;
+        }
+        
+        console.log('Processed deliveries:', deliveries); // Add this for debugging
+        setSavedConfigs(deliveries);
+      } else {
+        console.error('API returned success: false', response);
+        setSavedConfigs([]);
       }
-      
-      console.log('Processed deliveries:', deliveries); // Add this for debugging
-      setSavedConfigs(deliveries);
-    } else {
-      console.error('API returned success: false', response);
+    } catch (error) {
+      console.error('Error loading deliveries:', error);
       setSavedConfigs([]);
+      alert('Failed to load delivery configurations');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error loading deliveries:', error);
-    setSavedConfigs([]);
-    alert('Failed to load delivery configurations');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
+  const handleEditSlab = (slab, index) => {
+    setEditSlabData({
+      id: slab.id || slab.id,
+      min_amount: slab.min_amount || slab.minAmount || '',
+      max_amount: slab.max_amount || slab.maxAmount || '',
+      charges_type: slab.charges_type || slab.chargesType || 'percentage',
+      charge: slab.charge || ''
+    });
+    setEditingSlabIndex(index);
+  };
+
+  const handleUpdateSlab = async () => {
+    console.log("editSlabData:", editSlabData);
+    if (!editSlabData.min_amount || !editSlabData.charge) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const payload = {
+        id: editSlabData.id,
+        min_amount: editSlabData.min_amount,
+        max_amount: editSlabData.max_amount,
+        charges_type: editSlabData.charges_type,
+        charge: editSlabData.charge,
+      };
+    const response = await adminApiService.updateDeliveryCharges(payload);
+
+      if (response.success) {
+        // Update the viewConfig with the new slab data
+        const updatedSlabs = [...(viewConfig.slabs || viewConfig.pricing_slabs || viewConfig.delivery_charges)];
+        updatedSlabs[editingSlabIndex] = {
+          ...updatedSlabs[editingSlabIndex],
+          min_amount: editSlabData.min_amount,
+          max_amount: editSlabData.max_amount,
+          charges_type: editSlabData.charges_type,
+          charge: editSlabData.charge
+        };
+        
+        // setViewConfig(prev => ({
+        //   ...prev,
+        //   [viewConfig.slabs ? 'slabs' : viewConfig.pricing_slabs ? 'pricing_slabs' : 'delivery_charges']: updatedSlabs
+        // }));
+
+        const updatedViewConfig = {
+        ...viewConfig,
+        [viewConfig.slabs ? 'slabs' : viewConfig.pricing_slabs ? 'pricing_slabs' : 'delivery_charges']: updatedSlabs
+      };
+      
+      setViewConfig(updatedViewConfig);
+      // Update the savedConfigs array to reflect the changes
+      setSavedConfigs(prev => prev.map(config => 
+        (config.id || config._id) === (viewConfig.id || viewConfig._id) 
+          ? updatedViewConfig 
+          : config
+      ));
+        
+        // Reset editing state
+        setEditingSlabIndex(-1);
+        setEditSlabData({ min_amount: '', max_amount: '', charges_type: 'percentage', charge: '' });
+        
+        // Reload the main list
+        // await loadDeliveries();
+        
+        alert('Slab updated successfully!');
+      } else {
+        alert('Failed to update slab: ' + (response.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error updating slab:', error);
+      alert('Failed to update slab');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSlabIndex(-1);
+    setEditSlabData({ min_amount: '', max_amount: '', charges_type: 'percentage', charge: '' });
+  };
 
   useEffect(() => {
     loadDeliveries();
@@ -112,29 +179,15 @@ const loadDeliveries = async () => {
     }
   }, [selectedState, selectedCountry]);
 
-  const handleAddDelivery = async () => {
-    if (!selectedState || !selectedCity) {
-      alert('Please select state and city first');
-      return;
+  //useEffect to show slab form when city is selected
+  useEffect(() => {
+    if (selectedCity) {
+      setShowSlabForm(true);
+    } else {
+      setShowSlabForm(false);
+      setChargeSlabs([]);
     }
-    
-    try {
-      setLoading(true);
-      const stateName = states.find(s => s.isoCode === selectedState)?.name;
-      const response = await adminApiService.addDeliveryLocation(stateName, selectedCity);
-      
-      if (response.success) {
-        setShowSlabForm(true);
-      } else {
-        alert('Failed to add delivery location');
-      }
-    } catch (error) {
-      console.error('Error adding delivery location:', error);
-      alert('Failed to add delivery location');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedCity]);
 
   const handleSlabSubmit = () => {
     if (!formData.minAmount || !formData.charge || chargeSlabs.length >= 3) return;
@@ -174,33 +227,21 @@ const loadDeliveries = async () => {
 
     try {
       setLoading(true);
-      const data = {
-        // id: id.toString(),
+      const pricing = {
         state: states.find(s => s.isoCode === selectedState)?.name,
         city: selectedCity,
         is_active : true,
         delivery_charges: chargeSlabs.map(charges => ({
-          // id: charges.id.toString(),
           min_amount: charges.minAmount,
           max_amount: charges.maxAmount,
           charges_type: charges.chargesType,
           charge: charges.charge
         }))
       };
-      console.log('Sending data:', data); // Add this for debugging
-      const response = await adminApiService.addDeliveryLocationPricing(data);
+      console.log('Sending data:', pricing); // Add this for debugging
+      const response = await adminApiService.addDeliveryLocation(pricing);
       console.log('Save response:', response); // Add this for debugging
 
-      // if (response.success) {
-      //   await loadDeliveries(); // Reload the list
-      //   setSelectedState('');
-      //   setSelectedCity('');
-      //   setChargeSlabs([]);
-      //   setShowSlabForm(false);
-      //   alert('Configuration saved successfully!');
-      // } else {
-      //   alert('Failed to save configuration');
-      // }
       if (response.success) {
       // Reset form
       setSelectedState('');
@@ -332,17 +373,82 @@ const loadDeliveries = async () => {
                 <div className="space-y-2">
                   {(viewConfig.slabs || viewConfig.pricing_slabs || viewConfig.delivery_charges || []).map((slab, index) => (
                     <div key={index} className={`p-3 border rounded ${theme.border} ${theme.card}`}>
-                      <div className="flex justify-between items-center">
-                        <span className={`font-medium ${theme.text}`}>
-                          ₹{slab.min_amount || slab.minAmount}{(slab.max_amount || slab.maxAmount) ? ` - ₹${slab.max_amount || slab.maxAmount}` : "+"}
-                        </span>
-                        <span className="text-green-600 font-semibold">
-                          {slab.charge || slab.charge}{(slab.charges_type || slab.chargesType) === "percentage" ? "%" : "₹"} Charge
-                        </span>
-                      </div>
-                      <p className={`text-sm mt-1 ${theme.muted}`}>
-                        Type: {(slab.charges_type || slab.chargesType) === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
-                      </p>
+                      {editingSlabIndex === index ? (
+                        // Edit form
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <input
+                              type="number"
+                              value={editSlabData.min_amount}
+                              onChange={(e) => setEditSlabData(prev => ({ ...prev, min_amount: e.target.value }))}
+                              className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                              placeholder="Min Amount"
+                            />
+                            <input
+                              type="number"
+                              value={editSlabData.max_amount}
+                              onChange={(e) => setEditSlabData(prev => ({ ...prev, max_amount: e.target.value }))}
+                              className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                              placeholder="Max Amount"
+                            />
+                            <select
+                              value={editSlabData.charges_type}
+                              onChange={(e) => setEditSlabData(prev => ({ ...prev, charges_type: e.target.value }))}
+                              className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                            >
+                              <option value="percentage">Percentage %</option>
+                              <option value="fixed">Fixed ₹</option>
+                            </select>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={editSlabData.charge}
+                              onChange={(e) => setEditSlabData(prev => ({ ...prev, charge: e.target.value }))}
+                              className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                              placeholder="Charge Value"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleUpdateSlab}
+                              disabled={loading}
+                              className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {loading ? 'Updating...' : 'Update'}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="bg-gray-500 text-white px-3 py-1 text-sm rounded hover:bg-gray-600"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // Display view
+                        <div>
+                          <div className="flex justify-between items-center">
+                            <span className={`font-medium ${theme.text}`}>
+                              ₹{slab.min_amount || slab.minAmount}{(slab.max_amount || slab.maxAmount) ? ` - ₹${slab.max_amount || slab.maxAmount}` : "+"}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-green-600 font-semibold">
+                                {slab.charge || slab.charge}{(slab.charges_type || slab.chargesType) === "percentage" ? "%" : "₹"} Charge
+                              </span>
+                              <button
+                                onClick={() => handleEditSlab(slab, index)}
+                                className="bg-blue-600 text-white px-2 py-1 text-xs rounded hover:bg-blue-700 flex items-center gap-1"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                                Edit
+                              </button>
+                            </div>
+                          </div>
+                          <p className={`text-sm mt-1 ${theme.muted}`}>
+                            Type: {(slab.charges_type || slab.chargesType) === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -440,17 +546,6 @@ const loadDeliveries = async () => {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div className="flex items-end">
-                  <button
-                    onClick={handleAddDelivery}
-                    disabled={!selectedState || !selectedCity || loading}
-                    className="w-full text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: '#c79e73' }}
-                  >
-                    {loading ? 'Adding...' : 'Add Delivery'}
-                  </button>
                 </div>
               </div>
 

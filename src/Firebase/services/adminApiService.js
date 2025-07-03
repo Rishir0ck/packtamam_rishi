@@ -327,11 +327,11 @@ class AdminService {
   async getDeliveries() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/delhivery');
   }
-  async addDeliveryLocation(state, city) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location', { state, city });
+  async addDeliveryLocation(pricing) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location', {pricing});
   }
-  async addDeliveryLocationPricing(data) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location-pricing', {data});
+  async updateDeliveryCharges(payload) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/update-charge', payload);
   }
   async updateDeliveryStatus(deliveryId, is_active) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/change-status', { id: deliveryId, is_active });
