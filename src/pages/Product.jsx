@@ -15,7 +15,7 @@ const Input = React.memo(({ label, value, onChange, type = "text", placeholder =
       onChange={onChange}
       placeholder={placeholder} 
       readOnly={readOnly}
-      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
+      className={`w-full px-3 py-2 border rounded-lg ${theme.input} ${readOnly ? 'opacity-60' : ''}`}
       step={type === 'number' ? '0.01' : undefined}
     />
   </div>
@@ -286,7 +286,7 @@ export default function ProductForm() {
         <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${theme.text}`}>
           <Image className="w-5 h-5" />Product Images
         </h3>
-        <div className={`border-2 border-dashed ${theme.border} rounded-lg p-6 text-center hover:border-blue-400 transition-colors mb-4`}>
+        <div className={`border-2 border-dashed ${theme.border} rounded-lg p-6 text-center hover:border-amber-400 transition-colors mb-4`}>
           <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" id="image-upload" />
           <label htmlFor="image-upload" className="cursor-pointer">
             <Upload className={`w-10 h-10 ${theme.muted} mx-auto mb-2`} />
@@ -316,7 +316,7 @@ export default function ProductForm() {
                 type="text" 
                 value={formData[field]} 
                 onChange={(e) => handleInputChange(field, e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+                className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
               />
             </div>
           ))}
@@ -326,7 +326,7 @@ export default function ProductForm() {
             <select 
               value={formData.category_id} 
               onChange={(e) => handleInputChange('category_id', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+              className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -354,7 +354,7 @@ export default function ProductForm() {
             <select 
               value={formData.material_id} 
               onChange={(e) => handleInputChange('material_id', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+              className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
             >
               <option value="">Select Material</option>
               {materials.map((mat) => (
@@ -369,7 +369,7 @@ export default function ProductForm() {
           <textarea
             value={formData.specs} 
             onChange={(e) => handleInputChange('specs', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
+            className={`w-full px-3 py-2 border rounded-lg ${theme.input}`} 
             rows={2}
           />
         </div>
@@ -379,7 +379,7 @@ export default function ProductForm() {
           <textarea
             value={formData.features} 
             onChange={(e) => handleInputChange('features', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`} 
+            className={`w-full px-3 py-2 border rounded-lg ${theme.input}`} 
             rows={2}
           />
         </div>
@@ -573,7 +573,7 @@ export default function ProductForm() {
                         }
                       ].map((group) => (
                         <div key={group.title} className="flex flex-col gap-1">
-                          <div className="text-x font-semibold text-center">{group.title}</div>
+                          <div className={`text-x font-semibold text-center ${theme.text}`}>{group.title}</div>
                           {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
                             <Input
                               key={field}
