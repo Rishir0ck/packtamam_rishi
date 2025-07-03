@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, DollarSign, Percent, Tag, Package, Calendar, X } from 'lucide-react'
+import { Plus, Edit, Save, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, DollarSign, Percent, Tag, Package, Calendar, X, RefreshCw } from 'lucide-react'
 import Modal from './Modal'
 import ActionButton from './ActionButton'
 import useTheme from '../hooks/useTheme'
@@ -217,7 +217,9 @@ export default function DiscountModule() {
   if (loading) {
     return (
       <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div>
+          <RefreshCw className={`w-8 h-8 ${isDark ? 'text-gray-400' : 'text-gray-400'} mx-auto mb-2 animate-spin`} />
+        </div>
       </div>
     )
   }

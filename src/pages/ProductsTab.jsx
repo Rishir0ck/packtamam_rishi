@@ -138,19 +138,19 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
     { key: 'is_active', label: 'Status', sortable: true }
   ]
 
-  if (!data.length) {
-    return (
-      <div className={`min-h-screen ${theme.bg}`}>
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="text-center py-16">
-            <Package className={`w-16 h-16 mx-auto mb-4 ${theme.muted}`} />
-            <h3 className={`text-xl font-semibold mb-2 ${theme.text}`}>No products found</h3>
-            <p className={`${theme.muted}`}>Start by adding your first product</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // if (!data.length) {
+  //   return (
+  //     <div className={`min-h-screen ${theme.bg}`}>
+  //       <div className="max-w-6xl mx-auto p-6">
+  //         <div className="text-center py-16">
+  //           <Package className={`w-16 h-16 mx-auto mb-4 ${theme.muted}`} />
+  //           <h3 className={`text-xl font-semibold mb-2 ${theme.text}`}>No products found</h3>
+  //           <p className={`${theme.muted}`}>Start by adding your first product</p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className={`min-h-screen ${theme.bg}`}>
@@ -170,6 +170,15 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
           </button>
         </div>
 
+        {/* Show no products message if no data */}
+        {!data.length ? (
+          <div className="text-center py-16">
+            <Package className={`w-16 h-16 mx-auto mb-4 ${theme.muted}`} />
+            <h3 className={`text-xl font-semibold mb-2 ${theme.text}`}>No products found</h3>
+            <p className={`${theme.muted}`}>Start by adding your first product</p>
+          </div>
+        ) : (
+          <>
         {/* Search & Stats */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -492,6 +501,8 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
             </div>
           )}
         </Modal>
+        </>
+        )}
       </div>
     </div>
   )
