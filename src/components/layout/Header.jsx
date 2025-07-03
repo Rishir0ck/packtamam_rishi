@@ -73,10 +73,14 @@ export default function Header() {
     }
   }
 
-  const userInfo = {
-    name: user?.displayName || 'Admin User',
+    const userInfo = {
+    name: user?.displayName || user?.email?.split('@')[0] || 'Admin User',
     email: user?.email || 'admin@packtamam.com',
-    initials: (user?.displayName || user?.email || 'A').charAt(0).toUpperCase()
+    initials: (
+      user?.displayName?.charAt(0) ||
+      user?.email?.charAt(0) ||
+      'A'
+    ).toUpperCase()
   }
 
   const isDisabled = loading || isLoggingOut || isRefreshing
@@ -153,8 +157,8 @@ export default function Header() {
               className="w-8 h-8 rounded-full flex items-center justify-center shadow-md"
               style={{
                 background: isDark 
-                  ? `linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)`
-                  : `linear-gradient(135deg, #c79e73 0%, #43311e 100%)`
+                  ? '#c79e73'
+                  : '#43311e'
               }}
             >
               <span className="text-white text-sm font-semibold">{userInfo.initials}</span>
