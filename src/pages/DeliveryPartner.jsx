@@ -177,7 +177,7 @@ export default function DeliveryPartnerAdmin() {
               placeholder="Search partners by name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${theme.input}`}
+              className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
             />
           </div>
         </div>
@@ -294,7 +294,7 @@ export default function DeliveryPartnerAdmin() {
               {modalMode === 'view' ? (
                 <div className="space-y-4">
                   <div className={theme.text}><strong>Partner Name:</strong> {selectedPartner?.name}</div>
-                  <div className={theme.text}><strong>Tracking:</strong> {selectedPartner?.tracking_url}</div>
+                  <div className={theme.text}><strong>Tracking URL:</strong> {selectedPartner?.tracking_url}</div>
                 </div>
               ) : (
                 <div className="space-y-4">

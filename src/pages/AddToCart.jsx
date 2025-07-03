@@ -10,7 +10,7 @@ const mockCartData = [
       { id: 'item_001', name: 'Butter Chicken', price: 320, quantity: 2, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=60&h=60&fit=crop' },
       { id: 'item_002', name: 'Garlic Naan', price: 80, quantity: 3, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 880, addedAt: '2024-06-14T10:30:00Z', lastUpdated: '2024-06-14T11:15:00Z',
+    totalAmount: 880, addedAt: '2024-06-14T10:30:00Z', lastUpdated: '2024-06-14T11:15:00Z', deliveryPartner: 'blueDart',
     orderStatus: 'cart', location: 'Mumbai, Maharashtra', estimatedDelivery: '2024-06-14T14:30:00Z', trackingId: 'TRK001'
   },
   {
@@ -19,7 +19,7 @@ const mockCartData = [
     items: [
       { id: 'item_003', name: 'Margherita Pizza', price: 450, quantity: 1, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 450, addedAt: '2024-06-14T09:45:00Z', lastUpdated: '2024-06-14T10:20:00Z',
+    totalAmount: 450, addedAt: '2024-06-14T09:45:00Z', lastUpdated: '2024-06-14T10:20:00Z', deliveryPartner: 'dHLExpress',
     orderStatus: 'confirmed', location: 'Delhi, Delhi', estimatedDelivery: '2024-06-14T13:45:00Z', trackingId: 'TRK002'
   },
   {
@@ -28,7 +28,7 @@ const mockCartData = [
     items: [
       { id: 'item_005', name: 'Masala Dosa', price: 180, quantity: 2, image: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 360, addedAt: '2024-06-14T12:00:00Z', lastUpdated: '2024-06-14T12:30:00Z',
+    totalAmount: 360, addedAt: '2024-06-14T12:00:00Z', lastUpdated: '2024-06-14T12:30:00Z', deliveryPartner: 'fedEx',
     orderStatus: 'out-for-delivery', location: 'Bangalore, Karnataka', estimatedDelivery: '2024-06-14T15:00:00Z', trackingId: 'TRK003'
   },
   {
@@ -37,7 +37,7 @@ const mockCartData = [
     items: [
       { id: 'item_006', name: 'Chicken Biryani', price: 280, quantity: 1, image: 'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 280, addedAt: '2024-06-13T18:00:00Z', lastUpdated: '2024-06-14T08:00:00Z',
+    totalAmount: 280, addedAt: '2024-06-13T18:00:00Z', lastUpdated: '2024-06-14T08:00:00Z', deliveryPartner: 'fedEx',
     orderStatus: 'delivered', location: 'Ahmedabad, Gujarat', estimatedDelivery: '2024-06-13T21:00:00Z', trackingId: 'TRK004'
   },
   {
@@ -46,7 +46,7 @@ const mockCartData = [
     items: [
       { id: 'item_007', name: 'Pepperoni Pizza', price: 520, quantity: 1, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 520, addedAt: '2024-06-14T11:00:00Z', lastUpdated: '2024-06-14T11:30:00Z',
+    totalAmount: 520, addedAt: '2024-06-14T11:00:00Z', lastUpdated: '2024-06-14T11:30:00Z', deliveryPartner: 'fedEx',
     orderStatus: 'preparing', location: 'Chennai, Tamil Nadu', estimatedDelivery: '2024-06-14T14:00:00Z', trackingId: 'TRK005'
   },
   {
@@ -55,7 +55,7 @@ const mockCartData = [
     items: [
       { id: 'item_008', name: 'Rava Dosa', price: 160, quantity: 2, image: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=60&h=60&fit=crop' }
     ],
-    totalAmount: 320, addedAt: '2024-06-14T13:00:00Z', lastUpdated: '2024-06-14T13:15:00Z',
+    totalAmount: 320, addedAt: '2024-06-14T13:00:00Z', lastUpdated: '2024-06-14T13:15:00Z', deliveryPartner: 'delhivery',
     orderStatus: 'ready', location: 'Hyderabad, Telangana', estimatedDelivery: '2024-06-14T16:00:00Z', trackingId: 'TRK006'
   }
 ]
@@ -67,6 +67,15 @@ const orderStatuses = [
   { key: 'ready', label: 'Ready', icon: Package, color: '#7c3aed' },
   { key: 'out-for-delivery', label: 'Delivery', icon: Truck, color: '#2563eb' },
   { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: '#059669' }
+] 
+
+const deliveryPartners = [
+  { key: 'blueDart', label: 'Blue Dart'},
+  { key: 'delhivery', label: 'Delhivery'},
+  { key: 'fedEx', label: 'FedEx'},
+  { key: 'dHLExpress', label: 'DHL Express'},
+  { key: 'indiaPost(Speed Post)', label: 'India Post (Speed Post)'},
+  { key: 'amazonTransportationServices(ATS)', label: 'Amazon Transportation Services'},
 ]
 
 export default function OrderTableManagement() {
@@ -206,7 +215,7 @@ export default function OrderTableManagement() {
           <div 
             onClick={() => setFilter('all')}
             className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-              filter === 'all' ? 'ring-2 ring-blue-500' : ''
+              filter === 'all' ? 'ring-2 ring-amber-500' : ''
             }`}
           >
             <div className="flex items-center justify-between">
@@ -222,7 +231,7 @@ export default function OrderTableManagement() {
               key={stat.key}
               onClick={() => setFilter(filter === stat.key ? 'all' : stat.key)}
               className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-                filter === stat.key ? 'ring-2 ring-blue-500' : ''
+                filter === stat.key ? 'ring-2 ring-amber-500' : ''
               }`}
             >
               <div className="flex items-center justify-between">
@@ -245,7 +254,7 @@ export default function OrderTableManagement() {
               placeholder="Search orders..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)}
-              className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+              className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
             />
           </div>
         </div>
@@ -257,33 +266,38 @@ export default function OrderTableManagement() {
               <thead className={`${theme.tableHeader} border-b ${theme.border}`}>
                 <tr>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('trackingId')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('trackingId')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Order ID <SortIcon column="trackingId" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('customerName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('customerName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Customer <SortIcon column="customerName" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('restaurantName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('restaurantName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Restaurant <SortIcon column="restaurantName" />
                     </button>
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted}`}>Items</th>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('totalAmount')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('totalAmount')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Amount <SortIcon column="totalAmount" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('orderStatus')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('deliveryPartner')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
+                      Delivery Partner <SortIcon column="deliveryPartner" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button onClick={() => handleSort('orderStatus')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Status <SortIcon column="orderStatus" />
                     </button>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('addedAt')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted} hover:text-blue-500 transition-colors`}>
+                    <button onClick={() => handleSort('addedAt')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
                       Order Time <SortIcon column="addedAt" />
                     </button>
                   </th>
@@ -325,6 +339,9 @@ export default function OrderTableManagement() {
                     </td>
                     <td className="px-4 py-3">
                       <div className={`font-semibold text-sm ${theme.text}`}>₹{cart.totalAmount}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className={`font-medium text-sm ${theme.text}`}>{cart.deliveryPartner}</div>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={cart.orderStatus} />
@@ -462,11 +479,33 @@ export default function OrderTableManagement() {
               
               <div className="p-4 space-y-4">
                 <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Delivery Partner</label>
+                  <select 
+                    value={editData.deliveryPartner} 
+                    onChange={(e) => setEditData({...editData, deliveryPartner: e.target.value})}
+                    className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
+                  >
+                    {deliveryPartners.map(status => (
+                      <option key={status.key} value={status.key}>{status.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Tracking ID</label>
+                  <input
+                    type="text"
+                    value={editData.trackingId}
+                    onChange={(e) => setEditData({ ...editData, trackingId: e.target.value })}
+                    className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
+                    placeholder="Enter Tracking ID"
+                  />
+                </div>
+                <div>
                   <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Order Status</label>
                   <select 
                     value={editData.orderStatus} 
                     onChange={(e) => setEditData({...editData, orderStatus: e.target.value})}
-                    className={`w-full p-3 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                    className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
                   >
                     {orderStatuses.map(status => (
                       <option key={status.key} value={status.key}>{status.label}</option>

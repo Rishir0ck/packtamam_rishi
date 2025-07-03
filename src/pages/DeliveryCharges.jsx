@@ -400,7 +400,7 @@ const loadDeliveries = async () => {
                   <select
                     value={selectedCountry}
                     onChange={(e) => setSelectedCountry(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
                   >
                     {countries.map((country) => (
                       <option key={country.isoCode} value={country.isoCode}>
@@ -415,7 +415,7 @@ const loadDeliveries = async () => {
                   <select
                     value={selectedState}
                     onChange={(e) => setSelectedState(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
                   >
                     <option value="">Select State</option>
                     {states.map((state) => (
@@ -431,7 +431,7 @@ const loadDeliveries = async () => {
                   <select
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                    className={`w-full px-3 py-2 border rounded-lg ${theme.input}`}
                   >
                     <option value="">Select City</option>
                     {cities.map((city) => (
@@ -470,20 +470,20 @@ const loadDeliveries = async () => {
                         type="number"
                         value={formData.minAmount}
                         onChange={(e) => setFormData(prev => ({ ...prev, minAmount: e.target.value }))}
-                        className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                        className={`w-full px-3 py-2 text-sm border rounded ${theme.input}`}
                         placeholder="Min Amount"
                       />
                       <input
                         type="number"
                         value={formData.maxAmount}
                         onChange={(e) => setFormData(prev => ({ ...prev, maxAmount: e.target.value }))}
-                        className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                        className={`w-full px-3 py-2 text-sm border rounded ${theme.input}`}
                         placeholder="Max Amount"
                       />
                       <select
-                        value={formData.chargeType}
+                        value={formData.chargesType}
                         onChange={(e) => setFormData(prev => ({ ...prev, chargesType: e.target.value }))}
-                        className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                        className={`w-full px-1 py-2 text-sm border rounded ${theme.input}`}
                       >
                         <option value="percentage">Percentage %</option>
                         <option value="fixed">Fixed ₹</option>
@@ -493,7 +493,7 @@ const loadDeliveries = async () => {
                         step="0.01"
                         value={formData.charge}
                         onChange={(e) => setFormData(prev => ({ ...prev, charge: e.target.value }))}
-                        className={`px-2 py-1 text-sm border rounded ${theme.input}`}
+                        className={`w-full px-3 py-2 text-sm border rounded ${theme.input}`}
                         placeholder="Value"
                       />
                       <button
