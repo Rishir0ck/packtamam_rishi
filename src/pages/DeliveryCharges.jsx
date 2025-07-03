@@ -12,7 +12,7 @@ export default function DeliveryCharges() {
   const [cities, setCities] = useState([]);
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [discountSlabs, setDiscountSlabs] = useState([]);
+  const [chargeSlabs, setChargeSlabs] = useState([]);
   const [showSlabForm, setShowSlabForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [savedConfigs, setSavedConfigs] = useState([]);
@@ -25,7 +25,7 @@ export default function DeliveryCharges() {
   const itemsPerPage = 5;
 
   const [formData, setFormData] = useState({
-    minAmount: '', maxAmount: '', discountType: 'percentage', discountValue: ''
+    minAmount: '', maxAmount: '', chargesType: 'percentage', charge: ''
   });
 
   const theme = isDark ? {
@@ -39,24 +39,58 @@ export default function DeliveryCharges() {
   };
 
   // Load delivery configurations from API
-  const loadDeliveries = async () => {
-    try {
-      setLoading(true);
-      const response = await adminApiService.getDeliveries();
-      if (response.success) {
-        // Ensure we always set an array, even if response.data is null/undefined
-        setSavedConfigs(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setSavedConfigs([]);
+  // const loadDeliveries = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await adminApiService.getDeliveries();
+  //     if (response.success) {
+  //       // Ensure we always set an array, even if response.data is null/undefined
+  //       setSavedConfigs(Array.isArray(response.data.data) ? response.data.data : []);
+  //     } else {
+  //       setSavedConfigs([]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error loading deliveries:', error);
+  //     setSavedConfigs([]); // Set empty array on error
+  //     alert('Failed to load delivery configurations');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const loadDeliveries = async () => {
+  try {
+    setLoading(true);
+    const response = await adminApiService.getDeliveries();
+    console.log('API Response:', response); // Add this for debugging
+    
+    if (response.success) {
+      // Handle different possible response structures
+      let deliveries = [];
+      
+      if (Array.isArray(response.data)) {
+        deliveries = response.data;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        deliveries = response.data.data;
+      } else if (response.data && Array.isArray(response.data.deliveries)) {
+        deliveries = response.data.deliveries;
+      } else if (response.deliveries && Array.isArray(response.deliveries)) {
+        deliveries = response.deliveries;
       }
-    } catch (error) {
-      console.error('Error loading deliveries:', error);
-      setSavedConfigs([]); // Set empty array on error
-      alert('Failed to load delivery configurations');
-    } finally {
-      setLoading(false);
+      
+      console.log('Processed deliveries:', deliveries); // Add this for debugging
+      setSavedConfigs(deliveries);
+    } else {
+      console.error('API returned success: false', response);
+      setSavedConfigs([]);
     }
-  };
+  } catch (error) {
+    console.error('Error loading deliveries:', error);
+    setSavedConfigs([]);
+    alert('Failed to load delivery configurations');
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadDeliveries();
@@ -103,66 +137,87 @@ export default function DeliveryCharges() {
   };
 
   const handleSlabSubmit = () => {
-    if (!formData.minAmount || !formData.discountValue || discountSlabs.length >= 3) return;
+    if (!formData.minAmount || !formData.charge || chargeSlabs.length >= 3) return;
 
     const newSlab = {
       ...formData,
       minAmount: parseFloat(formData.minAmount),
       maxAmount: formData.maxAmount ? parseFloat(formData.maxAmount) : null,
-      discountValue: parseFloat(formData.discountValue),
+      charge: parseFloat(formData.charge),
       id: Date.now()
     };
 
     if (editingIndex >= 0) {
-      setDiscountSlabs(prev => prev.map((slab, idx) => idx === editingIndex ? newSlab : slab));
+      setChargeSlabs(prev => prev.map((slab, idx) => idx === editingIndex ? newSlab : slab));
       setEditingIndex(-1);
     } else {
-      setDiscountSlabs(prev => [...prev, newSlab]);
+      setChargeSlabs(prev => [...prev, newSlab]);
     }
 
-    setFormData({ minAmount: '', maxAmount: '', discountType: 'percentage', discountValue: '' });
+    setFormData({ minAmount: '', maxAmount: '', chargesType: 'percentage', charge: '' });
   };
 
   const handleEdit = (index) => {
-    setFormData(discountSlabs[index]);
+    setFormData(chargeSlabs[index]);
     setEditingIndex(index);
   };
 
   const handleDelete = (index) => {
-    setDiscountSlabs(prev => prev.filter((_, idx) => idx !== index));
+    setChargeSlabs(prev => prev.filter((_, idx) => idx !== index));
   };
 
   const handleSaveConfig = async () => {
-    if (!selectedState || !selectedCity || discountSlabs.length === 0) {
+    if (!selectedState || !selectedCity || chargeSlabs.length === 0) {
       alert('Please fill all required fields and add at least one slab');
       return;
     }
 
     try {
       setLoading(true);
-      const pricing = {
+      const data = {
+        // id: id.toString(),
         state: states.find(s => s.isoCode === selectedState)?.name,
         city: selectedCity,
-        slabs: discountSlabs.map(slab => ({
-          min_amount: slab.minAmount,
-          max_amount: slab.maxAmount,
-          discount_type: slab.discountType,
-          discount_value: slab.discountValue
+        is_active : true,
+        delivery_charges: chargeSlabs.map(charges => ({
+          // id: charges.id.toString(),
+          min_amount: charges.minAmount,
+          max_amount: charges.maxAmount,
+          charges_type: charges.chargesType,
+          charge: charges.charge
         }))
       };
+      console.log('Sending data:', data); // Add this for debugging
+      const response = await adminApiService.addDeliveryLocationPricing(data);
+      console.log('Save response:', response); // Add this for debugging
 
-      const response = await adminApiService.addDeliveryLocationPricing(pricing);
-      
+      // if (response.success) {
+      //   await loadDeliveries(); // Reload the list
+      //   setSelectedState('');
+      //   setSelectedCity('');
+      //   setChargeSlabs([]);
+      //   setShowSlabForm(false);
+      //   alert('Configuration saved successfully!');
+      // } else {
+      //   alert('Failed to save configuration');
+      // }
       if (response.success) {
-        await loadDeliveries(); // Reload the list
-        setSelectedState('');
-        setSelectedCity('');
-        setDiscountSlabs([]);
-        setShowSlabForm(false);
-        alert('Configuration saved successfully!');
-      } else {
-        alert('Failed to save configuration');
-      }
+      // Reset form
+      setSelectedState('');
+      setSelectedCity('');
+      setChargeSlabs([]);
+      setShowSlabForm(false);
+      
+      // Reload the list after a short delay to ensure backend processing is complete
+      setTimeout(() => {
+        loadDeliveries();
+      }, 1000);
+      
+      alert('Configuration saved successfully!');
+    } else {
+      console.error('Save failed:', response);
+      alert('Failed to save configuration: ' + (response.message || 'Unknown error'));
+    }
     } catch (error) {
       console.error('Error saving configuration:', error);
       alert('Failed to save configuration');
@@ -233,7 +288,7 @@ export default function DeliveryCharges() {
 
   const getChargesTypeDisplay = (slabs) => {
     if (!slabs || !Array.isArray(slabs)) return 'N/A';
-    const types = [...new Set(slabs.map(s => s.discount_type || s.discountType))];
+    const types = [...new Set(slabs.map(s => s.charges_type || s.chargesType || 'fixed'))];
     return types.map(type => type === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)').join(', ');
   };
 
@@ -275,18 +330,18 @@ export default function DeliveryCharges() {
               <div>
                 <h3 className={`text-lg font-semibold mb-3 ${theme.text}`}>Charge Slabs</h3>
                 <div className="space-y-2">
-                  {(viewConfig.slabs || viewConfig.pricing_slabs || []).map((slab, index) => (
+                  {(viewConfig.slabs || viewConfig.pricing_slabs || viewConfig.delivery_charges || []).map((slab, index) => (
                     <div key={index} className={`p-3 border rounded ${theme.border} ${theme.card}`}>
                       <div className="flex justify-between items-center">
                         <span className={`font-medium ${theme.text}`}>
                           ₹{slab.min_amount || slab.minAmount}{(slab.max_amount || slab.maxAmount) ? ` - ₹${slab.max_amount || slab.maxAmount}` : "+"}
                         </span>
                         <span className="text-green-600 font-semibold">
-                          {slab.discount_value || slab.discountValue}{(slab.discount_type || slab.discountType) === "percentage" ? "%" : "₹"} Charge
+                          {slab.charge || slab.charge}{(slab.charges_type || slab.chargesType) === "percentage" ? "%" : "₹"} Charge
                         </span>
                       </div>
                       <p className={`text-sm mt-1 ${theme.muted}`}>
-                        Type: {(slab.discount_type || slab.discountType) === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
+                        Type: {(slab.charges_type || slab.chargesType) === 'percentage' ? 'In Percentage(%)' : 'In Fixed(₹)'}
                       </p>
                     </div>
                   ))}
@@ -404,7 +459,7 @@ export default function DeliveryCharges() {
                 <div className={`border rounded-lg p-4 ${theme.border}`}>
                   <div className="flex justify-between items-center mb-3">
                     <h3 className={`text-lg font-semibold ${theme.text}`}>
-                      Delivery Charge Slabs ({discountSlabs.length}/3)
+                      Delivery Charge Slabs ({chargeSlabs.length}/3)
                     </h3>
                   </div>
 
@@ -426,8 +481,8 @@ export default function DeliveryCharges() {
                         placeholder="Max Amount"
                       />
                       <select
-                        value={formData.discountType}
-                        onChange={(e) => setFormData(prev => ({ ...prev, discountType: e.target.value }))}
+                        value={formData.chargeType}
+                        onChange={(e) => setFormData(prev => ({ ...prev, chargesType: e.target.value }))}
                         className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                       >
                         <option value="percentage">Percentage %</option>
@@ -436,21 +491,21 @@ export default function DeliveryCharges() {
                       <input
                         type="number"
                         step="0.01"
-                        value={formData.discountValue}
-                        onChange={(e) => setFormData(prev => ({ ...prev, discountValue: e.target.value }))}
+                        value={formData.charge}
+                        onChange={(e) => setFormData(prev => ({ ...prev, charge: e.target.value }))}
                         className={`px-2 py-1 text-sm border rounded ${theme.input}`}
                         placeholder="Value"
                       />
                       <button
                         onClick={handleSlabSubmit}
-                        disabled={!formData.minAmount || !formData.discountValue || discountSlabs.length >= 3}
+                        disabled={!formData.minAmount || !formData.charge || chargeSlabs.length >= 3}
                         className="bg-green-600 text-white py-1 text-sm rounded hover:bg-green-700 disabled:opacity-50"
                       >
                         {editingIndex >= 0 ? "Update" : "Add"}
                       </button>
                       <button
                         onClick={() => {
-                          setFormData({ minAmount: '', maxAmount: '', discountType: 'percentage', discountValue: '' });
+                          setFormData({ minAmount: '', maxAmount: '', chargesType: 'percentage', charge: '' });
                           setEditingIndex(-1);
                         }}
                         className={`px-2 py-1 rounded ${theme.btn}`}
@@ -462,14 +517,14 @@ export default function DeliveryCharges() {
 
                   {/* Slabs List */}
                   <div className="space-y-2">
-                    {discountSlabs.map((slab, index) => (
+                    {chargeSlabs.map((slab, index) => (
                       <div key={slab.id} className={`flex items-center justify-between p-2 border rounded text-sm ${theme.card} ${theme.border}`}>
                         <div className="flex items-center gap-3">
                           <span className={`font-medium ${theme.text}`}>
                             ₹{slab.minAmount}{slab.maxAmount ? ` - ₹${slab.maxAmount}` : "+"}
                           </span>
                           <span className="text-green-600">
-                            {slab.discountValue}{slab.discountType === "percentage" ? "%" : "₹"} Charge
+                            {slab.charge}{slab.chargesType === "percentage" ? "%" : "₹"} Charge
                           </span>
                         </div>
                         <div className="flex gap-1">
@@ -484,7 +539,7 @@ export default function DeliveryCharges() {
                     ))}
                   </div>
 
-                  {discountSlabs.length > 0 && (
+                  {chargeSlabs.length > 0 && (
                     <button
                       onClick={handleSaveConfig}
                       disabled={loading}
@@ -516,22 +571,22 @@ export default function DeliveryCharges() {
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>City</th>
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Charges Type</th>
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Status</th>
-                        <th className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`} onClick={() => handleSort("createdAt")}>
+                        {/* <th className={`px-4 py-2 text-left text-sm font-medium cursor-pointer ${theme.text} ${theme.hover}`} onClick={() => handleSort("createdAt")}>
                           <div className="flex items-center gap-1">Created <SortIcon field="createdAt" /></div>
-                        </th>
+                        </th> */}
                         <th className={`px-4 py-2 text-left text-sm font-medium ${theme.text}`}>Actions</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                       {paginatedConfigs.map((config, index) => (
-                        <tr key={config.id} className={`transition-colors ${theme.hover}`}>
+                        <tr key={config.id || config._id || index} className={`transition-colors ${theme.hover}`}>
                           <td className={`px-4 py-3 text-sm ${theme.text}`}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className={`px-4 py-3 text-sm font-medium ${theme.text}`}>{config.state}</td>
                           <td className={`px-4 py-3 text-sm ${theme.text}`}>{config.city}</td>
-                          <td className={`px-4 py-3 text-sm ${theme.text}`}>{getChargesTypeDisplay(config.slabs || config.pricing_slabs)}</td>
+                          <td className={`px-4 py-3 text-sm ${theme.text}`}>{getChargesTypeDisplay(config.slabs || config.pricing_slabs || config.delivery_charges)}</td>
                           <td className="px-4 py-3">
                             <button
-                              onClick={() => toggleStatus(config.id, config.is_active ?? (config.status === 'active'))}
+                              onClick={() => toggleStatus(config.id || config._id, config.is_active ?? (config.status === 'active'))}
                               disabled={loading}
                               className={`px-2 py-1 text-xs rounded-full disabled:opacity-50 ${
                                 (config.is_active ?? (config.status === 'active'))
@@ -542,9 +597,9 @@ export default function DeliveryCharges() {
                               {(config.is_active ?? (config.status === 'active')) ? 'Active' : 'Inactive'}
                             </button>
                           </td>
-                          <td className={`px-4 py-3 text-sm ${theme.text}`}>
-                            {new Date(config.createdAt || config.created_at).toLocaleDateString()}
-                          </td>
+                          {/* <td className={`px-4 py-3 text-sm ${theme.text}`}>
+                            {new Date(config.createdAt || config.created_at || config.created_at).toLocaleDateString()}
+                          </td> */}
                           <td className="px-4 py-3">
                             <button
                               onClick={() => setViewConfig(config)}

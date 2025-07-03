@@ -330,8 +330,8 @@ class AdminService {
   async addDeliveryLocation(state, city) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location', { state, city });
   }
-  async addDeliveryLocationPricing(pricing) {
-    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location-pricing', {pricing});
+  async addDeliveryLocationPricing(data) {
+    return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/add-location-pricing', {data});
   }
   async updateDeliveryStatus(deliveryId, is_active) {
     return this.makeAuthenticatedRequest('POST', '/api/admin/delhivery/change-status', { id: deliveryId, is_active });
