@@ -501,13 +501,13 @@ export default function AdvertisementModule() {
                           >
                             <Eye className="w-4 h-4" />
                           </Btn>
-                          {/* <Btn 
+                          <Btn 
                             onClick={() => handleEdit(ad)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
-                          </Btn> */}
+                          </Btn>
                           <Btn 
                             onClick={() => handleDelete(ad.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
