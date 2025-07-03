@@ -195,7 +195,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
                   <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     <button
                       onClick={() => handleSort(key)}
-                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      className="flex items-center gap-1"
                     >
                       {label}
                       <SortIcon column={key} />
@@ -213,7 +213,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
                   <td className={`px-4 py-3 font-medium ${theme.text}`}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className={`px-4 py-3 text-sm ${theme.text}`}>
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-10 h-10 object-cover rounded" />
+                      <img src={item.image_url} alt={item.name} className="w-10 h-15 object-cover rounded" />
                     ) : (
                       <div className={`w-10 h-10 rounded flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                         <Package className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
@@ -254,7 +254,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
           <div className="p-4 max-h-96 overflow-y-auto">
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Images</label>
-              <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors hover:border-blue-300 ${theme.border} ${isDark ? 'hover:border-blue-500' : 'hover:border-blue-300'}`}>
+              <div className={`border-2 border-dashed rounded-lg p-4 text-center  ${theme.border} ${isDark ? 'hover:border-amber-500' : 'hover:border-amber-300'}`}>
                 <input
                   type="file"
                   multiple
@@ -264,7 +264,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
                   id="img"
                 />
                 <label htmlFor="img" className="cursor-pointer">
-                  <Upload className={`w-6 h-6 mx-auto mb-2 ${theme.muted}`} />
+                  <Upload className={`w- h-6 mx-auto mb-2 ${theme.muted}`} />
                   <p className={`text-sm ${theme.muted}`}>Click to upload images</p>
                 </label>
               </div>
@@ -276,7 +276,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
                       <img
                         src={img.image_url || img.url}
                         alt=""
-                        className="w-full h-20 object-cover rounded-lg"
+                        className="w-full h-30 object-cover rounded-lg"
                       />
                       <button
                         onClick={() => {
@@ -308,7 +308,7 @@ export default function CategoriesTab({ data, loading, apiCall }) {
                   type="text"
                   value={editData?.name || ''}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
-                  className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input}`}
+                  className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
                   placeholder="Enter category name"
                 />
               </div>

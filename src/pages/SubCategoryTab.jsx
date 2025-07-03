@@ -182,7 +182,7 @@ export default function SubCategoriesTab({ data, loading, apiCall }) {
                   <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     <button
                       onClick={() => handleSort(key)}
-                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      className="flex items-center gap-1"
                     >
                       {label}
                       <SortIcon column={key} />
@@ -238,7 +238,7 @@ export default function SubCategoriesTab({ data, loading, apiCall }) {
                 type="text"
                 value={editData?.name || ''}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
-                className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input}`}
+                className={`w-full p-3 border rounded-lg text-sm ${theme.input}`}
                 placeholder="Enter sub category name"
               />
             </div>

@@ -178,7 +178,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme.input}`}
+            className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
           />
         </div>
 
@@ -216,7 +216,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                 {tableColumns.map(({ key, label, sortable }) => (
                   <th key={key} className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme.muted}`}>
                     {sortable ? (
-                      <button onClick={() => handleSort(key)} className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                      <button onClick={() => handleSort(key)} className="flex items-center gap-1">
                         {label}<SortIcon column={key} />
                       </button>
                     ) : label}
@@ -232,11 +232,30 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                 return (
                   <tr key={item.id} className={`${theme.tableRow} transition-colors`}>
                     <td className={`px-4 py-3 text-sm ${theme.text}`}>{serialNumber}</td> {/* Sr. No. cell */}
-                    <td className={`px-4 py-3 text-sm ${theme.text}`}>
+                    {/* <td className={`px-4 py-3 text-sm ${theme.text}`}>
                       {item.images?.[0]?.image_url ? (
-                        <img src={item.images[0].image_url} alt="Product" className="w-10 h-10 object-cover rounded" />
+                        <img src={item.images[0].image_url} alt="Product" className="w-20 h-12 object-cover rounded" />
                       ) : (
                         <div className={`w-10 h-10 ${isDark ? 'bg-gray-600' : 'bg-gray-200'} rounded flex items-center justify-center`}>
+                          <Package className="w-4 h-4 text-gray-400" />
+                        </div>
+                      )}
+                    </td> */}
+                    <td className={`px-4 py-3 text-sm ${theme.text}`}>
+                      {item.images?.[0]?.image_url ? (
+                        <div className="w-20 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                          <img
+                            src={item.images[0].image_url}
+                            alt="Product"
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-10 h-10 ${
+                            isDark ? 'bg-gray-600' : 'bg-gray-200'
+                          } rounded flex items-center justify-center`}
+                        >
                           <Package className="w-4 h-4 text-gray-400" />
                         </div>
                       )}
@@ -339,7 +358,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
             <div className="p-6 max-h-96 overflow-y-auto">
               <div className="grid grid-cols-3 gap-4 mb-6">
                 {/* Full-width image or slider */}
-                <div className="col-span-3">
+                {/* <div className="col-span-3">
                   <p className={`text-sm font-medium ${theme.muted}`}>Images</p>
                   {selected.images?.length > 1 ? (
                     <Slider {...imageSliderSettings} className="mt-2 w-full max-w-xl">
@@ -360,6 +379,36 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                         alt="Product"
                         className="w-full h-60 object-cover rounded"
                       />
+                    </div>
+                  ) : (
+                    <p className={`${theme.text} mt-2`}>No images available</p>
+                  )}
+                </div> */}
+
+                <div className="col-span-3">
+                  <p className={`text-sm font-medium ${theme.muted}`}>Images</p>
+                  {selected.images?.length > 0 ? (
+                    <div className="mt-2 flex space-x-4 max-w-xl">
+                      {selected.images.slice(0, 4).map((img, idx) => (
+                        <div
+                          key={idx}
+                          className="w-48 h-48 bg-gray-100 rounded flex items-center justify-center overflow-hidden"
+                        >
+                          <img
+                            src={img.image_url}
+                            alt={`Image ${idx + 1}`}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      ))}
+                      {Array.from({ length: 4 - selected.images.length }, (_, i) => (
+                        <div
+                          key={`placeholder-${i}`}
+                          className="w-48 h-48 bg-gray-200 rounded flex items-center justify-center text-gray-400"
+                        >
+                          No Image
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <p className={`${theme.text} mt-2`}>No images available</p>
