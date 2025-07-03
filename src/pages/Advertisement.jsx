@@ -9,17 +9,16 @@ export default function AdvertisementModule() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [showView, setShowView] = useState(null);
   const { isDark } = useTheme();
   const hasFetched = useRef(false);
-  const [showView, setShowView] = useState(null);
 
-  // Initial form state
   const initialFormState = {
     title: '',
-    images: [],
     placement: 'Header',
-    is_active: true,
-    priority: 1
+    priority: 1,
+    images: [],
+    is_active: true
   };
 
   const [formState, setFormState] = useState(initialFormState);
@@ -69,41 +68,26 @@ export default function AdvertisementModule() {
   const getImageUrl = (ad) => {
     if (!ad) return '';
     if (typeof ad === 'string') return ad;
-    if (ad.image_url) return ad.image_url;
-    if (ad.imageUrl) return ad.imageUrl;
-    if (ad.images && Array.isArray(ad.images) && ad.images.length > 0) {
-      const firstImage = ad.images[0];
-      return firstImage.url || firstImage.image_url || firstImage;
-    }
-    return '';
+    return ad.image_url || ad.imageUrl || (ad.images?.[0]?.url || ad.images?.[0]?.image_url || ad.images?.[0]) || '';
   };
 
-  // Fixed handleChange function with proper state updates
   const handleChange = useCallback((e) => {
-    e.persist(); // Ensure event persists for async operations
     const { name, value, type, checked, files } = e.target;
     
     setFormState(prev => {
       if (type === 'file') {
-        const imageObjs = Array.from(files).map(file => ({
-          originFileObj: file, 
-          url: URL.createObjectURL(file)
-        }));
         return { 
           ...prev, 
-          images: imageObjs 
-        };
-      } else if (type === 'checkbox') {
-        return { 
-          ...prev, 
-          [name]: checked 
-        };
-      } else {
-        return { 
-          ...prev, 
-          [name]: value 
+          images: Array.from(files).map(file => ({
+            originFileObj: file, 
+            url: URL.createObjectURL(file)
+          }))
         };
       }
+      if (type === 'checkbox') {
+        return { ...prev, [name]: checked };
+      }
+      return { ...prev, [name]: value };
     });
   }, []);
 
@@ -126,13 +110,18 @@ export default function AdvertisementModule() {
           setAds(prev => prev.map(ad => ad.id === editing.id 
             ? { ...ad, ...formState, image_url: getImageUrl(ad) } : ad));
         } else {
-          const newAd = result.data || { 
-            ...formState, 
-            id: Date.now(), 
-            image_url: formState.images[0]?.url || '',
-            images: formState.images 
+          // Fixed: Handle the response data properly
+          const newAd = result.data || result.banner || {};
+          const adToAdd = {
+            id: newAd.id || Date.now().toString(),
+            title: newAd.title || formState.title,
+            placement: newAd.placement || formState.placement,
+            priority: newAd.priority || formState.priority,
+            is_active: newAd.is_active !== undefined ? newAd.is_active : formState.is_active,
+            image_url: newAd.image_url || formState.images[0]?.url || '',
+            images: newAd.images || formState.images
           };
-          setAds(prev => [...prev, newAd]);
+          setAds(prev => [...prev, adToAdd]);
         }
         resetForm();
       } else {
@@ -146,10 +135,10 @@ export default function AdvertisementModule() {
   const handleEdit = useCallback((ad) => {
     setFormState({
       title: ad.title || '', 
-      images: [],
       placement: ad.placement || 'Header', 
-      is_active: ad.is_active !== false, 
-      priority: ad.priority || 1
+      priority: ad.priority || 1,
+      images: [],
+      is_active: ad.is_active !== false,
     });
     setEditing(ad);
     setShowForm(true);
@@ -177,7 +166,7 @@ export default function AdvertisementModule() {
       const result = await AdminService.updateBanner(ad.id, { ...ad, is_active: newStatus });
       if (result.success) {
         setAds(prev => prev.map(a => a.id === ad.id ? { ...a, is_active: newStatus } : a));
-         if (showView && showView.id === ad.id) {
+        if (showView?.id === ad.id) {
           setShowView({ ...showView, is_active: newStatus });
         }
       } else {
@@ -188,22 +177,17 @@ export default function AdvertisementModule() {
     }
   };
 
-  // Move component definitions outside render to prevent re-creation
-  const Btn = useCallback(({ onClick, className = '', children, ...props }) => (
+  const Btn = ({ onClick, className = '', children, ...props }) => (
     <button onClick={onClick} className={`transition-colors ${className}`} {...props}>
       {children}
     </button>
-  ), []);
+  );
 
-  const Input = useCallback(({ className = '', ...props }) => (
-    <input className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input} ${className}`} {...props} />
-  ), [theme.input]);
-
-  const Badge = useCallback(({ color, children }) => (
+  const Badge = ({ color, children }) => (
     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${color}`}>
       {children}
     </span>
-  ), []);
+  );
 
   if (loading) {
     return (
@@ -267,7 +251,7 @@ export default function AdvertisementModule() {
                   onChange={handleChange} 
                   required 
                   placeholder="Enter advertisement title"
-                  className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                  className={`w-full px-3 py-2 rounded-lg ${theme.input}`}
                 />
               </div>
 
@@ -277,7 +261,7 @@ export default function AdvertisementModule() {
                   name="placement" 
                   value={formState.placement} 
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                  className={`w-full px-3 py-2 rounded-lg ${theme.input}`}
                 >
                   {placements.map(p => (
                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -335,7 +319,7 @@ export default function AdvertisementModule() {
                     value={formState.priority}
                     onChange={handleChange} 
                     min="1"
-                    className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 ${theme.input}`}
+                    className={`w-full px-3 py-2 rounded-lg ${theme.input}`}
                   />
                 </div>
                 <div className="flex items-center">
@@ -355,8 +339,7 @@ export default function AdvertisementModule() {
               <div className="flex gap-3">
                 <Btn 
                   type="submit"
-                  className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium " 
-                  style={{ backgroundColor: '#c79e73' }}
+                  className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-medium" style={{ backgroundColor: '#c79e73' }}
                 >
                   <Save className="w-4 h-4" />{editing ? 'Update' : 'Save'}
                 </Btn>
@@ -387,7 +370,7 @@ export default function AdvertisementModule() {
                   <img 
                     src={getImageUrl(showView)} 
                     alt=""
-                    className="w-full h-48 object-cover rounded-lg border"
+                    className="w-full object-cover rounded-lg border"
                     onError={(e) => { e.target.style.display = 'none' }} 
                   />
                 ) : (
@@ -431,8 +414,8 @@ export default function AdvertisementModule() {
                   onClick={() => toggleActive(showView)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
                     showView.is_active !== false 
-                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                      : 'bg-green-600 hover:bg-green-700 text-white'
+                      ? 'bg-[#ff2a2a] text-white' 
+                      : 'bg-[#28a81d] text-white'
                   }`}
                 >
                   {showView.is_active !== false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -474,7 +457,9 @@ export default function AdvertisementModule() {
                 <tbody className={`divide-y ${theme.border}`}>
                   {ads.map((ad, index) => (
                     <tr key={ad.id || index} className={theme.hover}>
-                      <td className="px-6 py-4 whitespace-nowrap"><span className={`text-sm ${theme.text}`}>{index + 1}</span></td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm ${theme.text}`}>{index + 1}</span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getImageUrl(ad) ? (
                           <img
@@ -496,7 +481,7 @@ export default function AdvertisementModule() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge color={ad.placement === 'Header' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
-                            {ad.placement || 'Header'}
+                          {ad.placement || 'Header'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
