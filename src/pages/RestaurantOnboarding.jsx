@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Eye, Check, X, MessageSquare, Search, Download, FileText, Store, Clock, AlertCircle, CheckCircle, XCircle, RefreshCw, Upload, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mail, Phone, MapPin, Briefcase, Building, Building2, Key, MoveUpRight, CalendarDays, User2  } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
 import AdminService from '../Firebase/services/adminApiService'
+import { BiSolidUserCircle } from "react-icons/bi";
 
 export default function RestaurantOnboarding() {
   const { isDark } = useTheme()
@@ -67,7 +68,7 @@ export default function RestaurantOnboarding() {
           appliedDate: item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           status: item.status,
           liftInfo: item.is_lift_available && item.is_lift_access ? 'Yes' : 'No',
-          profileImg: item.profile_picture || "../src/assets/user1.png",
+          profileImg: item.profile_picture || null,
           documents: item.documents || {},
           franchise: item.franchise || {},
           queryHistory: item.query_message || []
@@ -249,7 +250,7 @@ export default function RestaurantOnboarding() {
         <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{name}</h4>
         <div className="flex gap-1">
           <button onClick={() => window.open(doc.path, '_blank')} className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}>
-            <Eye className="w-3 h-3" /> View
+            <Eye className={`w-3 h-3 ${isDark ? 'text-gray-300' : 'text-gray-900'}`} />  <span className={`${isDark ? 'text-gray-100' : 'text-gray-900'}`}>View</span>
           </button>
           <button onClick={() => downloadDocument(doc.path, `${name}.${ext}`)} className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded" style={{ backgroundColor: '#c79e73', color: 'white' }}>
             <Download className="w-3 h-3" /> Get
@@ -278,7 +279,7 @@ export default function RestaurantOnboarding() {
         {stats.map((stat, i) => {
           const IconComponent = stat.icon
           return (
-            <div key={i} onClick={() => setFilter(stat.filter)} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-3 border cursor-pointer hover:shadow-md ${filter === stat.filter ? 'ring-2' : ''}`} style={{ ringColor: filter === stat.filter ? '#c79e73' : 'transparent' }}>
+            <div key={i} onClick={() => setFilter(stat.filter)} className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-3 border cursor-pointer hover:shadow-md ${ filter === stat.filter ? 'ring-2 ring-amber-400' : ''}`} style={{ ringColor: filter === stat.filter ? '#f59e0b' : 'transparent' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stat.label}</p>
@@ -332,7 +333,12 @@ export default function RestaurantOnboarding() {
                         <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>{serialNumber}</td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />
+                            {/* <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" /> */}
+                            {r.profileImg ? (
+  <img src={r.profileImg} alt="" className="w-10 h-10 rounded-full object-cover" />
+) : (
+  <BiSolidUserCircle className="w-10 h-10 text-gray-400" />
+)}
                             <div className="ml-3">
                               <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{r.name}</div>
                               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{r.email}</div>
@@ -368,7 +374,7 @@ export default function RestaurantOnboarding() {
                               </>
                             )}
                             <button onClick={() => { setSelected(r); setModal('details') }} className={`p-2 ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} rounded-lg`}>
-                              <Eye className="w-4 h-4" />
+                              <Eye className={`w-4 h-4 ${isDark ? 'text-gray-300' : 'text-gray-900'}`} />
                             </button>
                           </div>
                         </td>
@@ -416,7 +422,12 @@ export default function RestaurantOnboarding() {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className={`p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
               <div className="flex items-center gap-3">
-                <img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />
+                {/* <img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" /> */}
+                {selected.profileImg ? (
+  <img src={selected.profileImg} alt="" className="w-12 h-12 rounded-full object-cover" />
+) : (
+  <BiSolidUserCircle className="w-12 h-12 text-gray-400" />
+)}
                 <div>
                   <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selected.name}</h2>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>by {selected.owner}</p>
