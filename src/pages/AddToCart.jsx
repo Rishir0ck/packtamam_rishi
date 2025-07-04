@@ -1,33 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { Eye, Edit, Search, ShoppingCart, CheckCircle, Truck, X, Save, User, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { Eye, Edit, Search, ShoppingCart, CheckCircle, Truck, X, Save, User, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
-
-const adminService = {
-  getOrders: async () => mockCartData,
-  updateOrder: async (orderId, data) => data
-}
-
-const mockCartData = [
-  {
-    id: 'cart_001', customerId: 'cust_123', customerName: 'John Doe', customerEmail: 'john@example.com', 
-    customerPhone: '+91 9876543210', restaurantId: 'rest_001', restaurantName: 'Spice Garden',
-    items: [
-      { id: 'item_001', name: 'Butter Chicken', price: 320, quantity: 2, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=60&h=60&fit=crop' },
-      { id: 'item_002', name: 'Garlic Naan', price: 80, quantity: 3, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 880, addedAt: '2024-06-14T10:30:00Z', lastUpdated: '2024-06-14T11:15:00Z', deliveryPartner: 'blueDart',
-    orderStatus: 'cart', location: 'Mumbai, Maharashtra', estimatedDelivery: '2024-06-14T14:30:00Z', trackingId: 'TRK001'
-  },
-  {
-    id: 'cart_002', customerId: 'cust_456', customerName: 'Sarah Wilson', customerEmail: 'sarah@example.com',
-    customerPhone: '+91 8765432109', restaurantId: 'rest_002', restaurantName: 'Pizza Corner',
-    items: [
-      { id: 'item_003', name: 'Margherita Pizza', price: 450, quantity: 1, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 450, addedAt: '2024-06-14T09:45:00Z', lastUpdated: '2024-06-14T10:20:00Z', deliveryPartner: 'dHLExpress',
-    orderStatus: 'confirmed', location: 'Delhi, Delhi', estimatedDelivery: '2024-06-14T13:45:00Z', trackingId: 'TRK002'
-  }
-]
+import adminApiService from '../Firebase/services/adminApiService' // Adjust path as needed
 
 const orderStatuses = [
   { key: 'cart', label: 'Cart', icon: ShoppingCart, color: '#6b7280' },
@@ -36,17 +10,9 @@ const orderStatuses = [
   { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: '#059669' }
 ]
 
-const deliveryPartners = [
-  { key: 'blueDart', label: 'Blue Dart'},
-  { key: 'delhivery', label: 'Delhivery'},
-  { key: 'fedEx', label: 'FedEx'},
-  { key: 'dHLExpress', label: 'DHL Express'},
-  { key: 'indiaPost(Speed Post)', label: 'India Post (Speed Post)'},
-  { key: 'amazonTransportationServices(ATS)', label: 'Amazon Transportation Services'},
-]
-
 export default function OrderManagement() {
-  const [orders, setOrders] = useState(mockCartData)
+  const [orders, setOrders] = useState([])
+  const [deliveryPartners, setDeliveryPartners] = useState([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
@@ -71,6 +37,7 @@ export default function OrderManagement() {
     btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700', modal: 'bg-white'
   }
 
+  // API calls
   const apiCall = useCallback(async (operation, onSuccess) => {
     setLoading(true)
     try {
@@ -84,6 +51,106 @@ export default function OrderManagement() {
     }
   }, [])
 
+  // Transform cart data to match order format
+  const transformCartData = useCallback((cartItems) => {
+    return cartItems.map(item => ({
+      id: `cart_${item.id}`,
+      trackingId: `CART-${item.id}`,
+      customerName: 'Cart User', // You might want to get this from user data
+      customerEmail: '',
+      customerPhone: '',
+      restaurantName: 'Product Store',
+      location: 'N/A',
+      items: [{
+        id: item.product.id,
+        name: item.product.name,
+        image: item.product.images?.[0]?.image_url || '',
+        price: item.priceWithGst,
+        quantity: item.add
+      }],
+      totalAmount: item.priceWithGst,
+      deliveryPartner: '',
+      orderStatus: 'cart',
+      addedAt: item.created_at,
+      estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+      user_id: item.user_id
+    }))
+  }, [])
+
+  // Transform order data to match expected format
+  const transformOrderData = useCallback((orderItems) => {
+    return orderItems.map(order => ({
+      id: order.id,
+      trackingId: order.tracking_id || order.order_id,
+      customerName: order.user?.owner_name || 'Unknown Customer',
+      customerEmail: order.user?.email || '',
+      customerPhone: order.user?.mobile_number || '',
+      restaurantName: order.user?.business_name || 'Business',
+      location: order.address || order.city || 'N/A',
+      items: order.order_items?.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        image: item.product.images?.[0]?.image_url || '',
+        price: item.priceWithGst,
+        quantity: item.add
+      })) || [],
+      totalAmount: order.amount,
+      deliveryPartner: order.delivery_partner_id || '',
+      orderStatus: order.payment_status === 'paid' ? 'confirmed' : 'cart',
+      addedAt: order.created_at,
+      estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      user_id: order.user_id,
+      payment_status: order.payment_status,
+      delivery_status: order.delivery_status
+    }))
+  }, [])
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [ordersRes, cartRes, partnersRes] = await Promise.all([
+        adminApiService.getOrderList(),
+        adminApiService.getCartList(),
+        adminApiService.getDeliveryPartners()
+      ])
+      
+      console.log('Orders Response:', ordersRes)
+      console.log('Cart Response:', cartRes)
+      console.log('Partners Response:', partnersRes)
+      
+      // Extract data from nested structure
+      const ordersData = ordersRes?.data?.data || ordersRes?.data || []
+      const cartData = cartRes?.data?.data || cartRes?.data || []
+      const partnersData = partnersRes?.data?.data || partnersRes?.data || []
+      
+      console.log('Extracted Orders Data:', ordersData)
+      console.log('Extracted Cart Data:', cartData)
+      console.log('Extracted Partners Data:', partnersData)
+      
+      // Transform the data to match expected format
+      const transformedOrders = transformOrderData(ordersData)
+      const transformedCart = transformCartData(cartData)
+      
+      // Combine orders and cart data
+      const allOrders = [...transformedOrders, ...transformedCart]
+      
+      console.log('Final Orders:', allOrders)
+      console.log('Final Partners:', partnersData)
+      
+      setOrders(allOrders)
+      setDeliveryPartners(partnersData)
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+      alert('Failed to load data. Please refresh the page.')
+    } finally {
+      setLoading(false)
+    }
+  }, [transformOrderData, transformCartData])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
   const handleSort = useCallback((key) => {
     setSortConfig(prev => ({
       key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
@@ -93,7 +160,7 @@ export default function OrderManagement() {
   const sortedAndFiltered = useMemo(() => {
     let result = orders.filter(o => {
       const searchMatch = [o.customerName, o.restaurantName, o.trackingId]
-        .some(field => field.toLowerCase().includes(search.toLowerCase()))
+        .some(field => field?.toLowerCase().includes(search.toLowerCase()))
       const filterMatch = filter === 'all' || o.orderStatus === filter
       return searchMatch && filterMatch
     })
@@ -129,7 +196,7 @@ export default function OrderManagement() {
   const handleSave = useCallback(() => {
     if (!editData) return
     apiCall(
-      () => adminService.updateOrder(editData.id, editData),
+      () => adminApiService.updateOrder(editData.id, editData),
       () => {
         setOrders(prev => prev.map(o => o.id === editData.id ? editData : o))
         setModal('')
@@ -141,10 +208,23 @@ export default function OrderManagement() {
   const getStatusInfo = useCallback((status) => 
     orderStatuses.find(s => s.key === status) || orderStatuses[0], [])
 
-  const formatTime = useCallback((timestamp) => 
-    new Date(timestamp).toLocaleString('en-IN', { 
+  const formatTime = useCallback((timestamp) => {
+    if (!timestamp) return 'N/A'
+    // Handle different timestamp formats
+    let date
+    if (timestamp.includes('/')) {
+      // Format: "04/07/2025, 01:50:54"
+      const [datePart, timePart] = timestamp.split(', ')
+      const [day, month, year] = datePart.split('/')
+      date = new Date(`${year}-${month}-${day}T${timePart}`)
+    } else {
+      date = new Date(timestamp)
+    }
+    
+    return date.toLocaleString('en-IN', { 
       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
-    }), [])
+    })
+  }, [])
 
   const stats = useMemo(() => 
     orderStatuses.map(status => ({
@@ -198,6 +278,17 @@ export default function OrderManagement() {
     { key: null, label: 'Actions' }
   ]
 
+  if (loading && orders.length === 0) {
+    return (
+      <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
+        <div className={`text-center ${theme.text}`}>
+          <RefreshCcw className={`w-8 h-8 animate-spin mx-auto mb-4`} />
+          <p>Loading orders...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-200`}>
       <div className="p-4 max-w-full mx-auto">
@@ -228,9 +319,9 @@ export default function OrderManagement() {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="mb-4">
-          <div className="relative">
+        {/* Search & Refresh */}
+        <div className="mb-4 flex gap-2">
+          <div className="relative flex-1">
             <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${theme.muted}`} />
             <input
               type="text" 
@@ -240,6 +331,13 @@ export default function OrderManagement() {
               className={`w-full pl-9 pr-4 py-2.5 border ${theme.input} rounded-lg focus:outline-none`}
             />
           </div>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className={`px-4 py-2 ${theme.btn} rounded-lg transition-colors disabled:opacity-50`}
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
 
         {/* Table */}
@@ -283,10 +381,10 @@ export default function OrderManagement() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex -space-x-1">
-                        {order.items.slice(0, 3).map((item, idx) => (
+                        {order.items?.slice(0, 3).map((item, idx) => (
                           <img key={idx} src={item.image} alt="" className="w-6 h-6 rounded border-2 border-white object-cover" />
                         ))}
-                        {order.items.length > 3 && (
+                        {order.items?.length > 3 && (
                           <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
                             isDark ? 'bg-gray-700 border-gray-800' : 'bg-gray-200 border-gray-300'
                           }`}>
@@ -294,13 +392,13 @@ export default function OrderManagement() {
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs ${theme.muted} mt-1`}>{order.items.length} items</div>
+                      <div className={`text-xs ${theme.muted} mt-1`}>{order.items?.length || 0} items</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className={`font-semibold text-sm ${theme.text}`}>₹{order.totalAmount}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className={`font-medium text-sm ${theme.text}`}>{order.deliveryPartner}</div>
+                      <div className={`font-medium text-sm ${theme.text}`}>{order.deliveryPartner || 'Not Assigned'}</div>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={order.orderStatus} />
@@ -349,9 +447,9 @@ export default function OrderManagement() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-2 py-1 text-sm border rounded transition-colors ${
+                    className={`px-2 py-1 text-sm rounded transition-colors ${
                       currentPage === page 
-                        ? 'bg-blue-500 text-white border-blue-500' 
+                        ? ' text-black' 
                         : `${theme.border} ${theme.hover}`
                     }`}
                   >
@@ -394,9 +492,9 @@ export default function OrderManagement() {
               </div>
 
               <div>
-                <h4 className={`font-medium mb-2 ${theme.text}`}>Items ({selected.items.length})</h4>
+                <h4 className={`font-medium mb-2 ${theme.text}`}>Items ({selected.items?.length || 0})</h4>
                 <div className="space-y-2">
-                  {selected.items.map((item) => (
+                  {selected.items?.map((item) => (
                     <div key={item.id} className={`flex items-center gap-3 p-2 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
                       <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
                       <div className="flex-1">
@@ -428,8 +526,11 @@ export default function OrderManagement() {
                     onChange={(e) => setEditData({...editData, deliveryPartner: e.target.value})}
                     className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
                   >
+                    <option value="">Select Delivery Partner</option>
                     {deliveryPartners.map(partner => (
-                      <option key={partner.key} value={partner.key}>{partner.label}</option>
+                      <option key={partner.id} value={partner.name}>
+                        {partner.name}
+                      </option>
                     ))}
                   </select>
                 </div>
