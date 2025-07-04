@@ -37,13 +37,13 @@ export default function Discount() {
     bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white', muted: 'text-gray-300',
     border: 'border-gray-700', input: 'bg-gray-700 border-gray-600 text-white',
     select: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700',
-    buttonPrimary: 'bg-blue-600 hover:bg-blue-700', buttonSuccess: 'bg-green-600 hover:bg-green-700',
+    buttonPrimary: 'bg-blue-600 hover:bg-blue-700', buttonSuccess: 'bg-[#c79e73] ',
     buttonDanger: 'bg-red-600 hover:bg-red-700', badge: 'bg-green-900 text-green-200'
   } : {
     bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600',
     border: 'border-gray-200', input: 'bg-white border-gray-300', select: 'bg-white border-gray-300',
     hover: 'hover:bg-gray-50', buttonPrimary: 'bg-blue-600 hover:bg-blue-700',
-    buttonSuccess: 'bg-green-600 hover:bg-green-700', buttonDanger: 'bg-red-600 hover:bg-red-700',
+    buttonSuccess: 'bg-[#c79e73]', buttonDanger: 'bg-red-600 hover:bg-red-700',
     badge: 'bg-green-100 text-green-800'
   };
 
@@ -178,7 +178,7 @@ export default function Discount() {
                 <ArrowLeft size={20} className={theme.text} />
               </button>
               <div className="flex items-center space-x-2">
-                <Tag size={24} className="text-blue-600" />
+                <Tag size={24} className="text-amber-600" />
                 <div>
                   <h1 className={`text-xl font-bold ${theme.text}`}>
                     Discount Management
@@ -210,7 +210,7 @@ export default function Discount() {
               <select
                 value={selectedSubcategory}
                 onChange={(e) => setSelectedSubcategory(e.target.value)}
-                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.select}`}
+                className={`w-full p-2 border rounded-lg ${theme.select}`}
               >
                 <option value="">Select Subcategory</option>
                 {subcategories.map(sub => (
@@ -229,7 +229,7 @@ export default function Discount() {
               <select
                 value={selectedSize}
                 onChange={(e) => setSelectedSize(e.target.value)}
-                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.select}`}
+                className={`w-full p-2 border rounded-lg ${theme.select}`}
               >
                 <option value="">Select Size</option>
                 {productSizes.map(size => (
@@ -248,7 +248,7 @@ export default function Discount() {
               <select
                 value={discountType}
                 onChange={(e) => setDiscountType(e.target.value)}
-                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.select}`}
+                className={`w-full p-2 border rounded-lg ${theme.select}`}
               >
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed Amount</option>
@@ -266,7 +266,7 @@ export default function Discount() {
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={discountType === 'percentage' ? '0.00' : '0.00'}
-                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme.input}`}
+                className={`w-full p-2 border rounded-lg ${theme.input}`}
               />
             </div>
           </div>
