@@ -1,6 +1,11 @@
-import React, { useState, useMemo } from 'react'
-import { Eye, Edit, Search, ShoppingCart, Package, Truck, CheckCircle, Clock, X, Save, User, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
+import React, { useState, useMemo, useCallback } from 'react'
+import { Eye, Edit, Search, ShoppingCart, CheckCircle, Truck, X, Save, User, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import useTheme from '../hooks/useTheme'
+
+const adminService = {
+  getOrders: async () => mockCartData,
+  updateOrder: async (orderId, data) => data
+}
 
 const mockCartData = [
   {
@@ -21,53 +26,15 @@ const mockCartData = [
     ],
     totalAmount: 450, addedAt: '2024-06-14T09:45:00Z', lastUpdated: '2024-06-14T10:20:00Z', deliveryPartner: 'dHLExpress',
     orderStatus: 'confirmed', location: 'Delhi, Delhi', estimatedDelivery: '2024-06-14T13:45:00Z', trackingId: 'TRK002'
-  },
-  {
-    id: 'cart_003', customerId: 'cust_789', customerName: 'Rahul Sharma', customerEmail: 'rahul@example.com',
-    customerPhone: '+91 7654321098', restaurantId: 'rest_003', restaurantName: 'Dosa Point',
-    items: [
-      { id: 'item_005', name: 'Masala Dosa', price: 180, quantity: 2, image: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 360, addedAt: '2024-06-14T12:00:00Z', lastUpdated: '2024-06-14T12:30:00Z', deliveryPartner: 'fedEx',
-    orderStatus: 'out-for-delivery', location: 'Bangalore, Karnataka', estimatedDelivery: '2024-06-14T15:00:00Z', trackingId: 'TRK003'
-  },
-  {
-    id: 'cart_004', customerId: 'cust_101', customerName: 'Priya Patel', customerEmail: 'priya@example.com',
-    customerPhone: '+91 9988776655', restaurantId: 'rest_001', restaurantName: 'Spice Garden',
-    items: [
-      { id: 'item_006', name: 'Chicken Biryani', price: 280, quantity: 1, image: 'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 280, addedAt: '2024-06-13T18:00:00Z', lastUpdated: '2024-06-14T08:00:00Z', deliveryPartner: 'fedEx',
-    orderStatus: 'delivered', location: 'Ahmedabad, Gujarat', estimatedDelivery: '2024-06-13T21:00:00Z', trackingId: 'TRK004'
-  },
-  {
-    id: 'cart_005', customerId: 'cust_202', customerName: 'Amit Kumar', customerEmail: 'amit@example.com',
-    customerPhone: '+91 8877665544', restaurantId: 'rest_002', restaurantName: 'Pizza Corner',
-    items: [
-      { id: 'item_007', name: 'Pepperoni Pizza', price: 520, quantity: 1, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 520, addedAt: '2024-06-14T11:00:00Z', lastUpdated: '2024-06-14T11:30:00Z', deliveryPartner: 'fedEx',
-    orderStatus: 'preparing', location: 'Chennai, Tamil Nadu', estimatedDelivery: '2024-06-14T14:00:00Z', trackingId: 'TRK005'
-  },
-  {
-    id: 'cart_006', customerId: 'cust_303', customerName: 'Sneha Reddy', customerEmail: 'sneha@example.com',
-    customerPhone: '+91 7766554433', restaurantId: 'rest_003', restaurantName: 'Dosa Point',
-    items: [
-      { id: 'item_008', name: 'Rava Dosa', price: 160, quantity: 2, image: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=60&h=60&fit=crop' }
-    ],
-    totalAmount: 320, addedAt: '2024-06-14T13:00:00Z', lastUpdated: '2024-06-14T13:15:00Z', deliveryPartner: 'delhivery',
-    orderStatus: 'ready', location: 'Hyderabad, Telangana', estimatedDelivery: '2024-06-14T16:00:00Z', trackingId: 'TRK006'
   }
 ]
 
 const orderStatuses = [
   { key: 'cart', label: 'Cart', icon: ShoppingCart, color: '#6b7280' },
   { key: 'confirmed', label: 'Payment Done', icon: CheckCircle, color: '#059669' },
-  // { key: 'preparing', label: 'Order Preparing', icon: Clock, color: '#d97706' },
-  // { key: 'ready', label: 'Ready', icon: Package, color: '#7c3aed' },
   { key: 'out-for-delivery', label: 'Assign Delivery Partner', icon: Truck, color: '#2563eb' },
   { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: '#059669' }
-] 
+]
 
 const deliveryPartners = [
   { key: 'blueDart', label: 'Blue Dart'},
@@ -78,8 +45,9 @@ const deliveryPartners = [
   { key: 'amazonTransportationServices(ATS)', label: 'Amazon Transportation Services'},
 ]
 
-export default function OrderTableManagement() {
-  const [carts, setCarts] = useState(mockCartData)
+export default function OrderManagement() {
+  const [orders, setOrders] = useState(mockCartData)
+  const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -87,75 +55,64 @@ export default function OrderTableManagement() {
   const [editData, setEditData] = useState(null)
   const [sortConfig, setSortConfig] = useState({ key: 'addedAt', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage] = useState(10)
   const { isDark } = useTheme()
 
   // Theme configuration
   const theme = isDark ? {
-    bg: 'bg-gray-900',
-    card: 'bg-gray-800',
-    text: 'text-white',
-    muted: 'text-gray-300',
-    border: 'border-gray-700',
-    input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
-    hover: 'hover:bg-gray-700',
-    tableHeader: 'bg-gray-700',
-    tableRow: 'hover:bg-gray-750',
-    btn: 'bg-gray-700 hover:bg-gray-600 text-white',
-    statCard: 'bg-gray-800 border-gray-700',
-    modal: 'bg-gray-800',
-    isDark: true
+    bg: 'bg-gray-900', card: 'bg-gray-800', text: 'text-white', muted: 'text-gray-300',
+    border: 'border-gray-700', input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400',
+    hover: 'hover:bg-gray-700', tableHeader: 'bg-gray-700', tableRow: 'hover:bg-gray-750',
+    btn: 'bg-gray-700 hover:bg-gray-600 text-white', modal: 'bg-gray-800'
   } : {
-    bg: 'bg-gray-50',
-    card: 'bg-white',
-    text: 'text-gray-900',
-    muted: 'text-gray-600',
-    border: 'border-gray-200',
-    input: 'bg-white border-gray-200 placeholder-gray-500',
-    hover: 'hover:bg-gray-50',
-    tableHeader: 'bg-gray-50',
-    tableRow: 'hover:bg-gray-50',
-    btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
-    statCard: 'bg-white border-gray-200',
-    modal: 'bg-white',
-    isDark: false
+    bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600',
+    border: 'border-gray-200', input: 'bg-white border-gray-300 placeholder-gray-500',
+    hover: 'hover:bg-gray-50', tableHeader: 'bg-gray-50', tableRow: 'hover:bg-gray-50',
+    btn: 'bg-gray-100 hover:bg-gray-200 text-gray-700', modal: 'bg-white'
   }
 
-  const handleSort = (key) => {
+  const apiCall = useCallback(async (operation, onSuccess) => {
+    setLoading(true)
+    try {
+      const result = await operation()
+      if (onSuccess) onSuccess(result)
+    } catch (error) {
+      console.error('API Error:', error)
+      alert('Operation failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const handleSort = useCallback((key) => {
     setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }))
-  }
+  }, [])
 
   const sortedAndFiltered = useMemo(() => {
-    let result = carts.filter(c => {
-      const searchMatch = [c.customerName, c.restaurantName, c.trackingId]
+    let result = orders.filter(o => {
+      const searchMatch = [o.customerName, o.restaurantName, o.trackingId]
         .some(field => field.toLowerCase().includes(search.toLowerCase()))
-      const filterMatch = filter === 'all' || c.orderStatus === filter
+      const filterMatch = filter === 'all' || o.orderStatus === filter
       return searchMatch && filterMatch
     })
 
     if (sortConfig.key) {
       result.sort((a, b) => {
-        let aVal = a[sortConfig.key]
-        let bVal = b[sortConfig.key]
-        
+        let aVal = a[sortConfig.key], bVal = b[sortConfig.key]
         if (sortConfig.key === 'totalAmount') {
-          aVal = Number(aVal)
-          bVal = Number(bVal)
+          aVal = Number(aVal); bVal = Number(bVal)
         } else if (sortConfig.key.includes('At') || sortConfig.key.includes('Delivery')) {
-          aVal = new Date(aVal)
-          bVal = new Date(bVal)
+          aVal = new Date(aVal); bVal = new Date(bVal)
         }
-        
         if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1
         if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1
         return 0
       })
     }
     return result
-  }, [carts, search, filter, sortConfig])
+  }, [orders, search, filter, sortConfig])
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -164,25 +121,38 @@ export default function OrderTableManagement() {
 
   const totalPages = Math.ceil(sortedAndFiltered.length / itemsPerPage)
 
-  const handleEdit = (cart) => { setEditData({ ...cart }); setModal('edit') }
-  const handleSave = () => { 
-    setCarts(prev => prev.map(c => c.id === editData.id ? editData : c))
-    setModal('')
-    setEditData(null)
-  }
+  const handleEdit = useCallback((order) => {
+    setEditData({ ...order })
+    setModal('edit')
+  }, [])
 
-  const getStatusInfo = (status) => orderStatuses.find(s => s.key === status) || orderStatuses[0]
-  const formatTime = (timestamp) => new Date(timestamp).toLocaleString('en-IN', { 
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
-  })
+  const handleSave = useCallback(() => {
+    if (!editData) return
+    apiCall(
+      () => adminService.updateOrder(editData.id, editData),
+      () => {
+        setOrders(prev => prev.map(o => o.id === editData.id ? editData : o))
+        setModal('')
+        setEditData(null)
+      }
+    )
+  }, [editData, apiCall])
 
-  const stats = orderStatuses.map(status => ({
-    ...status,
-    count: carts.filter(c => c.orderStatus === status.key).length
-  }))
+  const getStatusInfo = useCallback((status) => 
+    orderStatuses.find(s => s.key === status) || orderStatuses[0], [])
+
+  const formatTime = useCallback((timestamp) => 
+    new Date(timestamp).toLocaleString('en-IN', { 
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+    }), [])
+
+  const stats = useMemo(() => 
+    orderStatuses.map(status => ({
+      ...status, count: orders.filter(o => o.orderStatus === status.key).length
+    })), [orders])
 
   const SortIcon = ({ column }) => {
-    if (sortConfig.key !== column) return <ChevronUp className={`w-3 h-3 ${theme.muted} opacity-30`} />
+    if (sortConfig.key !== column) return <ChevronUp className="w-3 h-3 opacity-30" />
     return sortConfig.direction === 'asc' ? 
       <ChevronUp className="w-3 h-3 text-blue-500" /> : 
       <ChevronDown className="w-3 h-3 text-blue-500" />
@@ -199,40 +169,53 @@ export default function OrderTableManagement() {
     )
   }
 
+  const Modal = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div className={`${theme.modal} rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
+            <h2 className={`text-lg font-bold ${theme.text}`}>{title}</h2>
+            <button onClick={onClose} className={`p-2 ${theme.hover} rounded-lg transition-colors`}>
+              <X className={`w-5 h-5 ${theme.text}`} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    )
+  }
+
+  const columns = [
+    { key: 'trackingId', label: 'Order ID' },
+    { key: 'customerName', label: 'Customer' },
+    { key: 'restaurantName', label: 'Restaurant' },
+    { key: null, label: 'Items' },
+    { key: 'totalAmount', label: 'Amount' },
+    { key: 'deliveryPartner', label: 'Delivery Partner' },
+    { key: 'orderStatus', label: 'Status' },
+    { key: 'addedAt', label: 'Order Time' },
+    { key: null, label: 'Actions' }
+  ]
+
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-200`}>
-      <div className="p-4">
+      <div className="p-4 max-w-full mx-auto">
         {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className={`text-2xl font-bold ${theme.text} mb-1`}>Order Management</h1>
-            <p className={`text-sm ${theme.muted}`}>Track and manage customer orders</p>
-          </div>
+        <div className="mb-4">
+          <h1 className={`text-2xl font-bold ${theme.text} mb-1`}>Order Management</h1>
+          <p className={`text-sm ${theme.muted}`}>Track and manage customer orders</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mb-4">
-          <div 
-            onClick={() => setFilter('all')}
-            className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-              filter === 'all' ? 'ring-2 ring-amber-500' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-xs ${theme.muted}`}>Total</p>
-                <p className={`text-lg font-bold ${theme.text}`}>{carts.length}</p>
-              </div>
-              <ShoppingCart className={`w-4 h-4 ${theme.muted}`} />
-            </div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
           {stats.map((stat) => (
             <div 
               key={stat.key}
               onClick={() => setFilter(filter === stat.key ? 'all' : stat.key)}
-              className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-                filter === stat.key ? 'ring-2 ring-amber-500' : ''
-              }`}
+              className={`${theme.card} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
+                filter === stat.key ? 'ring-2 ring-blue-500' : ''
+              } ${theme.border}`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -245,16 +228,16 @@ export default function OrderTableManagement() {
           ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex gap-2 mb-4 items-center">
-          <div className="relative flex-1">
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
             <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${theme.muted}`} />
             <input
               type="text" 
               placeholder="Search orders..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)}
-              className={`w-full pl-9 pr-4 py-2.5 border ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none`}
+              className={`w-full pl-9 pr-4 py-2.5 border ${theme.input} rounded-lg focus:outline-none`}
             />
           </div>
         </div>
@@ -265,100 +248,76 @@ export default function OrderTableManagement() {
             <table className="w-full">
               <thead className={`${theme.tableHeader} border-b ${theme.border}`}>
                 <tr>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('trackingId')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Order ID <SortIcon column="trackingId" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('customerName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Customer <SortIcon column="customerName" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('restaurantName')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Restaurant <SortIcon column="restaurantName" />
-                    </button>
-                  </th>
-                  <th className={`px-4 py-3 text-left text-xs font-medium ${theme.muted}`}>Items</th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('totalAmount')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Amount <SortIcon column="totalAmount" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('deliveryPartner')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Delivery Partner <SortIcon column="deliveryPartner" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('orderStatus')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Status <SortIcon column="orderStatus" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button onClick={() => handleSort('addedAt')} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
-                      Order Time <SortIcon column="addedAt" />
-                    </button>
-                  </th>
-                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.muted}`}>Actions</th>
+                  {columns.map((col, i) => (
+                    <th key={i} className={`px-4 py-3 text-left ${i === 8 ? 'text-center' : ''}`}>
+                      {col.key ? (
+                        <button onClick={() => handleSort(col.key)} className={`flex items-center gap-1 text-xs font-medium ${theme.muted}`}>
+                          {col.label} <SortIcon column={col.key} />
+                        </button>
+                      ) : (
+                        <span className={`text-xs font-medium ${theme.muted}`}>{col.label}</span>
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                {paginatedData.map((cart) => (
-                  <tr key={cart.id} className={`border-b ${theme.tableRow} transition-colors`}>
+                {paginatedData.map((order) => (
+                  <tr key={order.id} className={`${theme.tableRow} transition-colors`}>
                     <td className="px-4 py-3">
-                      <div className={`font-medium text-sm ${theme.text}`}>{cart.trackingId}</div>
+                      <div className={`font-medium text-sm ${theme.text}`}>{order.trackingId}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                           <User className={`w-3 h-3 ${theme.muted}`} />
                         </div>
                         <div>
-                          <div className={`font-medium text-sm ${theme.text}`}>{cart.customerName}</div>
-                          <div className={`text-xs ${theme.muted}`}>{cart.location}</div>
+                          <div className={`font-medium text-sm ${theme.text}`}>{order.customerName}</div>
+                          <div className={`text-xs ${theme.muted}`}>{order.location}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className={`text-sm ${theme.text}`}>{cart.restaurantName}</div>
+                      <div className={`text-sm ${theme.text}`}>{order.restaurantName}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex -space-x-1">
-                        {cart.items.slice(0, 3).map((item, idx) => (
+                        {order.items.slice(0, 3).map((item, idx) => (
                           <img key={idx} src={item.image} alt="" className="w-6 h-6 rounded border-2 border-white object-cover" />
                         ))}
-                        {cart.items.length > 3 && (
-                          <div className={`w-6 h-6 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded border-2 ${isDark ? 'border-gray-800' : 'border-white'} flex items-center justify-center`}>
-                            <span className={`text-xs font-medium ${theme.muted}`}>+{cart.items.length - 3}</span>
+                        {order.items.length > 3 && (
+                          <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                            isDark ? 'bg-gray-700 border-gray-800' : 'bg-gray-200 border-gray-300'
+                          }`}>
+                            <span className={`text-xs font-medium ${theme.muted}`}>+{order.items.length - 3}</span>
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs ${theme.muted} mt-1`}>{cart.items.length} items</div>
+                      <div className={`text-xs ${theme.muted} mt-1`}>{order.items.length} items</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className={`font-semibold text-sm ${theme.text}`}>₹{cart.totalAmount}</div>
+                      <div className={`font-semibold text-sm ${theme.text}`}>₹{order.totalAmount}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className={`font-medium text-sm ${theme.text}`}>{cart.deliveryPartner}</div>
+                      <div className={`font-medium text-sm ${theme.text}`}>{order.deliveryPartner}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={cart.orderStatus} />
+                      <StatusBadge status={order.orderStatus} />
                     </td>
                     <td className="px-4 py-3">
-                      <div className={`text-sm ${theme.text}`}>{formatTime(cart.addedAt)}</div>
+                      <div className={`text-sm ${theme.text}`}>{formatTime(order.addedAt)}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-center">
                         <button 
-                          onClick={() => { setSelected(cart); setModal('view') }} 
-                          className={`p-1 ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded transition-colors`}
+                          onClick={() => { setSelected(order); setModal('view') }} 
+                          className={`p-1 rounded transition-colors ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                         >
                           <Eye className="w-3 h-3" />
                         </button>
                         <button 
-                          onClick={() => handleEdit(cart)} 
+                          onClick={() => handleEdit(order)} 
                           className="p-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition-colors"
                         >
                           <Edit className="w-3 h-3" />
@@ -412,86 +371,70 @@ export default function OrderTableManagement() {
         </div>
 
         {/* View Modal */}
-        {modal === 'view' && selected && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-            <div className={`${theme.modal} rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-              <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
-                <h2 className={`text-lg font-bold ${theme.text}`}>Order Details - {selected.trackingId}</h2>
-                <button onClick={() => setModal('')} className={`p-2 ${theme.hover} rounded-lg transition-colors`}>
-                  <X className={`w-5 h-5 ${theme.text}`} />
-                </button>
-              </div>
-              
-              <div className="p-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <h4 className={`font-medium mb-2 ${theme.text}`}>Customer</h4>
-                    <div className={`space-y-1 ${theme.muted}`}>
-                      <div>{selected.customerName}</div>
-                      <div>{selected.customerEmail}</div>
-                      <div>{selected.customerPhone}</div>
-                      <div>{selected.location}</div>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className={`font-medium mb-2 ${theme.text}`}>Restaurant</h4>
-                    <div className={theme.muted}>
-                      <div>{selected.restaurantName}</div>
-                      <div className="mt-2">Est. Delivery: {formatTime(selected.estimatedDelivery)}</div>
-                    </div>
+        <Modal isOpen={modal === 'view'} onClose={() => setModal('')} title={`Order Details - ${selected?.trackingId}`}>
+          {selected && (
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h4 className={`font-medium mb-2 ${theme.text}`}>Customer</h4>
+                  <div className={`space-y-1 ${theme.muted}`}>
+                    <div>{selected.customerName}</div>
+                    <div>{selected.customerEmail}</div>
+                    <div>{selected.customerPhone}</div>
+                    <div>{selected.location}</div>
                   </div>
                 </div>
-
                 <div>
-                  <h4 className={`font-medium mb-2 ${theme.text}`}>Items ({selected.items.length})</h4>
-                  <div className="space-y-2">
-                    {selected.items.map((item) => (
-                      <div key={item.id} className={`flex items-center gap-3 p-2 ${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded`}>
-                        <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
-                        <div className="flex-1">
-                          <div className={`font-medium text-sm ${theme.text}`}>{item.name}</div>
-                          <div className={`text-xs ${theme.muted}`}>₹{item.price} × {item.quantity}</div>
-                        </div>
-                        <div className={`font-medium ${theme.text}`}>₹{item.price * item.quantity}</div>
+                  <h4 className={`font-medium mb-2 ${theme.text}`}>Restaurant</h4>
+                  <div className={theme.muted}>
+                    <div>{selected.restaurantName}</div>
+                    <div className="mt-2">Est. Delivery: {formatTime(selected.estimatedDelivery)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className={`font-medium mb-2 ${theme.text}`}>Items ({selected.items.length})</h4>
+                <div className="space-y-2">
+                  {selected.items.map((item) => (
+                    <div key={item.id} className={`flex items-center gap-3 p-2 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
+                      <div className="flex-1">
+                        <div className={`font-medium text-sm ${theme.text}`}>{item.name}</div>
+                        <div className={`text-xs ${theme.muted}`}>₹{item.price} × {item.quantity}</div>
                       </div>
-                    ))}
-                  </div>
-                  <div className={`flex justify-between items-center mt-3 pt-3 border-t ${theme.border} font-semibold ${theme.text}`}>
-                    <span>Total</span>
-                    <span>₹{selected.totalAmount}</span>
-                  </div>
+                      <div className={`font-medium ${theme.text}`}>₹{item.price * item.quantity}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className={`flex justify-between items-center mt-3 pt-3 border-t ${theme.border} font-semibold ${theme.text}`}>
+                  <span>Total</span>
+                  <span>₹{selected.totalAmount}</span>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </Modal>
 
         {/* Edit Modal */}
-        {modal === 'edit' && editData && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-            <div className={`${theme.modal} rounded-xl max-w-md w-full`}>
-              <div className={`p-4 border-b ${theme.border} flex items-center justify-between`}>
-                <h2 className={`text-lg font-bold ${theme.text}`}>Update Order Status</h2>
-                <button onClick={() => setModal('')} className={`p-2 ${theme.hover} rounded-lg transition-colors`}>
-                  <X className={`w-5 h-5 ${theme.text}`} />
-                </button>
-              </div>
-              
+        <Modal isOpen={modal === 'edit'} onClose={() => setModal('')} title="Update Order Status">
+          {editData && (
+            <>
               <div className="p-4 space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Delivery Partner</label>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Delivery Partner</label>
                   <select 
                     value={editData.deliveryPartner} 
                     onChange={(e) => setEditData({...editData, deliveryPartner: e.target.value})}
                     className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
                   >
-                    {deliveryPartners.map(status => (
-                      <option key={status.key} value={status.key}>{status.label}</option>
+                    {deliveryPartners.map(partner => (
+                      <option key={partner.key} value={partner.key}>{partner.label}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Tracking ID</label>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Tracking ID</label>
                   <input
                     type="text"
                     value={editData.trackingId}
@@ -501,7 +444,7 @@ export default function OrderTableManagement() {
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${theme.muted}`}>Order Status</label>
+                  <label className={`block text-sm font-medium mb-2 ${theme.text}`}>Order Status</label>
                   <select 
                     value={editData.orderStatus} 
                     onChange={(e) => setEditData({...editData, orderStatus: e.target.value})}
@@ -512,27 +455,28 @@ export default function OrderTableManagement() {
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div className={`flex gap-2 pt-4 border-t ${theme.border}`}>
-                  <button 
-                    onClick={handleSave}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg text-sm hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#c79e73' }}
-                  >
-                    <Save className="w-4 h-4" /> Update Order
-                  </button>
-                  <button 
-                    onClick={() => setModal('')}
-                    className={`px-4 py-2 rounded-lg text-sm transition-colors ${theme.btn}`}
-                  >
-                    Cancel
+              <div className={`p-4 border-t flex gap-2 ${theme.border}`}>
+                <button 
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  {loading ? 'Saving...' : 'Update Order'}
+                </button>
+                <button 
+                  onClick={() => setModal('')}
+                  className={`px-4 py-2 rounded-lg text-sm transition-colors ${theme.btn}`}
+                >
+                  Cancel
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </>
+          )}
+        </Modal>
+      </div>
     </div>
   )
 }

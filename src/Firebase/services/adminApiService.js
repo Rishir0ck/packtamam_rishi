@@ -365,6 +365,14 @@ class AdminService {
     return this.makeAuthenticatedRequest('POST', '/api/admin/delete/coupon', { id: couponId });
   }
 
+  //Order List APIs
+  async getOrderList() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/order/list');
+  }
+  async getCartList() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/order/cart');
+  }
+
 
   // Helper Methods
   createProductFormData(productData) {
