@@ -196,7 +196,7 @@ export default function OrderManagement() {
   const handleSave = useCallback(() => {
     if (!editData) return
     apiCall(
-      () => adminApiService.updateOrder(editData.id, editData),
+      () => adminApiService.updateDeliveryPartners(editData.id, editData),
       () => {
         setOrders(prev => prev.map(o => o.id === editData.id ? editData : o))
         setModal('')

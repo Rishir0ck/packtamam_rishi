@@ -372,6 +372,9 @@ class AdminService {
   async getCartList() {
     return this.makeAuthenticatedRequest('GET', '/api/admin/order/cart');
   }
+  async updateDeliveryPartners() {
+    return this.makeAuthenticatedRequest('GET', '/api/admin/order/set-delivery-partner');
+  }
 
 
   // Helper Methods
