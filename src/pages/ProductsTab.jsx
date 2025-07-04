@@ -207,9 +207,9 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                         </td>
                         <td className={`px-4 py-3 ${theme.text}`}>
                           <div className="font-medium">{item.name}</div>
-                          {(item.shape || item.colour) && (
+                          {(item.category.name || item.sub_category || item.material.name) && (
                             <div className={`text-sm ${theme.muted}`}>
-                              {[item.shape, item.colour].filter(Boolean).join(' • ')}
+                              {[item.category.name, item.sub_category, item.material.name].filter(Boolean).join(' • ')}
                             </div>
                           )}
                         </td>
@@ -329,6 +329,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                     {selected.specs && (
                       <div className="col-span-3">
                         <p className={`text-sm font-medium ${theme.muted}`}>Description</p>
+                        {/* <p className={`mt-1 ${theme.text}`} style={{ whiteSpace: 'pre-line' }}>{selected.specs}</p> */}
                         <p className={`mt-1 ${theme.text}`}>{selected.specs}</p>
                       </div>
                     )}
