@@ -157,18 +157,27 @@ export default function PDiscount() {
     
     try {
       setSaving(true)
-      const firstSlab = editData.slabs[0]
-    const discountData = {
-      id: editData.id,
-      min_amount: firstSlab.min ? parseFloat(firstSlab.min) : 0,
-      max_amount: firstSlab.max ? parseFloat(firstSlab.max) : null,
-      // discount_type: firstSlab.type,
-      discount_type: firstSlab.type === 'percentage' ? 'percentage' : 'fixed',
-      value: parseFloat(firstSlab.value),
-      start_date: editData.timeRestricted ? editData.startDate : null,
-      end_date: editData.timeRestricted ? editData.endDate : null,
-      // is_active: editData.isActive
-    }
+      // const firstSlab = editData.slabs[0]
+      const discountData = {
+        ...editData,
+        id: editData.id,
+        // min_amount: firstSlab.min ? parseFloat(firstSlab.min) : 0,
+        // max_amount: firstSlab.max ? parseFloat(firstSlab.max) : null,
+        // discount_type: firstSlab.type,
+        slabs: editData.slabs.map(slab => ({
+          min: slab.min ? parseFloat(slab.min) : null,
+          max: slab.max ? parseFloat(slab.max) : null,
+          value: parseFloat(slab.value),
+          type: slab.type
+        })).filter(slab => slab.value),
+        // discount_type: firstSlab.type === 'percentage' ? 'percentage' : 'fixed',
+        // value: parseFloat(firstSlab.value),
+        minTicketSize: editData.slabs[0]?.min ? parseFloat(editData.slabs[0].min) : null,
+        maxTicketSize: editData.slabs[0]?.max ? parseFloat(editData.slabs[0].max) : null,
+        // start_date: editData.timeRestricted ? editData.startDate : null,
+        // end_date: editData.timeRestricted ? editData.endDate : null,
+        is_active: editData.isActive
+      }
 
       const response = editData.id 
         ? await adminApiService.updateDiscountTicket(discountData)
@@ -205,23 +214,43 @@ export default function PDiscount() {
     }
   }
 
+  // const generateCoupon = async (discountId) => {
+  //   try {
+  //     setGeneratingCoupon(true)
+  //     const response = await adminApiService.addTicketCoupon(discountId)
+  //     if (response.success) {
+  //       await loadDiscounts()
+  //       // Update the selected discount in the modal with fresh data
+  //       const updatedDiscount = discounts.find(d => d.id === discountId)
+  //       if (updatedDiscount) {
+  //         setSelectedDiscount(updatedDiscount)
+  //       }
+  //       // showAlert('Coupon generated successfully', 'success')
+  //     } else {
+  //       showAlert(response.message || 'Failed to generate coupon', 'error')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error generating coupon:', error)
+  //     showAlert('Failed to generate coupon', 'error')
+  //   } finally {
+  //     setGeneratingCoupon(false)
+  //   }
+  // }
   const generateCoupon = async (discountId) => {
-    try {
-      setGeneratingCoupon(true)
-      const response = await adminApiService.addTicketCoupon(discountId)
-      if (response.success) {
-        await loadDiscounts()
-        showAlert('Coupon generated successfully', 'success')
-      } else {
-        showAlert(response.message || 'Failed to generate coupon', 'error')
-      }
-    } catch (error) {
-      console.error('Error generating coupon:', error)
-      showAlert('Failed to generate coupon', 'error')
-    } finally {
-      setGeneratingCoupon(false)
-    }
+  setGeneratingCoupon(true);
+  try {
+    const newCoupon = await adminApiService.addTicketCoupon(discountId); // Assume this API returns the created coupon
+    setSelectedDiscount((prev,updatedDiscount) => ({
+      ...prev, ...updatedDiscount,
+      coupons: [...(prev?.coupons || []), newCoupon],
+    }));
+    await loadDiscounts()
+  } catch (error) {
+    console.error('Failed to generate coupon:', error);
+  } finally {
+    setGeneratingCoupon(false);
   }
+};
 
   const deleteCoupon = async (couponId) => {
     if (window.confirm('Are you sure you want to delete this coupon?')) {
@@ -442,6 +471,7 @@ export default function PDiscount() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-medium">Discount Slabs</label>
+                {!editData?.id && (
                 <button
                   onClick={addSlab}
                   className="flex items-center gap-1 px-4 py-2 text-sm bg-[#c79e73] text-white rounded-lg"
@@ -449,6 +479,7 @@ export default function PDiscount() {
                   <Plus className="w-3 h-3" />
                   Add Slab
                 </button>
+                )}
               </div>
 
               <div className="space-y-2">
