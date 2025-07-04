@@ -305,7 +305,7 @@ export default function OrderManagement() {
               key={stat.key}
               onClick={() => setFilter(filter === stat.key ? 'all' : stat.key)}
               className={`${theme.card} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
-                filter === stat.key ? 'ring-2 ring-blue-500' : ''
+                filter === stat.key ? 'ring-2 ring-amber-500' : ''
               } ${theme.border}`}
             >
               <div className="flex items-center justify-between">
@@ -331,13 +331,6 @@ export default function OrderManagement() {
               className={`w-full pl-9 pr-4 py-2.5 border ${theme.input} rounded-lg focus:outline-none`}
             />
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className={`px-4 py-2 ${theme.btn} rounded-lg transition-colors disabled:opacity-50`}
-          >
-            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
         </div>
 
         {/* Table */}
@@ -562,17 +555,17 @@ export default function OrderManagement() {
                 <button 
                   onClick={handleSave}
                   disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#c79e73]  disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {loading ? 'Saving...' : 'Update Order'}
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => setModal('')}
                   className={`px-4 py-2 rounded-lg text-sm transition-colors ${theme.btn}`}
                 >
                   Cancel
-                </button>
+                </button> */}
               </div>
             </>
           )}

@@ -259,7 +259,7 @@ export default function PolicyAdmin() {
         <div className={`rounded-lg shadow-sm overflow-hidden ${themeClass('bg-white', 'bg-gray-800 border border-gray-700')}`}>
           {loading && policies.length === 0 ? (
             <div className="flex justify-center items-center p-8">
-              <RefreshCw className="animate-spin w-6 h-6 text-blue-500 mr-2" />
+              <RefreshCw className="animate-spin w-6 h-6 mr-2" />
               <span className="text-gray-600">Loading policies...</span>
             </div>
           ) : (

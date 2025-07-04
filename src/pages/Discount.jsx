@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Tag, Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Package, Tag, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
 import adminApiService from '../Firebase/services/adminApiService';
@@ -47,14 +47,14 @@ export default function Discount() {
     select: 'bg-gray-700 border-gray-600 text-white', hover: 'hover:bg-gray-700',
     buttonPrimary: 'bg-blue-600 hover:bg-blue-700', buttonSuccess: 'bg-[#c79e73]',
     buttonDanger: 'bg-red-600 hover:bg-red-700', badge: 'bg-green-900 text-green-200',
-    tab: 'bg-gray-700 border-gray-600', tabActive: 'bg-blue-600 text-white'
+    tab: 'bg-gray-700 border-gray-600', tabActive: 'bg-[#c79e73] text-white'
   } : {
     bg: 'bg-gray-50', card: 'bg-white', text: 'text-gray-900', muted: 'text-gray-600',
     border: 'border-gray-200', input: 'bg-white border-gray-300', select: 'bg-white border-gray-300',
     hover: 'hover:bg-gray-50', buttonPrimary: 'bg-blue-600 hover:bg-blue-700',
     buttonSuccess: 'bg-[#c79e73]', buttonDanger: 'bg-red-600 hover:bg-red-700',
     badge: 'bg-green-100 text-green-800', tab: 'bg-gray-100 border-gray-300',
-    tabActive: 'bg-blue-600 text-white'
+    tabActive: 'bg-[#c79e73] text-white'
   };
 
   // Fetch data
@@ -439,7 +439,7 @@ export default function Discount() {
 
           {loading && (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               <p className={`mt-2 ${theme.muted}`}>Loading...</p>
             </div>
           )}
