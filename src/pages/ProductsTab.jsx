@@ -313,6 +313,7 @@ export default function ProductsTab({ data = [], loading, apiCall }) {
                     {[
                       ['Name', selected.name],
                       ['Category', selected.category?.name || 'N/A'],
+                      ['Sub Category', selected.sub_category?.name || 'N/A'],
                       ['Material', selected.material?.name || 'N/A'],
                       ['HSN Code', selected.hsn_code || 'N/A'],
                       ['Shape', selected.shape || 'N/A'],

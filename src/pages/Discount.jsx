@@ -199,6 +199,29 @@ export default function Discount() {
     }
   };
 
+  // Add this function after the deleteSubcategory function
+  const saveAndNavigate = () => {
+    const productDataWithDiscounts = {
+      ...productData,
+      discounts: savedDiscounts.map(discount => ({
+        size_id: discount.size_id,
+        discount_type: discount.discount_type,
+        discount_value: discount.discount_value
+      })),
+      subcategories: productSubcategories.map(sub => ({
+        subcategory_id: sub.subcategory_id
+      }))
+    };
+    
+    // Navigate back to inventory management with updated data
+    navigate('/inventory-management', { 
+      state: { 
+        productData: productDataWithDiscounts,
+        fromDiscount: true 
+      } 
+    });
+  };
+
   // Form handlers
   const resetDiscountForm = () => {
     setSelectedSize('');
@@ -240,31 +263,31 @@ export default function Discount() {
       <div className={`${theme.card} rounded-lg shadow-lg`}>
         {/* Header */}
         <div className={`p-6 border-b ${theme.border}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => navigate('/inventory-management')}
-                className={`p-2 rounded-lg ${theme.hover} transition-colors`}
-              >
-                <ArrowLeft size={20} className={theme.text} />
-              </button>
-              <div className="flex items-center space-x-2">
-                <Tag size={24} className="text-amber-600" />
-                <div>
-                  <h1 className={`text-xl font-bold ${theme.text}`}>
-                    Product Management
-                  </h1>
-                  <p className={`text-sm ${theme.muted}`}>
-                    Product: {productData.name}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${theme.badge}`}>
-              {savedDiscounts.length} Discounts | {productSubcategories.length} Subcategories
-            </div>
-          </div>
+  <div className="flex items-center justify-between">
+    <div className="flex items-center space-x-3">
+      <button
+        onClick={() => navigate('/inventory-management')}
+        className={`p-2 rounded-lg ${theme.hover} transition-colors`}
+      >
+        <ArrowLeft size={20} className={theme.text} />
+      </button>
+      <div className="flex items-center space-x-2">
+        <Tag size={24} className="text-amber-600" />
+        <div>
+          <h1 className={`text-xl font-bold ${theme.text}`}>
+            Product Management
+          </h1>
+          <p className={`text-sm ${theme.muted}`}>
+            Product: {productData.name}
+          </p>
         </div>
+      </div>
+    </div>
+      <div className={`px-3 py-1 rounded-full text-xs font-medium ${theme.badge}`}>
+        {savedDiscounts.length} Discounts | {productSubcategories.length} Subcategories
+      </div>
+  </div>
+</div>
 
         {/* Tabs */}
         <div className={`px-6 pt-6 border-b ${theme.border}`}>

@@ -384,6 +384,19 @@ class AdminService {
         if (image.originFileObj) formData.append('document', image.originFileObj);
       });
     }
+
+    // Add discounts and subcategories to form data
+    if (Array.isArray(productData.discounts)) {
+      formData.append('discounts', JSON.stringify(productData.discounts));
+    } else {
+      formData.append('discounts', '[]');
+    }
+
+    if (Array.isArray(productData.subcategories)) {
+      formData.append('subcategories', JSON.stringify(productData.subcategories));
+    } else {
+      formData.append('subcategories', '[]');
+    }
     
     return formData;
   }

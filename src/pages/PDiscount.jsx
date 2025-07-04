@@ -420,7 +420,7 @@ export default function PDiscount() {
                   <td className="px-4 py-3 flex gap-2">
                     <ActionButton onClick={() => openModal(discount)} color="#c79e73" icon={Edit} title="Edit" />
                     <ActionButton onClick={() => openCouponModal(discount)} color="#3b82f6" icon={Gift} title="Manage Coupons" />
-                    <ActionButton onClick={() => deleteDiscount(discount.id)} color="#ef4444" icon={Trash2} title="Delete" />
+                    {/* <ActionButton onClick={() => deleteDiscount(discount.id)} color="#ef4444" icon={Trash2} title="Delete" /> */}
                   </td>
                 </tr>
               ))}

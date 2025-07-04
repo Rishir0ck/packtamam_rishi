@@ -234,7 +234,7 @@ export default function ProductForm() {
       };
 
       const response = await AdminService.addProduct(productData);
-      
+
       if (response.success) {
         message.success('Product added successfully!');
         navigate('/inventory-management');
@@ -440,90 +440,6 @@ export default function ProductForm() {
     </div>
   ), [sizes, theme, addSize, removeSize, handleSizeChange]);
 
-  // const BulkPricingStep = useMemo(() => (
-  //   <div>
-  //     <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
-  //     <div className="space-y-6">
-  //       {sizes.map((size, sizeIndex) => (
-  //         <div key={size.id} className={`rounded-xl p-6 ${theme.card} border ${theme.border}`}>
-  //           <div className="flex justify-between items-center mb-4">
-  //             <h4 className={`font-medium text-lg ${theme.text}`}>{size.size || `Size ${sizeIndex + 1}`} - Bulk Pricing</h4>
-  //             <button
-  //               onClick={() => addPriceSlab(size.id)}
-  //               className="bg-[#c79e73] text-white px-3 py-1 rounded text-sm flex items-center gap-1"
-  //             >
-  //               <Plus className="w-3 h-3" /> Add Slab
-  //             </button>
-  //           </div>
-  //           <div className={`${theme.card} rounded-lg p-4 overflow-x-auto border ${theme.border}`}>
-  //             <div className="space-y-3 min-w-[900px]">
-  //               {size.priceSlabs.map((slab, index) => (
-  //                 <div key={slab.id} className="flex gap-4 items-start border-b pb-4">
-  //                   <div className={`text-sm ${theme.muted} w-6 shrink-0`}>#{index + 1}</div>
-  //                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-  //                     {[
-  //                       {
-  //                         title: 'Pack Details', fields: [
-  //                           ['Pack Off', 'packOff', 'number'],
-  //                           ['Qty of Pack', 'minPack', 'number']
-  //                         ]
-  //                       },
-  //                       {
-  //                         title: 'Cost & Markup', fields: [
-  //                           ['Cost Price(₹)', 'costPrice', 'number'],
-  //                           ['Markup(%)', 'markupPrice', 'number'],
-  //                           ['Gross Profit(₹)', 'grossProfit', 'number', true]
-  //                         ]
-  //                       },
-  //                       {
-  //                         title: 'Selling Price', fields: [
-  //                           ['Sell Price(₹)', 'sellPrice', 'number', true],
-  //                           ['GST(%)', 'gst', 'number'],
-  //                           ['GST Amount(₹)', 'gstAmount', 'number', true]
-  //                         ]
-  //                       },
-  //                       {
-  //                         title: 'Final Price', fields: [
-  //                           ['With GST(₹)', 'priceWithGst', 'number', true]
-  //                         ]
-  //                       }
-  //                     ].map((group) => (
-  //                       <div key={group.title} className="flex flex-col gap-1">
-  //                         <div className="text-xs font-semibold text-center">{group.title}</div>
-  //                         {group.fields.map(([label, field, type = 'text', readOnly = false]) => (
-  //                           <input
-  //                             key={field}
-  //                             type={type}
-  //                             value={slab[field] || ''}
-  //                             onChange={(e) => calculateSlabPrice(size.id, slab.id, field, e.target.value)}
-  //                             className={`w-32 px-1 py-1 border rounded text-sm ${readOnly ? 'opacity-60 cursor-not-allowed' : ''} ${theme.input}`}
-  //                             placeholder={label}
-  //                             readOnly={readOnly}
-  //                           />
-  //                         ))}
-  //                       </div>
-  //                     ))}
-  //                   </div>
-  //                   <div className="flex flex-col justify-center">
-  //                     {size.priceSlabs.length > 1 && (
-  //                       <button
-  //                         onClick={() => removePriceSlab(size.id, slab.id)}
-  //                         className="text-red-500 hover:text-red-700"
-  //                       >
-  //                         <Trash2 className="w-4 h-4" />
-  //                       </button>
-  //                     )}
-  //                   </div>
-  //                 </div>
-  //               ))}
-  //             </div>
-  //           </div>
-  //         </div>
-  //       ))}
-  //     </div>
-  //   </div>
-  // ), [sizes, theme, addPriceSlab, removePriceSlab, calculateSlabPrice]);
-
   const BulkPricingStep = useMemo(() => (
     <div>
       <h3 className={`text-lg font-semibold mb-6 ${theme.text}`}>Bulk Pricing Slabs (Pack-wise)</h3>
@@ -625,7 +541,7 @@ export default function ProductForm() {
               </tr>
             </thead>
             <tbody className={`divide-y ${theme.border}`}>
-              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], ['Specification', 'specs']].map(([field, key]) => (
+              {[...basicFields, ['Category', 'category_id'], ['Material', 'material_id'], ['Specification', 'specs'],['Features','features']].map(([field, key]) => (
                 <tr key={field} className={theme.hover}>
                   <td className={`px-4 py-2 font-medium ${theme.text}`}>{field}</td>
                   <td className={`px-4 py-2 ${theme.text}`}>
