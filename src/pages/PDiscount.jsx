@@ -5,7 +5,7 @@ import adminApiService from '../Firebase/services/adminApiService'
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{title}</h3>
@@ -58,11 +58,13 @@ export default function PDiscount() {
       const response = await adminApiService.getDiscounts()
       if (response.success) {
         // Ensure we always set an array
-        const discountsData = response.data.data
+        const discountsData = response.data
+        // Ensure the data is an array before setting it
         if (Array.isArray(discountsData)) {
           setDiscounts(discountsData)
         } else {
           console.warn('API response.data is not an array:', discountsData)
+          console.log('data', discountsData)
           setDiscounts([])
         }
       } else {
@@ -269,7 +271,7 @@ export default function PDiscount() {
           </div>
           <button
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-[#c79e73] text-white rounded-lg font-medium transition-colors"
           >
             <Plus className="w-5 h-5" />
             Add Discount
@@ -333,7 +335,7 @@ export default function PDiscount() {
                     </span>
                   </td>
                   <td className="px-4 py-3 flex gap-2">
-                    <ActionButton onClick={() => openModal(discount)} color="#d97706" icon={Edit} title="Edit" />
+                    <ActionButton onClick={() => openModal(discount)} color="#c79e73" icon={Edit} title="Edit" />
                     <ActionButton onClick={() => openCouponModal(discount)} color="#3b82f6" icon={Gift} title="Manage Coupons" />
                     <ActionButton onClick={() => deleteDiscount(discount.id)} color="#ef4444" icon={Trash2} title="Delete" />
                   </td>
@@ -431,7 +433,7 @@ export default function PDiscount() {
                 <label className="text-sm font-medium">Discount Slabs</label>
                 <button
                   onClick={addSlab}
-                  className="flex items-center gap-1 px-3 py-1 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                  className="flex items-center gap-1 px-4 py-2 text-sm bg-[#c79e73] text-white rounded-lg"
                 >
                   <Plus className="w-3 h-3" />
                   Add Slab
@@ -515,7 +517,7 @@ export default function PDiscount() {
             <button
               onClick={saveDiscount}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50 text-sm hover:bg-amber-700"
+              className="flex items-center gap-2 px-4 py-2 bg-[#c79e73] text-white rounded-lg font-medium disabled:opacity-50 text-sm"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save'}
@@ -535,7 +537,7 @@ export default function PDiscount() {
               <button
                 onClick={() => generateCoupon(selectedDiscount?.id)}
                 disabled={generatingCoupon}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[#c79e73] text-white rounded-lg text-sm"
               >
                 <Gift className="w-4 h-4" />
                 {generatingCoupon ? 'Generating...' : 'Generate New Coupon'}
@@ -550,16 +552,16 @@ export default function PDiscount() {
                       <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
                         {coupon.code}
                       </code>
-                      <button
+                      {/* <button
                         onClick={() => toggleCouponStatus(coupon)}
                         className={`inline-flex px-2 py-1 rounded-full text-xs cursor-pointer hover:opacity-80 ${
                           coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}
                       >
                         {coupon.isActive ? 'Active' : 'Inactive'}
-                      </button>
+                      </button> */}
                       <span className="text-sm text-gray-600">
-                        Created: {coupon.createdAt}
+                        Created: {coupon.code}
                       </span>
                     </div>
                     <div className="flex gap-2">
