@@ -211,7 +211,7 @@ export default function OrderTableManagement() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mb-4">
           <div 
             onClick={() => setFilter('all')}
             className={`${theme.statCard} rounded-lg p-3 border cursor-pointer hover:shadow-md transition-all ${
