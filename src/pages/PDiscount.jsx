@@ -43,8 +43,8 @@ export default function PDiscount() {
   const [generatingCoupon, setGeneratingCoupon] = useState(false)
 
   const initialFormData = {
-    timeRestricted: false, startDate: '', endDate: '', isActive: true,
-    slabs: [{ min: '', max: '', value: '', type: 'amount' }]
+    timeRestricted: false, startDate: '', endDate: '',// isActive: true,
+    slabs: [{ min: '', max: '', value: '', type: 'fixed' }]
   }
 
   const showAlert = (message, type = 'info') => {
@@ -52,37 +52,64 @@ export default function PDiscount() {
     alert(message)
   }
 
-  const loadDiscounts = useCallback(async () => {
+  const loadDiscounts = async () => {
     try {
       setLoading(true)
       const response = await adminApiService.getDiscounts()
       if (response.success) {
-        // Ensure we always set an array
-        const discountsData = response.data
-        // Ensure the data is an array before setting it
-        if (Array.isArray(discountsData)) {
-          setDiscounts(discountsData)
-        } else {
-          console.warn('API response.data is not an array:', discountsData)
-          console.log('data', discountsData)
-          setDiscounts([])
+        let discountsData = response.data
+        
+        if (discountsData.data) {
+          discountsData = discountsData.data
         }
+        // Normalize to array if it's a single object
+        if (!Array.isArray(discountsData)) {
+          discountsData = discountsData ? [discountsData] : []
+        }
+
+        // Transform API data to match component expectations
+        const transformedData = discountsData.map(item => {
+          console.log('Processing item:', item)
+          return {
+          id: item.id,
+          timeRestricted: !!(item.start_date && item.end_date),
+          startDate: item.start_date ? new Date(item.start_date).toISOString().split('T')[0] : '',
+          endDate: item.end_date ? new Date(item.end_date).toISOString().split('T')[0] : '',
+          slabs: [{
+            min: item.min_amount || 0,
+            max: item.max_amount || null,
+            value: item.value,
+            type: item.discount_type === 'percentage' ? 'percentage' : 'fixed'
+          }],
+          minTicketSize: item.min_amount || 0,
+          maxTicketSize: item.max_amount || null,
+          coupons: item.coupons?.map(coupon => ({
+            id: coupon.id,
+            code: coupon.coupon,
+            isActive: coupon.is_active
+          })) || []
+        }
+        })
+
+        setDiscounts(transformedData)
+        console.log('Transformed data:', transformedData)
+        console.log('Setting discounts to:', transformedData)
       } else {
-        setDiscounts([]) // Set empty array on failure
+        setDiscounts([])
         showAlert('Failed to load discounts', 'error')
       }
     } catch (error) {
       console.error('Error loading discounts:', error)
-      setDiscounts([]) // Set empty array on error
+      setDiscounts([])
       showAlert('Failed to load discounts', 'error')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     loadDiscounts()
-  }, [loadDiscounts])
+  }, [])
 
   const paginatedData = useMemo(() => {
     // Add safety check to ensure discounts is an array
@@ -112,7 +139,7 @@ export default function PDiscount() {
   const addSlab = () => {
     setEditData(prev => ({
       ...prev,
-      slabs: [...prev.slabs, { min: '', max: '', value: '', type: 'amount' }]
+      slabs: [...prev.slabs, { min: '', max: '', value: '', type: 'fixed' }]
     }))
   }
 
@@ -130,18 +157,19 @@ export default function PDiscount() {
     
     try {
       setSaving(true)
-      const discountData = {
-        ...editData,
-        slabs: editData.slabs.map(slab => ({
-          min: slab.min ? parseFloat(slab.min) : null,
-          max: slab.max ? parseFloat(slab.max) : null,
-          value: parseFloat(slab.value),
-          type: slab.type
-        })).filter(slab => slab.value),
-        minTicketSize: editData.slabs[0]?.min ? parseFloat(editData.slabs[0].min) : null,
-        maxTicketSize: editData.slabs[0]?.max ? parseFloat(editData.slabs[0].max) : null
-      }
-      
+      const firstSlab = editData.slabs[0]
+    const discountData = {
+      id: editData.id,
+      min_amount: firstSlab.min ? parseFloat(firstSlab.min) : 0,
+      max_amount: firstSlab.max ? parseFloat(firstSlab.max) : null,
+      // discount_type: firstSlab.type,
+      discount_type: firstSlab.type === 'percentage' ? 'percentage' : 'fixed',
+      value: parseFloat(firstSlab.value),
+      start_date: editData.timeRestricted ? editData.startDate : null,
+      end_date: editData.timeRestricted ? editData.endDate : null,
+      // is_active: editData.isActive
+    }
+
       const response = editData.id 
         ? await adminApiService.updateDiscountTicket(discountData)
         : await adminApiService.addDiscountTicket(discountData)
@@ -237,8 +265,8 @@ export default function PDiscount() {
         min: slab.min?.toString() || '',
         max: slab.max?.toString() || '',
         value: slab.value.toString(),
-        type: slab.type || 'amount'
-      })) : [{ min: item.minTicketSize?.toString() || '', max: item.maxTicketSize?.toString() || '', value: '', type: 'amount' }]
+        type: slab.type || 'fixed'
+      })) : [{ min: '', max: '', value: '', type: 'fixed' }]
     } : initialFormData)
     setModal('editDiscount')
   }
@@ -286,7 +314,6 @@ export default function PDiscount() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slabs</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Period</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupons</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -302,14 +329,14 @@ export default function PDiscount() {
                         {discount.slabs.map((slab, i) => (
                           <div key={i} className="flex items-center gap-2 text-xs">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                              slab.type === 'amount' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                              slab.type === 'fixed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                             }`}>
-                              {slab.type === 'amount' ? <IndianRupee size={10} /> : <Percent size={10} />}
+                              {slab.type === 'fixed' ? <IndianRupee size={10} /> : <Percent size={10} />}
                               {slab.type}
                             </span>
                             <span>
                               {slab.min ? `₹${slab.min}` : '₹0'} - {slab.max ? `₹${slab.max}` : '∞'}: 
-                              {slab.type === 'amount' ? ` ₹${slab.value}` : ` ${slab.value}%`}
+                              {slab.type === 'fixed' ? ` ₹${slab.value}` : ` ${slab.value}%`}
                             </span>
                           </div>
                         ))}
@@ -326,13 +353,6 @@ export default function PDiscount() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {discount.coupons?.length || 0} coupon(s)
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                      discount.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {discount.isActive ? 'Active' : 'Inactive'}
-                    </span>
                   </td>
                   <td className="px-4 py-3 flex gap-2">
                     <ActionButton onClick={() => openModal(discount)} color="#c79e73" icon={Edit} title="Edit" />
@@ -398,15 +418,6 @@ export default function PDiscount() {
                 <Calendar size={16} />
                 Time Restricted
               </label>
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={editData?.isActive || false}
-                  onChange={(e) => handleFieldChange('isActive', e.target.checked)}
-                  className="text-blue-600"
-                />
-                Active
-              </label>
             </div>
 
             {editData?.timeRestricted && (
@@ -448,12 +459,12 @@ export default function PDiscount() {
                         <input
                           type="radio"
                           name={`type-${index}`}
-                          value="amount"
-                          checked={slab.type === 'amount'}
+                          value="fixed"
+                          checked={slab.type === 'fixed'}
                           onChange={(e) => handleSlabChange(index, 'type', e.target.value)}
                         />
                         <IndianRupee size={14} />
-                        Amount
+                        Flat
                       </label>
                       <label className="flex items-center gap-1">
                         <input
@@ -491,7 +502,7 @@ export default function PDiscount() {
                       placeholder="Value"
                     />
                     <span className="text-sm text-gray-500">
-                      {slab.type === 'amount' ? '₹' : '%'}
+                      {slab.type === 'fixed' ? '₹' : '%'}
                     </span>
                     {editData?.slabs?.length > 1 && (
                       <button
@@ -552,16 +563,10 @@ export default function PDiscount() {
                       <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
                         {coupon.code}
                       </code>
-                      {/* <button
-                        onClick={() => toggleCouponStatus(coupon)}
-                        className={`inline-flex px-2 py-1 rounded-full text-xs cursor-pointer hover:opacity-80 ${
-                          coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}
-                      >
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs ${
+                        coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
                         {coupon.isActive ? 'Active' : 'Inactive'}
-                      </button> */}
-                      <span className="text-sm text-gray-600">
-                        Created: {coupon.code}
                       </span>
                     </div>
                     <div className="flex gap-2">
