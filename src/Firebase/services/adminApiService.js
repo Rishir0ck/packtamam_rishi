@@ -681,6 +681,192 @@ class AdminService {
       code: error.code
     };
   }
+
+async getAllowedModules() {
+  try {
+    console.log('🔍--- AdminService - Fetching allowed modules...');
+    
+    // Step 1: Validate auth tokens with better error handling
+    const tokens = this.getAuthTokens();
+    console.log('Tokens available:', {
+      hasServer: !!tokens?.server,
+      hasClient: !!tokens?.client,
+      serverTokenLength: tokens?.server?.length || 0
+    });
+    
+    if (!tokens || !tokens.server) {
+      console.error('❌ AdminService - No server token available');
+      return {
+        success: false,
+        error: 'No authentication token available',
+        errorCode: 'NO_AUTH_TOKEN'
+      };
+    }
+
+    // Step 2: Validate current user before making API call
+    const currentUser = this.getCurrentUser();
+    console.log('Current user:', {
+      hasUser: !!currentUser,
+      uid: currentUser?.uid || 'N/A',
+      email: currentUser?.email || 'N/A'
+    });
+    
+    if (!currentUser) {
+      console.error('❌ AdminService - No current user information available');
+      return {
+        success: false,
+        error: 'No current user information available',
+        errorCode: 'NO_USER_INFO'
+      };
+    }
+
+    // Step 3: Make API call with enhanced error handling
+    console.log('📡 Making API request to /api/admin/list-permissions');
+    
+    const response = await this.makeAuthenticatedRequest(
+      'GET', 
+      '/api/admin/list-permissions', 
+      { token: tokens.server }
+    );
+    
+    console.log('Raw API response:', {
+      success: response?.success,
+      hasData: !!response?.data,
+      dataType: typeof response?.data,
+      dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
+      error: response?.error,
+      statusCode: response?.statusCode || 'N/A'
+    });
+    
+    // Step 4: Enhanced response validation
+    if (!response) {
+      console.error('❌ AdminService - No response received from API');
+      return {
+        success: false,
+        error: 'No response received from server',
+        errorCode: 'NO_RESPONSE'
+      };
+    }
+
+    if (!response.success) {
+      console.error('❌ AdminService - API request failed:', response.error);
+      return {
+        success: false,
+        error: response.error || 'API request failed',
+        errorCode: 'API_ERROR',
+        statusCode: response.statusCode
+      };
+    }
+
+    if (!response.data) {
+      console.error('❌ AdminService - No data in response');
+      return {
+        success: false,
+        error: 'No data received from server',
+        errorCode: 'NO_DATA'
+      };
+    }
+
+    // Step 5: Validate data structure
+    if (!Array.isArray(response.data)) {
+      console.error('❌ AdminService - Response data is not an array:', typeof response.data);
+      return {
+        success: false,
+        error: 'Invalid data format received from server',
+        errorCode: 'INVALID_DATA_FORMAT'
+      };
+    }
+
+    // Step 6: Find current user's data with better matching
+    console.log('🔍 Searching for user data in response...');
+    
+    const userData = response.data.find(user => {
+      const uidMatch = user.uid && currentUser.uid && user.uid === currentUser.uid;
+      const emailMatch = user.email && currentUser.email && 
+                        user.email.toLowerCase() === currentUser.email.toLowerCase();
+      
+      console.log('Checking user:', {
+        userUid: user.uid,
+        userEmail: user.email,
+        currentUid: currentUser.uid,
+        currentEmail: currentUser.email,
+        uidMatch,
+        emailMatch
+      });
+      
+      return uidMatch || emailMatch;
+    });
+
+    if (!userData) {
+      console.error('❌ AdminService - Current user not found in response');
+      console.log('Available users in response:', response.data.map(u => ({
+        uid: u.uid,
+        email: u.email
+      })));
+      
+      return {
+        success: false,
+        error: 'Current user not found in permissions list',
+        errorCode: 'USER_NOT_FOUND'
+      };
+    }
+
+    // Step 7: Validate modules data
+    if (!userData.modules) {
+      console.warn('⚠️ AdminService - No modules property found for user');
+      return {
+        success: true,
+        data: [],
+        warning: 'No modules assigned to current user'
+      };
+    }
+
+    console.log('✅ AdminService - Modules fetched successfully:', {
+      moduleCount: Array.isArray(userData.modules) ? userData.modules.length : 'N/A',
+      modules: userData.modules
+    });
+    
+    return {
+      success: true,
+      data: userData.modules,
+      userInfo: {
+        uid: userData.uid,
+        email: userData.email
+      }
+    };
+    
+  } catch (error) {
+    console.error('❌ AdminService - Unexpected error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Check for specific error types
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return {
+        success: false,
+        error: 'Network error - please check your connection',
+        errorCode: 'NETWORK_ERROR'
+      };
+    }
+    
+    if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+      return {
+        success: false,
+        error: 'Invalid response format from server',
+        errorCode: 'PARSE_ERROR'
+      };
+    }
+    
+    return {
+      success: false,
+      error: error.message || 'Unexpected error occurred',
+      errorCode: 'UNEXPECTED_ERROR'
+    };
+  }
+}
+
 }
 
 export default new AdminService();
