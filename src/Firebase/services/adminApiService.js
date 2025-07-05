@@ -686,14 +686,8 @@ async getAllowedModules() {
   try {
     console.log('🔍--- AdminService - Fetching allowed modules...');
     
-    // Step 1: Validate auth tokens with better error handling
+    // Step 1: Validate auth tokens
     const tokens = this.getAuthTokens();
-    console.log('Tokens available:', {
-      hasServer: !!tokens?.server,
-      hasClient: !!tokens?.client,
-      serverTokenLength: tokens?.server?.length || 0
-    });
-    
     if (!tokens || !tokens.server) {
       console.error('❌ AdminService - No server token available');
       return {
@@ -703,14 +697,8 @@ async getAllowedModules() {
       };
     }
 
-    // Step 2: Validate current user before making API call
+    // Step 2: Validate current user
     const currentUser = this.getCurrentUser();
-    console.log('Current user:', {
-      hasUser: !!currentUser,
-      uid: currentUser?.uid || 'N/A',
-      email: currentUser?.email || 'N/A'
-    });
-    
     if (!currentUser) {
       console.error('❌ AdminService - No current user information available');
       return {
@@ -720,27 +708,22 @@ async getAllowedModules() {
       };
     }
 
-    // Step 3: Make API call with enhanced error handling
+    // Step 3: Make API call
     console.log('📡 Making API request to /api/admin/list-permissions');
     
-    const response = await this.makeAuthenticatedRequest(
-      'GET', 
-      '/api/admin/list-permissions', 
-      { token: tokens.server }
-    );
+    const response = await this.makeAuthenticatedRequest('GET', '/api/admin/list-sub-admin');
     
-    console.log('Raw API response:', {
-      success: response?.success,
-      hasData: !!response?.data,
-      dataType: typeof response?.data,
-      dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
-      error: response?.error,
-      statusCode: response?.statusCode || 'N/A'
-    });
+    // Step 4: Debug - Log the entire response structure
+    console.log('🔍 FULL API RESPONSE DEBUG:');
+    console.log('Response type:', typeof response);
+    console.log('Response keys:', response ? Object.keys(response) : 'No response');
+    console.log('Response.success:', response?.success);
+    console.log('Response.data type:', typeof response?.data);
+    console.log('Response.data:', response?.data);
     
-    // Step 4: Enhanced response validation
+    // Step 5: Basic response validation
     if (!response) {
-      console.error('❌ AdminService - No response received from API');
+      console.error('❌ No response received from API');
       return {
         success: false,
         error: 'No response received from server',
@@ -749,17 +732,16 @@ async getAllowedModules() {
     }
 
     if (!response.success) {
-      console.error('❌ AdminService - API request failed:', response.error);
+      console.error('❌ API request failed:', response.error);
       return {
         success: false,
         error: response.error || 'API request failed',
-        errorCode: 'API_ERROR',
-        statusCode: response.statusCode
+        errorCode: 'API_ERROR'
       };
     }
 
     if (!response.data) {
-      console.error('❌ AdminService - No data in response');
+      console.error('❌ No data in response');
       return {
         success: false,
         error: 'No data received from server',
@@ -767,72 +749,144 @@ async getAllowedModules() {
       };
     }
 
-    // Step 5: Validate data structure
-    if (!Array.isArray(response.data)) {
-      console.error('❌ AdminService - Response data is not an array:', typeof response.data);
+    // Step 6: Handle different possible response structures
+    let userData = null;
+    let modules = [];
+
+    // Case 1: Direct array of users
+    if (Array.isArray(response.data)) {
+      console.log('📋 Response data is a direct array of users');
+      userData = response.data.find(user => {
+        if (!user || typeof user !== 'object') return false;
+        const uidMatch = user.uid && currentUser.uid && String(user.uid) === String(currentUser.uid);
+        const emailMatch = user.email && currentUser.email && 
+                          String(user.email).toLowerCase().trim() === String(currentUser.email).toLowerCase().trim();
+        return uidMatch || emailMatch;
+      });
+    }
+    
+    // Case 2: Object with users array
+      else if (response.data.users && Array.isArray(response.data.users)) {
+          console.log('📋 Response data has users array');
+          userData = response.data.find(user => {
+      if (!user || typeof user !== 'object') return false;
+  
+      const uidMatch = user.uid && currentUser.uid && String(user.uid) === String(currentUser.uid);
+      const emailMatch = user.email && currentUser.email && 
+                        String(user.email).toLowerCase().trim() === String(currentUser.email).toLowerCase().trim();
+      return uidMatch || emailMatch;
+    });
+        }
+    
+    // Case 3: Single user object
+    else if (response.data.uid || response.data.email) {
+      console.log('📋 Response data is a single user object');
+      userData = response.data.find(user => {
+    if (!user || typeof user !== 'object') return false;
+  
+    const uidMatch = user.uid && currentUser.uid && String(user.uid) === String(currentUser.uid);
+    const emailMatch = user.email && currentUser.email && 
+                      String(user.email).toLowerCase().trim() === String(currentUser.email).toLowerCase().trim();
+    return uidMatch || emailMatch;
+  });
+      }
+    
+    // Case 4: Direct modules array (if API returns modules directly)
+    else if (response.data.modules || Array.isArray(response.data)) {
+      console.log('📋 Response data might contain direct modules');
+      modules = response.data.modules || response.data;
+      
       return {
-        success: false,
-        error: 'Invalid data format received from server',
-        errorCode: 'INVALID_DATA_FORMAT'
+        success: true,
+        data: modules,
+        note: 'Modules retrieved directly from response'
       };
     }
 
-    // Step 6: Find current user's data with better matching
-    console.log('🔍 Searching for user data in response...');
-    
-    const userData = response.data.find(user => {
-      const uidMatch = user.uid && currentUser.uid && user.uid === currentUser.uid;
-      const emailMatch = user.email && currentUser.email && 
-                        user.email.toLowerCase() === currentUser.email.toLowerCase();
+    // Case 5: Check for other possible structures
+    else {
+      console.log('📋 Unknown response structure, exploring...');
       
-      console.log('Checking user:', {
-        userUid: user.uid,
-        userEmail: user.email,
-        currentUid: currentUser.uid,
-        currentEmail: currentUser.email,
-        uidMatch,
-        emailMatch
-      });
+      // Try to find any array that might contain user data
+      const possibleArrays = Object.keys(response.data).filter(key => 
+        Array.isArray(response.data[key])
+      );
       
-      return uidMatch || emailMatch;
+      console.log('Found arrays in response:', possibleArrays);
+      
+      if (possibleArrays.length > 0) {
+        for (const arrayKey of possibleArrays) {
+          console.log(`Checking array: ${arrayKey}`, response.data[arrayKey]);
+          
+          const foundUser = response.data[arrayKey].find(item => {
+            if (typeof item === 'object' && item !== null) {
+              const uidMatch = item.uid && currentUser.uid && item.uid === currentUser.uid;
+              const emailMatch = item.email && currentUser.email && 
+                                item.email.toLowerCase() === currentUser.email.toLowerCase();
+              return uidMatch || emailMatch;
+            }
+            return false;
+          });
+          
+          if (foundUser) {
+            userData = foundUser;
+            break;
+          }
+        }
+      }
+    }
+
+    // Step 6: Handle different possible response structures
+    console.log('🔍 Current user for matching:', {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      uidType: typeof currentUser.uid,
+      emailType: typeof currentUser.email
     });
 
-    if (!userData) {
-      console.error('❌ AdminService - Current user not found in response');
-      console.log('Available users in response:', response.data.map(u => ({
-        uid: u.uid,
-        email: u.email
-      })));
+    // Step 7: Handle user data if found
+    if (userData) {
+      console.log('✅ Found user data:', {
+        uid: userData.uid,
+        email: userData.email,
+        hasModules: !!userData.modules
+      });
+      
+      modules = userData.modules || [];
+    } else {
+      console.error('❌ Current user not found in response');
+      console.log('Current user details:', {
+        uid: currentUser.uid,
+        email: currentUser.email
+      });
       
       return {
         success: false,
         error: 'Current user not found in permissions list',
-        errorCode: 'USER_NOT_FOUND'
+        errorCode: 'USER_NOT_FOUND',
+        debugInfo: {
+          responseStructure: Object.keys(response.data),
+          currentUser: {
+            uid: currentUser.uid,
+            email: currentUser.email
+          }
+        }
       };
     }
 
-    // Step 7: Validate modules data
-    if (!userData.modules) {
-      console.warn('⚠️ AdminService - No modules property found for user');
-      return {
-        success: true,
-        data: [],
-        warning: 'No modules assigned to current user'
-      };
-    }
-
-    console.log('✅ AdminService - Modules fetched successfully:', {
-      moduleCount: Array.isArray(userData.modules) ? userData.modules.length : 'N/A',
-      modules: userData.modules
+    // Step 8: Return modules
+    console.log('✅ Modules fetched successfully:', {
+      moduleCount: Array.isArray(modules) ? modules.length : 'N/A',
+      modules: modules
     });
     
     return {
       success: true,
-      data: userData.modules,
-      userInfo: {
+      data: modules,
+      userInfo: userData ? {
         uid: userData.uid,
         email: userData.email
-      }
+      } : null
     };
     
   } catch (error) {
@@ -841,23 +895,6 @@ async getAllowedModules() {
       stack: error.stack,
       name: error.name
     });
-    
-    // Check for specific error types
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      return {
-        success: false,
-        error: 'Network error - please check your connection',
-        errorCode: 'NETWORK_ERROR'
-      };
-    }
-    
-    if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
-      return {
-        success: false,
-        error: 'Invalid response format from server',
-        errorCode: 'PARSE_ERROR'
-      };
-    }
     
     return {
       success: false,
