@@ -81,7 +81,7 @@ export default function OrderManagement() {
   const transformOrderData = useCallback((orderItems) => {
     return orderItems.map(order => ({
       id: order.id,
-      trackingId: order.tracking_id || order.order_id,
+      trackingId: order.order_id,
       customerName: order.user?.owner_name || 'Unknown Customer',
       customerEmail: order.user?.email || '',
       customerPhone: order.user?.mobile_number || '',
@@ -92,10 +92,12 @@ export default function OrderManagement() {
         name: item.product.name,
         image: item.product.images?.[0]?.image_url || '',
         price: item.priceWithGst,
-        quantity: item.add
+        quantity: item.add,
+        packOff: item.packOff,
+        gst: item.gst
       })) || [],
       totalAmount: order.amount,
-      deliveryPartner: order.delivery_partner_id || '',
+      deliveryPartner: order.delivery_partner?.name || '',
       orderStatus: order.payment_status === 'paid' ? 'confirmed' : 'cart',
       addedAt: order.created_at,
       estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -195,15 +197,35 @@ export default function OrderManagement() {
 
   const handleSave = useCallback(() => {
     if (!editData) return
+
+    // Find the selected delivery partner's ID
+    const selectedPartner = deliveryPartners.find(partner => partner.name === editData.deliveryPartner)
+    if (!selectedPartner) {
+      alert('Selected delivery partner not found')
+      return
+    }
+    const updatePayload = {
+      id: editData.id, // or editData.trackingId if that's the order ID
+      delivery_partner_id: selectedPartner.id, // This is the delivery partner ID
+      tracking_id: editData.trackingId,
+      status: editData.orderStatus
+    }
+    console.log('Update payload:', updatePayload) // Debug log
     apiCall(
-      () => adminApiService.updateDeliveryPartners(editData.id, editData),
-      () => {
-        setOrders(prev => prev.map(o => o.id === editData.id ? editData : o))
+      () => adminApiService.updateDeliveryPartners(updatePayload),
+      (result) => {
+        console.log('Update result:', result) // Debug log
+        setOrders(prev => prev.map( {
+          deliveryPartner: editData.deliveryPartner,
+          trackingId: editData.trackingId,
+          orderStatus: editData.orderStatus
+        } ))
         setModal('')
         setEditData(null)
+        alert('Order updated successfully!')
       }
     )
-  }, [editData, apiCall])
+  }, [editData, apiCall, deliveryPartners])
 
   const getStatusInfo = useCallback((status) => 
     orderStatuses.find(s => s.key === status) || orderStatuses[0], [])
@@ -407,12 +429,14 @@ export default function OrderManagement() {
                         >
                           <Eye className="w-3 h-3" />
                         </button>
+                        {order.orderStatus !== 'cart' && (
                         <button 
                           onClick={() => handleEdit(order)} 
                           className="p-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition-colors"
                         >
                           <Edit className="w-3 h-3" />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -492,9 +516,10 @@ export default function OrderManagement() {
                       <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
                       <div className="flex-1">
                         <div className={`font-medium text-sm ${theme.text}`}>{item.name}</div>
-                        <div className={`text-xs ${theme.muted}`}>₹{item.price} × {item.quantity}</div>
+                        <div className={`text-xs ${theme.muted}`}>{item.packOff} (Pack Off) × {item.quantity} Add</div>
+                        <div className={`text-xs ${theme.muted}`}>₹{item.price} (Incl. {item.gst}% tax)</div>
                       </div>
-                      <div className={`font-medium ${theme.text}`}>₹{item.price * item.quantity}</div>
+                      {/* <div className={`font-medium ${theme.text}`}>₹{item.price * item.quantity}</div> */}
                     </div>
                   ))}
                 </div>
@@ -532,6 +557,7 @@ export default function OrderManagement() {
                   <input
                     type="text"
                     value={editData.trackingId}
+                    disabled={editData.deliveryPartner === ''}
                     onChange={(e) => setEditData({ ...editData, trackingId: e.target.value })}
                     className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
                     placeholder="Enter Tracking ID"
