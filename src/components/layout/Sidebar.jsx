@@ -250,23 +250,6 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Debug Info - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className={`p-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <details className="text-xs">
-            <summary className={`cursor-pointer ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Debug Info
-            </summary>
-            <div className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <div>Loading: {modulesLoading ? 'Yes' : 'No'}</div>
-              <div>Allowed Modules: {allowedModules?.join(', ') || 'None'}</div>
-              <div>Filtered Items: {filteredMenuItems.length}</div>
-              <div>hasModuleAccess: {typeof hasModuleAccess}</div>
-            </div>
-          </details>
-        </div>
-      )}
-
       {/* Brand accent */}
       <div className="h-1 bg-[#c79e73]"></div>
     </div>
