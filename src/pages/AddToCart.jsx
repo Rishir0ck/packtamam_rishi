@@ -142,7 +142,7 @@ export default function OrderManagement() {
       setOrders(allOrders)
       setDeliveryPartners(partnersData)
       // ADD THIS LINE: Reset filter to show all data
-      setFilter('all')
+      setFilter('cart')
     } catch (error) {
       console.error('Failed to fetch data:', error)
       alert('Failed to load data. Please refresh the page.')
