@@ -562,7 +562,7 @@ export default function OrderManagement() {
                   <input
                     type="text"
                     value={editData.trackingId}
-                    disabled={editData.deliveryPartner === ''}
+                    disabled={true}
                     onChange={(e) => setEditData({ ...editData, trackingId: e.target.value })}
                     className={`w-full p-3 border rounded text-sm focus:outline-none ${theme.input}`}
                     placeholder="Enter Tracking ID"
