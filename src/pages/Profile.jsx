@@ -146,8 +146,8 @@ export default function ProfileManager() {
     }
     
     try {
-      const response = editingProfile  
-        // await adminApiService.updateSubAdmin(editingProfile.id, formData.email, formData.name, formData.role, formData.password, formData.modules, formData.is_active) :
+      const response = editingProfile ?
+        await adminApiService.updateSubAdmin(editingProfile.id, formData.email, formData.name, formData.role, formData.password, formData.modules, formData.is_active) :
         await adminApiService.addSubAdmin(formData.email, formData.name, formData.role, formData.password, formData.modules, formData.is_active);
       
       if (response.success) {
