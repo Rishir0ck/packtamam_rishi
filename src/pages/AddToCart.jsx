@@ -141,6 +141,8 @@ export default function OrderManagement() {
       
       setOrders(allOrders)
       setDeliveryPartners(partnersData)
+      // ADD THIS LINE: Reset filter to show all data
+      setFilter('all')
     } catch (error) {
       console.error('Failed to fetch data:', error)
       alert('Failed to load data. Please refresh the page.')
@@ -215,11 +217,14 @@ export default function OrderManagement() {
       () => adminApiService.updateDeliveryPartners(updatePayload),
       (result) => {
         console.log('Update result:', result) // Debug log
-        setOrders(prev => prev.map( {
+        setOrders(prev => prev.map(order => 
+        order.id === editData.id ? {
+          ...order,
           deliveryPartner: editData.deliveryPartner,
           trackingId: editData.trackingId,
           orderStatus: editData.orderStatus
-        } ))
+        } : order
+      ))
         setModal('')
         setEditData(null)
         alert('Order updated successfully!')
